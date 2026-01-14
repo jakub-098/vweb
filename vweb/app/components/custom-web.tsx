@@ -1,6 +1,9 @@
 export default function CustomWeb() {
   return (
-    <section className="w-full max-w-6xl px-4 pb-28 sm:w-4/5 lg:w-2/3 sm:px-0">
+    <section
+      id="web-na-mieru"
+      className="w-full max-w-6xl px-4 pb-28 sm:w-4/5 lg:w-2/3 sm:px-0"
+    >
       <div className="relative overflow-hidden rounded-2xl border border-purple-300/20 bg-black/60 shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl">
         <div
           className="absolute inset-0 bg-[url('/vawes2.png')] bg-cover bg-center opacity-40 mix-blend-screen"

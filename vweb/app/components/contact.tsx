@@ -1,6 +1,9 @@
 export default function Contact() {
   return (
-    <section className="w-full max-w-6xl px-4 pb-28 sm:w-4/5 lg:w-2/3 sm:px-0">
+    <section
+      id="kontakt"
+      className="w-full max-w-6xl px-4 pb-28 sm:w-4/5 lg:w-2/3 sm:px-0"
+    >
       <div className="relative overflow-hidden rounded-2xl border border-purple-300/20 bg-black/60 px-8 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:px-12 sm:py-14">
         <div className="mb-8 text-left">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200/80">

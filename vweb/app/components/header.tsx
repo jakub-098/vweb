@@ -1,6 +1,9 @@
 export default function Header() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center px-4 text-zinc-50 sm:px-8">
+    <div
+      id="top"
+      className="flex min-h-screen w-full items-center justify-center px-4 text-zinc-50 sm:px-8"
+    >
       <main className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
         <div
           className="pointer-events-none absolute -inset-[3px] rounded-2xl bg-gradient-to-b from-purple-500/45 via-transparent to-transparent opacity-70 blur-xl"
