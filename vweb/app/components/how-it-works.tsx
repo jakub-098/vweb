@@ -94,10 +94,13 @@ export default function HowItWorks() {
         </div>
 
         <div className="mt-12 flex justify-center">
-          <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-500 px-12 py-3.5 text-base font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400">
+          <a
+            href="/config"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-500 px-12 py-3.5 text-base font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400"
+          >
             <span>Nakonfigurovať</span>
             <span className="text-xs opacity-90">↗</span>
-          </button>
+          </a>
         </div>
       </div>
     </section>
