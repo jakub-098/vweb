@@ -39,8 +39,8 @@ export default function Home() {
               <Image
                 src="/Logo_White.png"
                 alt="Vas Web logo"
-                width={190}
-                height={40}
+					width={75}
+					height={16}
               />
             </div>
             <nav className="mt-2 flex justify-center gap-4 text-xs text-zinc-400 sm:justify-start sm:text-sm">

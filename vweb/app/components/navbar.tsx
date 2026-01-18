@@ -34,8 +34,8 @@ export default function Navbar() {
           <Image
             src="/Logo_White.png"
             alt="Vas Web logo"
-            width={190}
-            height={40}
+            width={75}
+            height={16}
             priority
           />
         </div>
