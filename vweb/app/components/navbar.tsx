@@ -1,11 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const links = [
   { href: "#top", label: "Úvod" },
   { href: "#ako-to-funguje", label: "Ako to funguje" },
-  { href: "#eshops", label: "E-shopy" },
   { href: "#web-na-mieru", label: "Web na mieru" },
   { href: "#kontakt", label: "Kontakt" },
 ];
@@ -30,20 +30,29 @@ export default function Navbar() {
       }`}
     >
       <nav className="flex h-full w-full max-w-6xl items-center justify-between px-4 text-sm text-zinc-50 sm:px-8">
-        <div className="font-semibold tracking-tight">
-          <span className="text-xs uppercase tracking-[0.3em] text-purple-200">
-            Vas Web
-          </span>
+        <div className="flex items-center">
+          <Image
+            src="/Logo_White.png"
+            alt="Vas Web logo"
+            width={190}
+            height={40}
+            priority
+          />
         </div>
         <div className="hidden gap-7 text-xs font-semibold text-zinc-200 sm:flex">
           {links.map((link) => (
-            <a
+            <button
               key={link.href}
-              href={link.href}
+              type="button"
+              onClick={() => {
+                const id = link.href.startsWith("#") ? link.href.slice(1) : link.href;
+                const el = document.getElementById(id);
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className="transition-colors hover:text-white"
             >
               {link.label}
-            </a>
+            </button>
           ))}
         </div>
       </nav>

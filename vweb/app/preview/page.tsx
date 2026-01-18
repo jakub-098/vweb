@@ -37,15 +37,33 @@ export default function PreviewPage() {
             <span className="text-sky-600">vas</span>web.sk
           </span>
           <nav className="flex items-center gap-4 text-xs font-medium text-slate-600 sm:text-sm">
-            <a href="#about" className="transition hover:text-slate-900">
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="transition hover:text-slate-900"
+            >
               O projekte
-            </a>
-            <a href="#services" className="transition hover:text-slate-900">
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="transition hover:text-slate-900"
+            >
               Služby
-            </a>
-            <a href="#kontakt" className="transition hover:text-slate-900">
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="transition hover:text-slate-900"
+            >
               Kontakt
-            </a>
+            </button>
           </nav>
         </div>
       </header>
@@ -75,18 +93,24 @@ export default function PreviewPage() {
                 Moderný, čistý dizajn so zameraním na prehľadnosť, čitateľnosť a jasnú štruktúru obsahu.
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                <a
-                  href="#about"
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className="rounded-full bg-sky-600 px-6 py-2.5 text-sm font-medium text-white shadow-[0_10px_30px_rgba(37,99,235,0.45)] transition hover:bg-sky-500"
                 >
                   Pozrieť sekcie nižšie
-                </a>
-                <a
-                  href="#services"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className="rounded-full border border-slate-300 bg-white/70 px-6 py-2.5 text-sm font-medium text-slate-700 shadow-[0_4px_16px_rgba(15,23,42,0.14)] backdrop-blur-sm transition hover:bg-slate-100 hover:text-slate-800"
                 >
                   Služby a spolupráca
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -288,7 +312,7 @@ export default function PreviewPage() {
             <div className="space-y-3">
               <label
                 htmlFor="preview-email"
-                className="text-xs font-medium uppercase tracking-[0.2em] text-sky-600"
+                className="text-xs font-medium uppercase tracking-[0.2em] text-sky-500"
               >
                 Váš e-mail
               </label>
@@ -304,7 +328,7 @@ export default function PreviewPage() {
             <div className="space-y-3">
               <label
                 htmlFor="preview-message"
-                className="text-xs font-medium uppercase tracking-[0.2em] text-sky-600"
+                className="text-xs font-medium uppercase tracking-[0.2em] text-sky-500"
               >
                 Správa
               </label>
@@ -334,7 +358,7 @@ export default function PreviewPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 sm:w-4/5 sm:flex-row lg:w-2/3">
           <div className="text-center sm:text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-              vasweb.sk
+              vweb.sk
             </p>
             <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500 sm:text-sm">
               Jednoduché prezentačné weby na mieru, navrhnuté tak, aby pôsobili
@@ -343,13 +367,13 @@ export default function PreviewPage() {
           </div>
           <div className="flex flex-col items-center gap-1 text-xs text-slate-500 sm:items-end sm:text-sm">
             <a href="mailto:studio@vasweb.sk" className="transition hover:text-slate-900">
-              studio@vasweb.sk
+              studio@vweb.sk
             </a>
             <a href="tel:+421900000000" className="transition hover:text-slate-900">
               +421 900 000 000
             </a>
             <p className="mt-1 text-[0.7rem] text-slate-400">
-              © {new Date().getFullYear()} vasweb.sk – všetky práva vyhradené.
+              © {new Date().getFullYear()} vweb.sk – všetky práva vyhradené.
             </p>
           </div>
         </div>

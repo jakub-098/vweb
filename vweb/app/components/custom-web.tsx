@@ -1,3 +1,5 @@
+"use client";
+
 export default function CustomWeb() {
   return (
     <section
@@ -18,13 +20,20 @@ export default function CustomWeb() {
             Web presne podľa toho, čo tvoj projekt potrebuje.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-200/90 sm:text-base">
-            Sem doplníš, ako pripravíš individuálne riešenia – od landing page po
-            komplexnejší web, ktorý zapadne do tvojho brandu aj technických
-            požiadaviek.
+            Chcete Eshop? Ste Reštaurácia? Potrebujete Blog alebo Portfólio?
+            Vytvoríme vám web na mieru, ktorý bude presne spĺňať vaše požiadavky
+            a očakávania.
           </p>
 
           <div className="mt-8 flex flex-col items-start gap-3">
-            <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("kontakt");
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400"
+            >
               Kontaktuj ma
             </button>
             <p className="max-w-xs text-xs text-zinc-400/90 sm:text-sm">

@@ -47,7 +47,7 @@ export default function Contact() {
               required
               rows={4}
               className="w-full resize-none rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-zinc-50 outline-none ring-0 transition placeholder:text-zinc-500 focus:border-purple-400 focus:bg-black/60"
-              placeholder="Stručne nám napíšte, čo potrebujete..."
+              placeholder="Sem nám napíšte, čo potrebujete..."
             />
           </div>
 

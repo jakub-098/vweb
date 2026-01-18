@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ConfigPage() {
+	const router = useRouter();
 	const [theme, setTheme] = useState<"tmava" | "svetla">("tmava");
 	const [accent, setAccent] = useState<
 		"purple" | "blue" | "green" | "orange" | "pink" | "red" | "yellow" | "teal" | "gray"
@@ -29,6 +31,14 @@ export default function ConfigPage() {
 	const [prices, setPrices] = useState<Record<string, number>>({});
 	const [submitting, setSubmitting] = useState(false);
 	const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+	const [userEmail, setUserEmail] = useState("");
+	const [emailError, setEmailError] = useState<string | null>(null);
+	const [missingFieldsError, setMissingFieldsError] = useState<string | null>(null);
+	const [existingDialogOpen, setExistingDialogOpen] = useState(false);
+	const [existingConfigEmail, setExistingConfigEmail] = useState("");
+	const [existingConfigEmailError, setExistingConfigEmailError] = useState<string | null>(null);
+	const [existingConfigChecking, setExistingConfigChecking] = useState(false);
 
 	useEffect(() => {
 		async function loadPrices() {
@@ -102,59 +112,74 @@ export default function ConfigPage() {
 		}
 	}
 
-	async function handleSubmit() {
+	function validateRequiredFields() {
+		const missing: string[] = [];
+
+		// aspoň jedna sekcia musí byť vybraná
+		if (selectedSectionsCount === 0) {
+			missing.push("aspoň jednu sekciu");
+		}
+
+		// doména je povinná a musí byť v správnom tvare
+		const rawDomain = domainOption === "own" ? domainOwn : domainRequest;
+		const trimmedDomain = rawDomain.trim();
+		const cleanedDomain = trimmedDomain
+			.replace(/^https?:\/\//i, "")
+			.replace(/^www\./i, "");
+		const domainPattern = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+		if (!domainOption || cleanedDomain.length === 0) {
+			missing.push("doménu");
+		} else if (!domainPattern.test(cleanedDomain)) {
+			setMissingFieldsError("Doména nie je v správnom tvare.");
+			return false;
+		} else if (domainOption === "request" && domainAvailable === false) {
+			setMissingFieldsError("Doména je obsadená – vyber prosím inú.");
+			return false;
+		}
+
+		// sekcia Mail – povinné podľa zvolenej možnosti
+		if (mail === "potrebujem") {
+			const local = mailLocalPart.trim();
+			if (!local) {
+				missing.push("e-mail pre web");
+			} else {
+				const localPattern = /^[A-Za-z0-9._%+-]+$/;
+				if (!localPattern.test(local)) {
+					setMissingFieldsError("E-mail v sekcii Mail nie je v správnom tvare.");
+					return false;
+				}
+			}
+		} else if (mail === "mam" && !sectionContactForm) {
+			const ex = existingEmail.trim();
+			if (!ex) {
+				missing.push("e-mail v sekcii Mail");
+			} else {
+				const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				if (!emailPattern.test(ex)) {
+					setMissingFieldsError("Zadaj prosím platnú e-mailovú adresu v sekcii Mail.");
+					return false;
+				}
+			}
+		}
+		// mail === "mam" a sectionContactForm === true – nevyžadujeme e-mail, pošle údaje neskôr
+
+		if (missing.length > 0) {
+			setMissingFieldsError(`Nevyplnili ste: ${missing.join(", ")}.`);
+			return false;
+		}
+
+		setMissingFieldsError(null);
+		return true;
+	}
+
+	async function handleSubmit(email: string) {
 		setSubmitting(true);
 		setSubmitMessage(null);
 
-		// doména je povinná
-		if (
-			!domainOption ||
-			(domainOption === "own" && domainOwn.trim().length === 0) ||
-			(domainOption === "request" && domainRequest.trim().length === 0)
-		) {
+		if (!validateRequiredFields()) {
 			setSubmitting(false);
-			setSubmitMessage("Prosím vyplň doménu – je povinná.");
 			return;
-		}
-
-		// ak chceš novú doménu, over jej dostupnosť
-		if (domainOption === "request") {
-			const domain = domainRequest.trim();
-			try {
-				const response = await fetch("/api/domain-check", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ domain }),
-				});
-
-				if (!response.ok) {
-					setSubmitting(false);
-					setDomainAvailable(null);
-					setDomainCheckMessage("Nepodarilo sa overiť doménu. Skús to neskôr.");
-					return;
-				}
-
-				const data = await response.json();
-
-				if (!data.available) {
-					setSubmitting(false);
-					setDomainAvailable(false);
-					setDomainCheckMessage("Domena je obsadena");
-					setSubmitMessage("Domena je obsadena – vyber prosím inú.");
-					return;
-				}
-
-				setDomainAvailable(true);
-				setDomainCheckMessage("Doména je voľná – super!");
-			} catch (error) {
-				console.error("Error checking domain before submit", error);
-				setSubmitting(false);
-				setDomainAvailable(null);
-				setDomainCheckMessage("Nepodarilo sa overiť doménu. Skús to neskôr.");
-				return;
-			}
 		}
 
 		try {
@@ -178,6 +203,7 @@ export default function ConfigPage() {
 					domainOption,
 					domainOwn,
 					domainRequest,
+					userEmail: email,
 				}),
 			});
 
@@ -186,6 +212,7 @@ export default function ConfigPage() {
 			}
 
 			setSubmitMessage("Konfigurácia bola odoslaná. Čoskoro sa ti ozvem.");
+			router.push("/upload");
 		} catch (error) {
 			console.error("Error submitting order", error);
 			setSubmitMessage(
@@ -237,6 +264,131 @@ export default function ConfigPage() {
 		return total;
 	})();
 
+	async function handleEmailConfirm() {
+		setEmailError(null);
+		const trimmed = userEmail.trim();
+		if (!trimmed) {
+			setEmailError("Prosím zadaj svoj e-mail, aby sa ti konfigurácia nestratila.");
+			return;
+		}
+
+		const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailPattern.test(trimmed)) {
+			setEmailError("Zadaj prosím platnú e-mailovú adresu.");
+			return;
+		}
+
+		if (typeof window !== "undefined") {
+			try {
+				window.localStorage.setItem("vwebOrderEmail", trimmed);
+			} catch {}
+		}
+
+		await handleSubmit(trimmed);
+		setEmailDialogOpen(false);
+		setUserEmail("");
+	}
+
+	async function handleContinueClick() {
+		// základná validácia domény a mailu
+		if (!validateRequiredFields()) return;
+
+		// ak chceš novú doménu, over jej dostupnosť pri Pokračovať
+		if (domainOption === "request") {
+			const domain = domainRequest.trim();
+			try {
+				setDomainChecking(true);
+				setDomainCheckMessage(null);
+
+				const response = await fetch("/api/domain-check", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ domain }),
+				});
+
+				if (!response.ok) {
+					setDomainAvailable(null);
+					setDomainCheckMessage("Nepodarilo sa overiť doménu. Skús to neskôr.");
+					return;
+				}
+
+				const data = await response.json();
+
+				if (!data.available) {
+					setDomainAvailable(false);
+					setDomainCheckMessage("Domena je obsadena");
+					setMissingFieldsError("Doména je obsadená – vyber prosím inú.");
+					return;
+				}
+
+				setDomainAvailable(true);
+				setDomainCheckMessage("Doména je voľná – super!");
+			} catch (error) {
+				console.error("Error checking domain from Pokračovať", error);
+				setDomainAvailable(null);
+				setDomainCheckMessage("Nepodarilo sa overiť doménu. Skús to neskôr.");
+				return;
+			} finally {
+				setDomainChecking(false);
+			}
+		}
+
+		// ak sme prešli všetky kontroly, otvoríme email popup
+		setEmailDialogOpen(true);
+	}
+
+	async function handleExistingConfirm() {
+		setExistingConfigEmailError(null);
+		const trimmed = existingConfigEmail.trim();
+		if (!trimmed) {
+			setExistingConfigEmailError("Prosím zadaj e-mail použitý pri konfigurácii.");
+			return;
+		}
+
+		const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailPattern.test(trimmed)) {
+			setExistingConfigEmailError("Zadaj prosím platnú e-mailovú adresu.");
+			return;
+		}
+
+		try {
+			setExistingConfigChecking(true);
+			const res = await fetch("/api/orders/find-by-email", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ email: trimmed }),
+			});
+
+			if (!res.ok) {
+				setExistingConfigEmailError("Nepodarilo sa overiť konfiguráciu. Skús to neskôr.");
+				return;
+			}
+
+			const data = await res.json();
+			if (!data.success || !data.found) {
+				setExistingConfigEmailError("Pre tento e-mail sme nenašli konfiguráciu.");
+				return;
+			}
+			if (typeof window !== "undefined") {
+				try {
+					window.localStorage.setItem("vwebOrderEmail", trimmed);
+				} catch {}
+			}
+			setExistingDialogOpen(false);
+			setExistingConfigEmail("");
+			router.push("/upload");
+		} catch (error) {
+			console.error("Error looking up existing configuration", error);
+			setExistingConfigEmailError("Pri overovaní nastala chyba. Skús to neskôr.");
+		} finally {
+			setExistingConfigChecking(false);
+		}
+	}
+
 	return (
 		<section className="flex min-h-screen w-full items-center justify-center px-4 py-16 text-zinc-50 sm:px-8">
 			<div className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
@@ -248,17 +400,41 @@ export default function ConfigPage() {
 				<div className="relative overflow-hidden rounded-2xl border border-purple-300/20 bg-black/60 px-7 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:px-11 sm:py-12">
 					<div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70" />
 
-					<header className="mb-10 max-w-2xl">
+					<header className="mb-10">
 						<p className="text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-purple-200/80">
 							Konfigurátor
 						</p>
-						<h1 className="mt-3 text-2xl font-semibold sm:text-3xl md:text-4xl">
-							Vyber si, z akých častí sa má tvoj web skladať.
-						</h1>
-						<p className="mt-4 text-sm leading-relaxed text-zinc-200/90 sm:text-base">
-							Zaškrtni len tie sekcie, ktoré na svojej webke naozaj potrebuješ.
-							Podľa výberu pripravím štruktúru a návrh riešenia.
-						</p>
+						<div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+							<h1 className="text-2xl font-semibold sm:text-3xl md:text-4xl">
+								Vyber si, z akých častí sa má tvoj web skladať.
+							</h1>
+							<button
+								type="button"
+								onClick={() => {
+									setExistingDialogOpen(true);
+									setExistingConfigEmailError(null);
+								}}
+								className="inline-flex items-center justify-center rounded-full border border-purple-300/70 bg-black/60 px-4 py-1.5 text-[0.7rem] font-semibold text-purple-100 shadow-[0_0_18px_rgba(168,85,247,0.45)] transition hover:border-purple-100 hover:bg-purple-500/80 hover:text-white sm:text-xs"
+							>
+								Konfiguráciu už mám
+							</button>
+						</div>
+						
+						<div className="mt-6 w-full rounded-2xl border border-purple-300/30 bg-black/50 px-5 py-4 text-sm text-zinc-100 shadow-[0_18px_60px_rgba(0,0,0,0.7)] sm:px-6 sm:py-5">
+							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+								<p className="text-xs leading-relaxed text-zinc-200/90 sm:max-w-xl sm:text-sm">
+									Najprv si prezri demo stránku, aby si videl, ako môžu jednotlivé bloky
+									pôsobiť v praxi. Potom sa tu v konfigurátore rozhodni, ktoré komponenty
+									potrebuješ.
+								</p>
+								<a
+									href="/preview"
+									className="inline-flex items-center justify-center rounded-full border border-purple-300/70 bg-purple-500/90 px-6 py-2.5 text-xs font-semibold text-white shadow-[0_12px_36px_rgba(88,28,135,0.75)] transition hover:bg-purple-400 hover:border-purple-200 hover:shadow-[0_16px_48px_rgba(88,28,135,0.9)] sm:text-sm"
+								>
+									Pozrieť demo stránku
+								</a>
+							</div>
+						</div>
 					</header>
 
 					<div className="grid gap-8 md:grid-cols-[1.6fr,1fr]">
@@ -268,8 +444,7 @@ export default function ConfigPage() {
 									Vyberte, aké komponenty potrebujete na vašej webke
 								</label>
 								<p className="text-xs text-zinc-400/90 sm:text-sm">
-									Zaškrtnite sekcie, ktoré chcete mať na stránke. Ku každej
-									sekcii si neskôr vieš doplniť vlastný náhľad.
+									Zaškrtnite sekcie, ktoré chcete mať na stránke. 
 								</p>
 
 								<div className="space-y-4">
@@ -562,6 +737,11 @@ export default function ConfigPage() {
 									<div className="space-y-3">
 										<p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-200">
 											Doména
+											{prices.domain && (
+												<span className="ml-2 text-[0.7rem] font-normal tracking-normal text-zinc-400/90">
+													+ {prices.domain.toFixed(2)} € – Ak si zakúpite službu Doména a Mail spolu, Ušetríte 10€ !
+												</span>
+											)}
 										</p>
 										<div className="space-y-2 text-sm">
 											<label className="flex items-center gap-3 text-base">
@@ -639,6 +819,11 @@ export default function ConfigPage() {
 									<div className="space-y-3">
 										<p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-200">
 											Mail
+											{prices.mail && (
+												<span className="ml-2 text-[0.7rem] font-normal tracking-normal text-zinc-400/90">
+													+ {prices.mail.toFixed(2)} € – Ak si zakúpite službu Doména a Mail spolu, Ušetríte 10€ !
+												</span>
+											)}
 										</p>
 										<div className="inline-flex rounded-full border border-purple-300/40 bg-black/40 p-0.5 text-sm">
 											<button
@@ -733,33 +918,37 @@ export default function ConfigPage() {
 										<div className="space-y-3 pt-4">
 											<p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-200">
 												Rýchle dodanie
+												{prices["24h"] && (
+													<span className="ml-2 text-[0.7rem] font-normal tracking-normal text-zinc-400/90">
+														+ {prices["24h"].toFixed(2)} €
+													</span>
+												)}
 											</p>
-											<div className="flex items-center justify-between gap-3 text-sm">
-												<div className="text-zinc-300">Hotové do 24 h</div>
-												<div className="inline-flex rounded-full border border-purple-300/40 bg-black/40 p-0.5 text-sm">
+											<div className="flex items-center justify-start gap-4 text-base">
+												<div className="inline-flex rounded-full border border-purple-300/40 bg-black/40 p-1 text-base">
 													<button
 														type="button"
 														onClick={() => setFastDelivery("no")}
-														className={`rounded-full px-4 py-1.5 font-semibold transition ${
+														className={`rounded-full px-6 py-2 font-semibold transition ${
 															fastDelivery === "no" ? "bg-purple-500/90 text-white" : "text-zinc-200"
 														}`}
 													>
-														Nie
+														48 h
 													</button>
 													<button
 														type="button"
 														onClick={() => setFastDelivery("yes")}
-														className={`rounded-full px-4 py-1.5 font-semibold transition ${
+														className={`rounded-full px-6 py-2 font-semibold transition ${
 															fastDelivery === "yes" ? "bg-purple-500/90 text-white" : "text-zinc-200"
 														}`}
 													>
-														Áno
+														24 h
 													</button>
 												</div>
 											</div>
 											<div className="mt-4 space-y-2 rounded-2xl border border-purple-400/40 bg-black/40 px-4 py-4 text-sm text-zinc-100">
 												<p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200">
-													Odhadovaná cena projektu
+													Cena projektu
 												</p>
 												{Object.keys(prices).length === 0 ? (
 													<p className="text-xs text-zinc-400">
@@ -801,32 +990,106 @@ export default function ConfigPage() {
 							</div>
 						</div>
 
-						<aside className="space-y-4 rounded-2xl border border-purple-300/25 bg-black/50 px-5 py-5 text-sm text-zinc-200/90 shadow-[0_18px_60px_rgba(0,0,0,0.9)]">
-							<h2 className="text-sm font-semibold text-zinc-50">
-								Čo sa stane ďalej?
-							</h2>
-							<ol className="list-decimal space-y-2 pl-4 text-xs sm:text-sm">
-								<li>Po odoslaní konfigurácie si prejdem tvoje požiadavky.</li>
-								<li>Do 24 hodín sa ozvem s návrhom riešenia a orientačnou cenou.</li>
-								<li>Ak ti to sedí, pustíme sa do tvorby webu.</li>
-							</ol>
-							<div className="pt-1 text-xs text-zinc-400/90">
-								Toto je zatiaľ len štruktúra – konkrétny proces a políčka vieš
-								upraviť podľa toho, ako budeš s klientmi pracovať.
+						{emailDialogOpen && (
+							<div className="fixed inset-0 z-50 bg-black/70">
+								<div className="fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-purple-300/40 bg-black/90 px-5 py-6 text-sm text-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.95)]">
+									<h2 className="text-base font-semibold">Zadajte váš e-mail</h2>
+									<p className="mt-2 text-xs text-zinc-300">
+										Zadajte svoj e-mail, aby sa vám konfigurácia nestratila a vedeli sme ju priradiť k vám.
+									</p>
+									<input
+										type="email"
+										className="mt-4 w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+										placeholder="napr. studio@vasweb.sk"
+										value={userEmail}
+										onChange={(e) => setUserEmail(e.target.value)}
+									/>
+									{emailError && (
+										<div className="mt-2 rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-2 text-xs text-red-200">
+											{emailError}
+										</div>
+									)}
+									<div className="mt-4 flex justify-end gap-2 text-xs">
+										<button
+											type="button"
+											onClick={() => {
+												setEmailDialogOpen(false);
+												setEmailError(null);
+											}}
+											className="rounded-full border border-zinc-600/70 px-3 py-1.5 text-[0.7rem] font-semibold text-zinc-200 transition hover:border-zinc-400/90 hover:text-zinc-50"
+										>
+											Zrušiť
+										</button>
+										<button
+											type="button"
+											onClick={handleEmailConfirm}
+											disabled={submitting}
+											className="rounded-full bg-purple-500/90 px-4 py-1.5 text-[0.7rem] font-semibold text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/60"
+										>
+											{submitting ? "Odosielam konfiguráciu..." : "Potvrdiť a odoslať"}
+										</button>
+									</div>
+								</div>
 							</div>
+						)}
+
+						{existingDialogOpen && (
+							<div className="fixed inset-0 z-50 bg-black/70">
+								<div className="fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-purple-300/40 bg-black/90 px-5 py-6 text-sm text-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.95)]">
+									<h2 className="text-base font-semibold">Mám už konfiguráciu</h2>
+									<p className="mt-2 text-xs text-zinc-300">
+										Zadaj e-mail, ktorý si použil pri konfigurácii, aby sme ťa vedeli prepojiť na ďalší krok.
+									</p>
+									<input
+										type="email"
+										className="mt-4 w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+										placeholder="napr. studio@vasweb.sk"
+										value={existingConfigEmail}
+										onChange={(e) => setExistingConfigEmail(e.target.value)}
+									/>
+									{existingConfigEmailError && (
+										<div className="mt-2 rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-2 text-xs text-red-200">
+											{existingConfigEmailError}
+										</div>
+									)}
+									<div className="mt-4 flex justify-end gap-2 text-xs">
+										<button
+											type="button"
+											onClick={() => {
+												setExistingDialogOpen(false);
+												setExistingConfigEmailError(null);
+											}}
+											className="rounded-full border border-zinc-600/70 px-3 py-1.5 text-[0.7rem] font-semibold text-zinc-200 transition hover:border-zinc-400/90 hover:text-zinc-50"
+										>
+											Zrušiť
+										</button>
+										<button
+											type="button"
+											onClick={handleExistingConfirm}
+											disabled={existingConfigChecking}
+											className="rounded-full bg-purple-500/90 px-4 py-1.5 text-[0.7rem] font-semibold text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/60"
+										>
+											{existingConfigChecking ? "Kontrolujem..." : "Pokračovať"}
+										</button>
+									</div>
+								</div>
+							</div>
+						)}
+
+						<aside>
+							{missingFieldsError && (
+								<div className="mb-3 rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-2 text-xs text-red-200">
+									{missingFieldsError}
+								</div>
+							)}
 							<button
 								type="button"
-								onClick={handleSubmit}
+								onClick={handleContinueClick}
 								disabled={submitting}
 								className="mt-3 w-full rounded-full bg-purple-500/90 px-4 py-2 text-xs font-semibold tracking-wide text-white shadow-[0_0_25px_rgba(168,85,247,0.6)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/60"
 							>
-								{submitting ? "Odosielam konfiguráciu..." : "Odoslať konfiguráciu"}
+								Pokračovať
 							</button>
-							{submitMessage && (
-								<p className="pt-1 text-[0.7rem] text-zinc-300/90">
-									{submitMessage}
-								</p>
-							)}
 						</aside>
 					</div>
 				</div>

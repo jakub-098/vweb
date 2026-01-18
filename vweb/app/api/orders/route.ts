@@ -40,6 +40,11 @@ export async function POST(request: Request) {
 				? body.customFont.trim()
 				: null;
 
+		const userEmail: string | null =
+			typeof body.userEmail === "string" && body.userEmail.trim().length > 0
+				? body.userEmail.trim()
+				: null;
+
 		let domainOption: "own" | "request" = "own";
 		if (body.domainOption === "request") {
 			domainOption = "request";
@@ -70,8 +75,9 @@ export async function POST(request: Request) {
 				domain_own,
 				domain_request,
 				hosting_option,
-				mail_option
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				mail_option,
+				user_email
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				sectionAbout ? 1 : 0,
 				sectionCards ? 1 : 0,
@@ -87,6 +93,7 @@ export async function POST(request: Request) {
 				domainRequest,
 				hostingOption,
 				mailOption,
+				userEmail,
 			]
 		);
 
