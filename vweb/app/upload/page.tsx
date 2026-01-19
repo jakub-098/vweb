@@ -54,6 +54,8 @@ export default function UploadPage() {
 	const [values, setValues] = useState<Record<string, string>>({});
 	const [imagesBySection, setImagesBySection] = useState<Record<string, File[]>>({});
 	const [defaultItemsBySection, setDefaultItemsBySection] = useState<Record<string, number[]>>({});
+	const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+	const [sectionError, setSectionError] = useState<string | null>(null);
 	const [imageModalOpen, setImageModalOpen] = useState(false);
 	const [imageModalSectionKey, setImageModalSectionKey] = useState<string | null>(null);
 	const [imageModalLimit, setImageModalLimit] = useState(0);
@@ -130,6 +132,7 @@ export default function UploadPage() {
 				}
 				setDefaultItemsBySection(initialDefaults);
 				setSections(active);
+				setCurrentSectionIndex(0);
 				setLoading(false);
 			} catch (err) {
 				console.error("Failed to load order for upload page", err);
@@ -194,12 +197,303 @@ export default function UploadPage() {
 		});
 	}
 
+	function validateSection(sectionKey: string, project: Project | null): boolean {
+		if (!project) {
+			return true;
+		}
+
+		const errors: string[] = [];
+
+		function checkField(storageKey: string, presetValue: string | undefined) {
+			const effective = (values[storageKey] ?? presetValue ?? "").trim();
+			if (!effective) {
+				errors.push(storageKey);
+			}
+		}
+
+		if (project.small_title > 0) {
+			for (let i = 0; i < project.small_title; i++) {
+				const storageKey = `${sectionKey}.small_title.${i}`;
+				const presetValue =
+					project.small_title_defaults?.[i] ?? (i === 0 ? project.small_title_value : "");
+				checkField(storageKey, presetValue);
+			}
+		}
+
+		if (project.title > 0) {
+			for (let i = 0; i < project.title; i++) {
+				const storageKey = `${sectionKey}.title.${i}`;
+				const presetValue = project.title_defaults?.[i] ?? (i === 0 ? project.title_value : "");
+				checkField(storageKey, presetValue);
+			}
+		}
+
+		if (project.text > 0) {
+			for (let i = 0; i < project.text; i++) {
+				const storageKey = `${sectionKey}.text.${i}`;
+				const presetValue = project.text_defaults?.[i] ?? "";
+				checkField(storageKey, presetValue);
+			}
+		}
+
+		const defaultProject = findDefaultProjectForSection(sectionKey);
+		const defaultItemIds = defaultItemsBySection[sectionKey] ?? [];
+
+		if (defaultProject && defaultItemIds.length > 0) {
+			for (const itemId of defaultItemIds) {
+				const baseKey = `${sectionKey}.default.${itemId}`;
+
+				if (defaultProject.small_title > 0) {
+					for (let j = 0; j < defaultProject.small_title; j++) {
+						const storageKey = `${baseKey}.small_title.${j}`;
+						const presetValue = j === 0 ? defaultProject.small_title_value : "";
+						checkField(storageKey, presetValue);
+					}
+				}
+
+				if (defaultProject.title > 0) {
+					for (let j = 0; j < defaultProject.title; j++) {
+						const storageKey = `${baseKey}.title.${j}`;
+						const presetValue = j === 0 ? defaultProject.title_value : "";
+						checkField(storageKey, presetValue);
+					}
+				}
+
+				if (defaultProject.text > 0) {
+					for (let j = 0; j < defaultProject.text; j++) {
+						const storageKey = `${baseKey}.text.${j}`;
+						const presetValue = "";
+						checkField(storageKey, presetValue);
+					}
+				}
+
+				// Obrázky pre predvolené položky sú povinné (okrem galérie)
+				if (defaultProject.images > 0 && sectionKey !== "section_gallery") {
+					const itemImageKey = `${baseKey}.images`;
+					const itemImages = imagesBySection[itemImageKey] ?? [];
+					if (itemImages.length === 0) {
+						errors.push(itemImageKey);
+					}
+				}
+			}
+		}
+
+		// Obrázky pre hlavnú sekciu sú povinné (okrem galérie)
+		if (project.images > 0 && sectionKey !== "section_gallery") {
+			const sectionImages = imagesBySection[sectionKey] ?? [];
+			if (sectionImages.length === 0) {
+				errors.push(`${sectionKey}.images`);
+			}
+		}
+
+		if (errors.length > 0) {
+			setSectionError("obrazok je povinny");
+			return false;
+		}
+
+		setSectionError(null);
+		return true;
+	}
+
+	function handleNextSection() {
+		if (!sections.length) return;
+		const current = sections[currentSectionIndex];
+		if (!current) return;
+
+		const isValid = validateSection(current.key, current.project);
+		if (!isValid) return;
+
+		// after validation send this section to API, then move on
+		sendCurrentSection(current.key)
+			.then((ok) => {
+				if (!ok) return;
+				if (currentSectionIndex < sections.length - 1) {
+					setCurrentSectionIndex((prev) => prev + 1);
+				}
+			})
+			.catch((err) => {
+				console.error("Failed to send section", err);
+			});
+	}
+
+	function handlePrevSection() {
+		if (currentSectionIndex === 0) return;
+		setSectionError(null);
+		setCurrentSectionIndex((prev) => Math.max(prev - 1, 0));
+	}
+
 	function removeDefaultItem(sectionKey: string, itemId: number) {
 		setDefaultItemsBySection((prev) => {
 			const current = prev[sectionKey] ?? [];
 			const next = current.filter((id) => id !== itemId);
 			return { ...prev, [sectionKey]: next };
 		});
+	}
+
+	async function sendCurrentSection(sectionKey: string): Promise<boolean> {
+		if (!order) return false;
+
+		const userEmail = (order as any).user_email ?? null;
+		const orderId = order.id;
+		if (!userEmail || !orderId) return false;
+
+		const project = findProjectForSection(sectionKey);
+		if (!project) return true; // nothing to send
+
+		try {
+			if (sectionKey === "section_about") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const text = (values[`${sectionKey}.text.0`] ?? "").trim();
+				const imageFiles = imagesBySection[sectionKey] ?? [];
+				const imageFile = imageFiles[0];
+
+				const formData = new FormData();
+				formData.append("orderId", String(orderId));
+				formData.append("userEmail", String(userEmail));
+				formData.append("smallTitle", smallTitle);
+				formData.append("title", title);
+				formData.append("text", text);
+				if (imageFile) {
+					formData.append("image", imageFile);
+				}
+
+				const res = await fetch("/api/sections/about", {
+					method: "POST",
+					body: formData,
+				});
+				return res.ok;
+			}
+
+			if (sectionKey === "section_cards") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const defaultProject = findDefaultProjectForSection(sectionKey);
+				const defaultItemIds = defaultItemsBySection[sectionKey] ?? [];
+				const items = defaultProject
+					? defaultItemIds.map((itemId) => {
+						const baseKey = `${sectionKey}.default.${itemId}`;
+						return {
+							small_title: (values[`${baseKey}.small_title.0`] ?? defaultProject.small_title_value ?? "").trim(),
+							title: (values[`${baseKey}.title.0`] ?? defaultProject.title_value ?? "").trim(),
+							text: (values[`${baseKey}.text.0`] ?? "").trim(),
+						};
+					})
+					: [];
+
+				const res = await fetch("/api/sections/cards", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ orderId, userEmail, smallTitle, title, items }),
+				});
+				return res.ok;
+			}
+
+			if (sectionKey === "section_offer") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const text = (values[`${sectionKey}.text.0`] ?? "").trim();
+				const defaultProject = findDefaultProjectForSection(sectionKey);
+				const defaultItemIds = defaultItemsBySection[sectionKey] ?? [];
+				const items = defaultProject
+					? defaultItemIds.map((itemId) => {
+						const baseKey = `${sectionKey}.default.${itemId}`;
+						return {
+							title: (values[`${baseKey}.title.0`] ?? defaultProject.title_value ?? "").trim(),
+							text: (values[`${baseKey}.text.0`] ?? "").trim(),
+						};
+					})
+					: [];
+
+				const formData = new FormData();
+				formData.append("orderId", String(orderId));
+				formData.append("userEmail", String(userEmail));
+				formData.append("smallTitle", smallTitle);
+				formData.append("title", title);
+				formData.append("text", text);
+				formData.append("items", JSON.stringify(items));
+
+				if (defaultProject) {
+					defaultItemIds.forEach((itemId, index) => {
+						const baseKey = `${sectionKey}.default.${itemId}`;
+						const itemImageKey = `${baseKey}.images`;
+						const itemImages = imagesBySection[itemImageKey] ?? [];
+						const file = itemImages[0];
+						if (file) {
+							formData.append(`itemImage_${index}`, file);
+						}
+					});
+				}
+
+				const res = await fetch("/api/sections/offer", {
+					method: "POST",
+					body: formData,
+				});
+				return res.ok;
+			}
+
+			if (sectionKey === "section_gallery") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const imageFiles = imagesBySection[sectionKey] ?? [];
+
+				const formData = new FormData();
+				formData.append("orderId", String(orderId));
+				formData.append("userEmail", String(userEmail));
+				formData.append("smallTitle", smallTitle);
+				formData.append("title", title);
+				imageFiles.forEach((file) => {
+					formData.append("images", file);
+				});
+
+				const res = await fetch("/api/sections/gallery", {
+					method: "POST",
+					body: formData,
+				});
+				return res.ok;
+			}
+
+			if (sectionKey === "section_faq") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const defaultProject = findDefaultProjectForSection(sectionKey);
+				const defaultItemIds = defaultItemsBySection[sectionKey] ?? [];
+				const items = defaultProject
+					? defaultItemIds.map((itemId) => {
+						const baseKey = `${sectionKey}.default.${itemId}`;
+						return {
+							question: (values[`${baseKey}.title.0`] ?? defaultProject.title_value ?? "").trim(),
+							answer: (values[`${baseKey}.text.0`] ?? "").trim(),
+						};
+					})
+					: [];
+
+				const res = await fetch("/api/sections/faq", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ orderId, userEmail, smallTitle, title, items }),
+				});
+				return res.ok;
+			}
+
+			if (sectionKey === "section_contact_form") {
+				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const text = (values[`${sectionKey}.text.0`] ?? "").trim();
+
+				const res = await fetch("/api/sections/contact-form", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ orderId, userEmail, smallTitle, title, text }),
+				});
+				return res.ok;
+			}
+
+			return true;
+		} catch (e) {
+			console.error("Error sending section", e);
+			return false;
+		}
 	}
 
 	return (
@@ -226,208 +520,229 @@ export default function UploadPage() {
 					)}
 					{!loading && !error && sections.length > 0 && (
 						<div className="space-y-5">
-								{sections.map(({ key, project }) => {
-									const imagesForSection = imagesBySection[key] ?? [];
-									const defaultProject = findDefaultProjectForSection(key);
-									const defaultItemIds = defaultItemsBySection[key] ?? [];
-									const maxDefaultItems = project?.default ?? 0;
-									const currentDefaultCount = defaultItemIds.length;
-									return (
-										<div
-											key={key}
-											className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
-										>
-											<p className="text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
-												{project?.small_title_value ?? formatSectionHeader(key)}
+							{sections[currentSectionIndex] && (() => {
+								const { key, project } = sections[currentSectionIndex]!;
+								const imagesForSection = imagesBySection[key] ?? [];
+								const defaultProject = findDefaultProjectForSection(key);
+								const defaultItemIds = defaultItemsBySection[key] ?? [];
+								const maxDefaultItems = project?.default ?? 0;
+								const currentDefaultCount = defaultItemIds.length;
+
+								return (
+									<div
+										key={key}
+										className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
+									>
+										<div className="flex items-center justify-between gap-3">
+											<button
+													type="button"
+													className="text-xs font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
+													onClick={handlePrevSection}
+													disabled={currentSectionIndex === 0}
+											>
+												<span className="mr-1">←</span> Späť
+											</button>
+											<p className="text-xs font-medium text-zinc-400">
+												Sekcia {currentSectionIndex + 1} / {sections.length}
 											</p>
-											{!project ? (
-												<p className="mt-2 text-xs text-zinc-400">
-													Pre túto sekciu nemáme definovaný preset – dohodneme sa individuálne.
-												</p>
-											) : (
-												<div className="mt-3 space-y-3 text-xs text-zinc-200">
-													{project.small_title > 0 && (
-														<div className="space-y-1">
-															<p className="font-semibold text-zinc-100">Malý nadpis</p>
-															{Array.from({ length: project.small_title }).map((_, i) => {
-																const storageKey = `${key}.small_title.${i}`;
-																const presetValue =
-																	project.small_title_defaults?.[i] ??
-																	(i === 0 ? project.small_title_value : "");
-																return (
-																	<input
-																		key={storageKey}
-																		type="text"
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																		placeholder={`Malý nadpis ${i + 1}`}
-																		value={values[storageKey] ?? presetValue}
-																		onChange={(e) => updateValue(key, "small_title", i, e.target.value)}
-																	/>
-																);
-															})}
+										</div>
+										<p className="mt-2 text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
+											{project?.small_title_value ?? formatSectionHeader(key)}
+										</p>
+										{!project ? (
+											<p className="mt-2 text-xs text-zinc-400">
+												Pre túto sekciu nemáme definovaný preset – dohodneme sa individuálne.
+											</p>
+										) : (
+											<div className="mt-3 space-y-3 text-xs text-zinc-200">
+												{project.small_title > 0 && (
+													<div className="space-y-1">
+														<p className="font-semibold text-zinc-100">Malý nadpis</p>
+														{Array.from({ length: project.small_title }).map((_, i) => {
+															const storageKey = `${key}.small_title.${i}`;
+															const presetValue =
+																project.small_title_defaults?.[i] ??
+																(i === 0 ? project.small_title_value : "");
+															return (
+																<input
+																	key={storageKey}
+																	type="text"
+																	required
+																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																	placeholder={`Malý nadpis ${i + 1}`}
+																	value={values[storageKey] ?? presetValue}
+																	onChange={(e) => updateValue(key, "small_title", i, e.target.value)}
+																/>
+															);
+														})}
+													</div>
+												)}
+												{project.title > 0 && (
+													<div className="space-y-1">
+														<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
+														{Array.from({ length: project.title }).map((_, i) => {
+															const storageKey = `${key}.title.${i}`;
+															const presetValue =
+																project.title_defaults?.[i] ??
+																(i === 0 ? project.title_value : "");
+															return (
+																<input
+																	key={storageKey}
+																	type="text"
+																	required
+																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																	placeholder={`Hlavný nadpis ${i + 1}`}
+																	value={values[storageKey] ?? presetValue}
+																	onChange={(e) => updateValue(key, "title", i, e.target.value)}
+																/>
+															);
+														})}
+													</div>
+												)}
+												{project.text > 0 && (
+													<div className="space-y-1">
+														<p className="font-semibold text-zinc-100">Text</p>
+														{Array.from({ length: project.text }).map((_, i) => {
+															const storageKey = `${key}.text.${i}`;
+															const presetValue = project.text_defaults?.[i] ?? "";
+															return (
+																<textarea
+																	key={storageKey}
+																	rows={3}
+																	required
+																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																	placeholder={`Text ${i + 1}`}
+																	value={values[storageKey] ?? presetValue}
+																	onChange={(e) => updateValue(key, "text", i, e.target.value)}
+																/>
+															);
+														})}
+													</div>
+												)}
+												{project.images > 0 && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-3">
+															<p>
+																Obrázky: {imagesForSection.length}/{project.images} nahraných
+															</p>
+															<button
+																type="button"
+																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"
+																onClick={() => openImageModal(key, project.images)}
+															>
+																Nahrať obrázky
+															</button>
 														</div>
-													)}
-													{project.title > 0 && (
-														<div className="space-y-1">
-															<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
-															{Array.from({ length: project.title }).map((_, i) => {
-																const storageKey = `${key}.title.${i}`;
-																const presetValue =
-																	project.title_defaults?.[i] ??
-																	(i === 0 ? project.title_value : "");
-																return (
-																	<input
-																		key={storageKey}
-																		type="text"
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																		placeholder={`Hlavný nadpis ${i + 1}`}
-																		value={values[storageKey] ?? presetValue}
-																		onChange={(e) => updateValue(key, "title", i, e.target.value)}
-																	/>
-																);
-															})}
-														</div>
-													)}
-													{project.text > 0 && (
-														<div className="space-y-1">
-															<p className="font-semibold text-zinc-100">Text</p>
-															{Array.from({ length: project.text }).map((_, i) => {
-																const storageKey = `${key}.text.${i}`;
-																const presetValue = project.text_defaults?.[i] ?? "";
-																return (
-																	<textarea
-																		key={storageKey}
-																		rows={3}
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																		placeholder={`Text ${i + 1}`}
-																		value={values[storageKey] ?? presetValue}
-																		onChange={(e) => updateValue(key, "text", i, e.target.value)}
-																	/>
-																);
-															})}
-														</div>
-													)}
-													{project.images > 0 && (
-														<div className="space-y-2">
-															<div className="flex items-center justify-between gap-3">
-																<p>
-																	Obrázky: {imagesForSection.length}/{project.images} nahraných
+														{imagesForSection.length > 0 && (
+															<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																{imagesForSection.map((file, idx) => (
+																	<li key={`${key}-img-${idx}`} className="truncate">
+																		{file.name}
+																	</li>
+																))}
+															</ul>
+														)}
+													</div>
+												)}
+												{project.default > 0 && (
+													<div className="space-y-2">
+														{defaultProject ? (
+															<>
+																<p className="font-semibold text-zinc-100">
+																	Predvolené položky
+																	<span className="ml-2 text-[0.7rem] font-normal text-zinc-400">
+																		{currentDefaultCount}/{maxDefaultItems}
+																	</span>
 																</p>
-																<button
-																	type="button"
-																	className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"
-																	onClick={() => openImageModal(key, project.images)}
-																>
-																	Nahrať obrázky
-																</button>
-															</div>
-															{imagesForSection.length > 0 && (
-																<ul className="space-y-1 text-[0.7rem] text-zinc-300">
-																	{imagesForSection.map((file, idx) => (
-																		<li key={`${key}-img-${idx}`} className="truncate">
-																			{file.name}
-																		</li>
-																	))}
-																</ul>
-															)}
-														</div>
-													)}
-													{project.default > 0 && (
-														<div className="space-y-2">
-															{defaultProject ? (
-																<>
-																	<p className="font-semibold text-zinc-100">
-																		Predvolené položky
-																		<span className="ml-2 text-[0.7rem] font-normal text-zinc-400">
-																			{currentDefaultCount}/{maxDefaultItems}
-																		</span>
-																	</p>
-																	{defaultItemIds.map((itemId, visualIndex) => {
-																		const baseKey = `${key}.default.${itemId}`;
-																		const itemImageKey = `${baseKey}.images`;
-																		const itemImages = imagesBySection[itemImageKey] ?? [];
-																		return (
-																			<div
-																				key={baseKey}
-																				className="space-y-2 rounded-lg border border-white/10 bg-black/40 px-3 py-3"
-																			>
-																				<div className="flex items-center justify-between gap-3">
-																					<p className="text-[0.7rem] font-medium text-zinc-400">
-																						Položka {visualIndex + 1}
+																{defaultItemIds.map((itemId, visualIndex) => {
+																	const baseKey = `${key}.default.${itemId}`;
+																	const itemImageKey = `${baseKey}.images`;
+																	const itemImages = imagesBySection[itemImageKey] ?? [];
+																	return (
+																		<div
+																			key={baseKey}
+																			className="space-y-2 rounded-lg border border-white/10 bg-black/40 px-3 py-3"
+																		>
+																			<div className="flex items-center justify-between gap-3">
+																				<p className="text-[0.7rem] font-medium text-zinc-400">
+																					Položka {visualIndex + 1}
+																				</p>
+																				<button
+																					type="button"
+																					className="rounded-md border border-red-500/60 bg-red-500/15 px-2 py-0.5 text-[0.7rem] font-medium text-red-100 hover:bg-red-500/25"
+																					onClick={() => removeDefaultItem(key, itemId)}
+																				>
+																					Odstrániť
+																				</button>
+																			</div>
+																			{defaultProject.small_title > 0 && (
+																				<div className="space-y-1">
+																					<p className="font-semibold text-zinc-100">
+																						Malý nadpis
 																					</p>
-																					<button
-																						type="button"
-																						className="rounded-md border border-red-500/60 bg-red-500/15 px-2 py-0.5 text-[0.7rem] font-medium text-red-100 hover:bg-red-500/25"
-																						onClick={() => removeDefaultItem(key, itemId)}
-																					>
-																						Odstrániť
-																					</button>
+																					{Array.from({ length: defaultProject.small_title }).map((_, j) => {
+																						const storageKey = `${baseKey}.small_title.${j}`;
+																						const presetValue =
+																							j === 0 ? defaultProject.small_title_value : "";
+																						return (
+																							<input
+																								key={storageKey}
+																								type="text"
+																								required
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								placeholder={`Malý nadpis ${j + 1}`}
+																								value={values[storageKey] ?? presetValue}
+																								onChange={(e) =>
+																									updateValue(`${key}.default.${itemId}`, "small_title", j, e.target.value)
+																								}
+																							/>
+																						);
+																					})}
 																				</div>
-																				{defaultProject.small_title > 0 && (
-																					<div className="space-y-1">
-																						<p className="font-semibold text-zinc-100">
-																							Malý nadpis
-																						</p>
-																						{Array.from({ length: defaultProject.small_title }).map((_, j) => {
-																							const storageKey = `${baseKey}.small_title.${j}`;
-																							const presetValue =
-																								j === 0 ? defaultProject.small_title_value : "";
-																							return (
-																								<input
-																									key={storageKey}
-																									type="text"
-																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																									placeholder={`Malý nadpis ${j + 1}`}
-																										value={values[storageKey] ?? presetValue}
-																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemId}`, "small_title", j, e.target.value)
-																									}
-																								/>
-																							);
-																						})}
-																					</div>
-																				)}
-																				{defaultProject.title > 0 && (
-																					<div className="space-y-1">
-																						<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
-																						{Array.from({ length: defaultProject.title }).map((_, j) => {
-																							const storageKey = `${baseKey}.title.${j}`;
-																							const presetValue = j === 0 ? defaultProject.title_value : "";
-																							return (
-																								<input
-																									key={storageKey}
-																									type="text"
-																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																									placeholder={`Hlavný nadpis ${j + 1}`}
-																										value={values[storageKey] ?? presetValue}
-																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemId}`, "title", j, e.target.value)
-																									}
-																								/>
-																							);
-																						})}
-																					</div>
-																				)}
-																				{defaultProject.text > 0 && (
-																					<div className="space-y-1">
-																						<p className="font-semibold text-zinc-100">Text</p>
-																						{Array.from({ length: defaultProject.text }).map((_, j) => {
-																							const storageKey = `${baseKey}.text.${j}`;
-																							const presetValue = "";
-																							return (
-																								<textarea
-																									key={storageKey}
-																									rows={3}
-																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																									placeholder={`Text ${j + 1}`}
-																										value={values[storageKey] ?? presetValue}
-																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemId}`, "text", j, e.target.value)
-																									}
-																								/>
-																							);
-																						})}
-																					</div>
+																			)}
+																			{defaultProject.title > 0 && (
+																				<div className="space-y-1">
+																					<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
+																					{Array.from({ length: defaultProject.title }).map((_, j) => {
+																						const storageKey = `${baseKey}.title.${j}`;
+																						const presetValue = j === 0 ? defaultProject.title_value : "";
+																						return (
+																							<input
+																								key={storageKey}
+																								type="text"
+																								required
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								placeholder={`Hlavný nadpis ${j + 1}`}
+																								value={values[storageKey] ?? presetValue}
+																								onChange={(e) =>
+																									updateValue(`${key}.default.${itemId}`, "title", j, e.target.value)
+																								}
+																							/>
+																						);
+																					})}
+																				</div>
+																			)}
+																			{defaultProject.text > 0 && (
+																				<div className="space-y-1">
+																					<p className="font-semibold text-zinc-100">Text</p>
+																					{Array.from({ length: defaultProject.text }).map((_, j) => {
+																						const storageKey = `${baseKey}.text.${j}`;
+																						const presetValue = "";
+																						return (
+																							<textarea
+																								key={storageKey}
+																								rows={3}
+																								required
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								placeholder={`Text ${j + 1}`}
+																								value={values[storageKey] ?? presetValue}
+																								onChange={(e) =>
+																									updateValue(`${key}.default.${itemId}`, "text", j, e.target.value)
+																								}
+																							/>
+																						);
+																					})}
+																				</div>
 																			)}
 																			{defaultProject.images > 0 && (
 																				<div className="space-y-1">
@@ -444,43 +759,55 @@ export default function UploadPage() {
 																						</button>
 																					</div>
 																					{itemImages.length > 0 && (
-																									<ul className="space-y-1 text-[0.7rem] text-zinc-300">
-																										{itemImages.map((file, idx) => (
-																											<li key={`${itemImageKey}-img-${idx}`} className="truncate">
-																												{file.name}
-																											</li>
-																									))}
-																								</ul>
-																						)}
+																							<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																								{itemImages.map((file, idx) => (
+																									<li key={`${itemImageKey}-img-${idx}`} className="truncate">
+																										{file.name}
+																									</li>
+																								))}
+																						</ul>
+																					)}
 																				</div>
 																			)}
-																		</div>
-																	);
-																})}
-																<button
-																	type="button"
-																	className="mt-1 inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/15 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/25 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
-																	onClick={() => addDefaultItem(key, maxDefaultItems)}
-																	disabled={currentDefaultCount >= maxDefaultItems}
-																>
-																	Pridať položku
-																	<span className="ml-2 text-[0.7rem] text-zinc-300">
-																		{currentDefaultCount}/{maxDefaultItems}
-																	</span>
-																</button>
+																	</div>
+																);
+															})}
+															<button
+																type="button"
+																className="mt-1 inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/15 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/25 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
+																onClick={() => addDefaultItem(key, maxDefaultItems)}
+																disabled={currentDefaultCount >= maxDefaultItems}
+															>
+																Pridať položku
+																<span className="ml-2 text-[0.7rem] text-zinc-300">
+																	{currentDefaultCount}/{maxDefaultItems}
+																</span>
+															</button>
 															</>
 														) : (
-																<p>
-																	Predvolené prvky: {project.default}
-																</p>
-															)}
-														</div>
-													)}
-												</div>
-											)}
+															<p>
+																Predvolené prvky: {project.default}
+															</p>
+														)}
+													</div>
+												)}
+											</div>
+										)}
+										{sectionError && (
+											<p className="mt-4 text-xs text-red-300">{sectionError}</p>
+										)}
+										<div className="mt-4 flex justify-end">
+											<button
+													type="button"
+													className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-4 py-1.5 text-[0.8rem] font-semibold text-purple-50 hover:bg-purple-500/40"
+												onClick={handleNextSection}
+											>
+												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Dalej"}
+											</button>
 										</div>
-									);
-								})}
+									</div>
+								);
+							})()}
 						</div>
 					)}
 				</div>
