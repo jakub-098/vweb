@@ -3,6 +3,37 @@ import type { ResultSetHeader } from "mysql2";
 import pool from "@/lib/db";
 import { uploadFileToSpace } from "@/lib/storage";
 
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const orderId = Number(url.searchParams.get("orderId"));
+
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: "orderId is required" },
+        { status: 400 }
+      );
+    }
+
+    const [rows] = await pool.query<any[]>(
+      "SELECT * FROM section_gallery WHERE order_id = ? ORDER BY id DESC LIMIT 1",
+      [orderId]
+    );
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json({ success: true, found: false });
+    }
+
+    return NextResponse.json({ success: true, found: true, section: rows[0] });
+  } catch (error) {
+    console.error("Error loading section_gallery", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to load section" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();

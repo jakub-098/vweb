@@ -28,6 +28,11 @@ export async function POST(request: Request) {
 		const mailOption: "potrebujem" | "mam" =
 			body.mailOption ?? "potrebujem";
 
+		const mailLocalPart: string | null =
+			mailOption === "potrebujem" && typeof body.mailLocalPart === "string" && body.mailLocalPart.trim().length > 0
+				? body.mailLocalPart.trim()
+				: null;
+
 		const sectionAbout: boolean = !!body.sectionAbout;
 		const sectionCards: boolean = !!body.sectionCards;
 		const sectionFaq: boolean = !!body.sectionFaq;
@@ -76,8 +81,9 @@ export async function POST(request: Request) {
 				domain_request,
 				hosting_option,
 				mail_option,
+				mail_local_part,
 				user_email
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
 				sectionAbout ? 1 : 0,
 				sectionCards ? 1 : 0,
@@ -93,6 +99,7 @@ export async function POST(request: Request) {
 				domainRequest,
 				hostingOption,
 				mailOption,
+				mailLocalPart,
 				userEmail,
 			]
 		);

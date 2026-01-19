@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Project } from "@/data/preset";
 import { projects } from "@/data/preset";
 
@@ -47,6 +48,7 @@ function findDefaultProjectForSection(sectionKey: string): Project | null {
 }
 
 export default function UploadPage() {
+	const router = useRouter();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [order, setOrder] = useState<Order | null>(null);
@@ -61,6 +63,161 @@ export default function UploadPage() {
 	const [imageModalLimit, setImageModalLimit] = useState(0);
 	const [imageModalError, setImageModalError] = useState<string | null>(null);
 
+	async function loadExistingSections(orderId: number, active: SectionDescriptor[]) {
+		try {
+			const newValues: Record<string, string> = {};
+			const newDefaults: Record<string, number[]> = {};
+
+			for (const { key, project } of active) {
+				if (!project) continue;
+
+				if (key === "section_about") {
+					const res = await fetch(`/api/sections/about?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_about.small_title.0"] = section.small_title ?? "";
+					newValues["section_about.title.0"] = section.title ?? "";
+					newValues["section_about.text.0"] = section.text ?? "";
+				}
+
+				if (key === "section_cards") {
+					const res = await fetch(`/api/sections/cards?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_cards.small_title.0"] = section.small_title ?? "";
+					newValues["section_cards.title.0"] = section.title ?? "";
+					if (section.items_json) {
+						let items: any[] = [];
+						const raw = section.items_json;
+						if (Array.isArray(raw)) {
+							items = raw;
+						} else if (typeof raw === "string") {
+							try {
+								items = JSON.parse(raw);
+							} catch {
+								items = [];
+							}
+						} else if (raw && typeof raw === "object") {
+							items = Array.isArray((raw as any)) ? (raw as any) : [];
+						}
+						const ids: number[] = [];
+						items.forEach((item, index) => {
+							const id = index;
+							ids.push(id);
+							const baseKey = `section_cards.default.${id}`;
+							newValues[`${baseKey}.small_title.0`] = item.small_title ?? "";
+							newValues[`${baseKey}.title.0`] = item.title ?? "";
+							newValues[`${baseKey}.text.0`] = item.text ?? "";
+						});
+						newDefaults["section_cards"] = ids;
+					}
+				}
+
+				if (key === "section_offer") {
+					const res = await fetch(`/api/sections/offer?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_offer.small_title.0"] = section.small_title ?? "";
+					newValues["section_offer.title.0"] = section.title ?? "";
+					newValues["section_offer.text.0"] = section.text ?? "";
+					if (section.items_json) {
+						let items: any[] = [];
+						const raw = section.items_json;
+						if (Array.isArray(raw)) {
+							items = raw;
+						} else if (typeof raw === "string") {
+							try {
+								items = JSON.parse(raw);
+							} catch {
+								items = [];
+							}
+						} else if (raw && typeof raw === "object") {
+							items = Array.isArray((raw as any)) ? (raw as any) : [];
+						}
+						const ids: number[] = [];
+						items.forEach((item, index) => {
+							const id = index;
+							ids.push(id);
+							const baseKey = `section_offer.default.${id}`;
+							newValues[`${baseKey}.title.0`] = item.title ?? "";
+							newValues[`${baseKey}.text.0`] = item.text ?? "";
+						});
+						newDefaults["section_offer"] = ids;
+					}
+				}
+
+				if (key === "section_gallery") {
+					const res = await fetch(`/api/sections/gallery?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_gallery.small_title.0"] = section.small_title ?? "";
+					newValues["section_gallery.title.0"] = section.title ?? "";
+				}
+
+				if (key === "section_faq") {
+					const res = await fetch(`/api/sections/faq?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_faq.small_title.0"] = section.small_title ?? "";
+					newValues["section_faq.title.0"] = section.title ?? "";
+					if (section.items_json) {
+						let items: any[] = [];
+						const raw = section.items_json;
+						if (Array.isArray(raw)) {
+							items = raw;
+						} else if (typeof raw === "string") {
+							try {
+								items = JSON.parse(raw);
+							} catch {
+								items = [];
+							}
+						} else if (raw && typeof raw === "object") {
+							items = Array.isArray((raw as any)) ? (raw as any) : [];
+						}
+						const ids: number[] = [];
+						items.forEach((item, index) => {
+							const id = index;
+							ids.push(id);
+							const baseKey = `section_faq.default.${id}`;
+							newValues[`${baseKey}.title.0`] = item.question ?? "";
+							newValues[`${baseKey}.text.0`] = item.answer ?? "";
+						});
+						newDefaults["section_faq"] = ids;
+					}
+				}
+				if (key === "section_contact_form") {
+					const res = await fetch(`/api/sections/contact-form?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_contact_form.small_title.0"] = section.small_title ?? "";
+					newValues["section_contact_form.title.0"] = section.title ?? "";
+					newValues["section_contact_form.text.0"] = section.text ?? "";
+				}
+			}
+
+			if (Object.keys(newValues).length > 0) {
+				setValues((prev) => ({ ...prev, ...newValues }));
+			}
+			if (Object.keys(newDefaults).length > 0) {
+				setDefaultItemsBySection((prev) => ({ ...prev, ...newDefaults }));
+			}
+		} catch (err) {
+			console.error("Failed to load existing section content", err);
+		}
+	}
+
 	useEffect(() => {
 		async function loadOrder() {
 			try {
@@ -74,8 +231,7 @@ export default function UploadPage() {
 				}
 
 				if (!email) {
-					setError("Nenašli sme e-mail konfigurácie. Vráť sa prosím do konfigurátora.");
-					setLoading(false);
+					router.replace("/config");
 					return;
 				}
 
@@ -86,15 +242,13 @@ export default function UploadPage() {
 				});
 
 				if (!res.ok) {
-					setError("Nepodarilo sa načítať konfiguráciu. Skús to neskôr.");
-					setLoading(false);
+					router.replace("/config");
 					return;
 				}
 
 				const data = await res.json();
 				if (!data.success || !data.found || !data.order) {
-					setError("Pre tento e-mail sme nenašli konfiguráciu.");
-					setLoading(false);
+					router.replace("/config");
 					return;
 				}
 
@@ -133,6 +287,8 @@ export default function UploadPage() {
 				setDefaultItemsBySection(initialDefaults);
 				setSections(active);
 				setCurrentSectionIndex(0);
+
+				await loadExistingSections(fetchedOrder.id, active);
 				setLoading(false);
 			} catch (err) {
 				console.error("Failed to load order for upload page", err);
@@ -266,28 +422,11 @@ export default function UploadPage() {
 						checkField(storageKey, presetValue);
 					}
 				}
-
-				// Obrázky pre predvolené položky sú povinné (okrem galérie)
-				if (defaultProject.images > 0 && sectionKey !== "section_gallery") {
-					const itemImageKey = `${baseKey}.images`;
-					const itemImages = imagesBySection[itemImageKey] ?? [];
-					if (itemImages.length === 0) {
-						errors.push(itemImageKey);
-					}
-				}
-			}
-		}
-
-		// Obrázky pre hlavnú sekciu sú povinné (okrem galérie)
-		if (project.images > 0 && sectionKey !== "section_gallery") {
-			const sectionImages = imagesBySection[sectionKey] ?? [];
-			if (sectionImages.length === 0) {
-				errors.push(`${sectionKey}.images`);
 			}
 		}
 
 		if (errors.length > 0) {
-			setSectionError("obrazok je povinny");
+			setSectionError("Vyplň prosím všetky textové polia v tejto sekcii.");
 			return false;
 		}
 
@@ -309,6 +448,8 @@ export default function UploadPage() {
 				if (!ok) return;
 				if (currentSectionIndex < sections.length - 1) {
 					setCurrentSectionIndex((prev) => prev + 1);
+				} else {
+					router.push("/summary");
 				}
 			})
 			.catch((err) => {

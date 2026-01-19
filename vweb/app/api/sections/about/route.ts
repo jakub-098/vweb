@@ -3,6 +3,37 @@ import type { ResultSetHeader } from "mysql2";
 import pool from "@/lib/db";
 import { uploadFileToSpace } from "@/lib/storage";
 
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const orderId = Number(url.searchParams.get("orderId"));
+
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: "orderId is required" },
+        { status: 400 }
+      );
+    }
+
+    const [rows] = await pool.query<any[]>(
+      "SELECT * FROM section_about WHERE order_id = ? ORDER BY id DESC LIMIT 1",
+      [orderId]
+    );
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json({ success: true, found: false });
+    }
+
+    return NextResponse.json({ success: true, found: true, section: rows[0] });
+  } catch (error) {
+    console.error("Error loading section_about", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to load section" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -23,20 +54,22 @@ export async function POST(request: Request) {
 
     const imageFile = formData.get("image") as File | null;
 
-    if (!smallTitle || !title || !text || !imageFile) {
+    if (!smallTitle || !title || !text) {
       return NextResponse.json(
         { success: false, error: "Missing required content" },
         { status: 400 }
       );
     }
 
-    await uploadFileToSpace({
-      file: imageFile,
-      email: userEmailRaw,
-      sectionKey: "section_about",
-    });
-
-    const imageName = imageFile.name;
+    let imageName = "";
+    if (imageFile) {
+      await uploadFileToSpace({
+        file: imageFile,
+        email: userEmailRaw,
+        sectionKey: "section_about",
+      });
+      imageName = imageFile.name;
+    }
 
     const [result] = await pool.execute<ResultSetHeader>(
       `INSERT INTO section_about (

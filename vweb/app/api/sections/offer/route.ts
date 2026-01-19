@@ -3,6 +3,37 @@ import type { ResultSetHeader } from "mysql2";
 import pool from "@/lib/db";
 import { uploadFileToSpace } from "@/lib/storage";
 
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const orderId = Number(url.searchParams.get("orderId"));
+
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: "orderId is required" },
+        { status: 400 }
+      );
+    }
+
+    const [rows] = await pool.query<any[]>(
+      "SELECT * FROM section_offer WHERE order_id = ? ORDER BY id DESC LIMIT 1",
+      [orderId]
+    );
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json({ success: true, found: false });
+    }
+
+    return NextResponse.json({ success: true, found: true, section: rows[0] });
+  } catch (error) {
+    console.error("Error loading section_offer", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to load section" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -37,21 +68,20 @@ export async function POST(request: Request) {
         const textValue = typeof item.text === "string" ? item.text.trim() : "";
 
         const file = formData.get(`itemImage_${index}`) as File | null;
-
-        if (!file) {
-          throw new Error("Missing image for offer item");
+        let imageName = "";
+        if (file) {
+          await uploadFileToSpace({
+            file,
+            email: userEmailRaw,
+            sectionKey: "section_offer",
+          });
+          imageName = file.name;
         }
-
-        await uploadFileToSpace({
-          file,
-          email: userEmailRaw,
-          sectionKey: "section_offer",
-        });
 
         return {
           title: titleValue,
           text: textValue,
-          image_name: file.name,
+          image_name: imageName,
         };
       })
     );

@@ -39,6 +39,8 @@ export default function ConfigPage() {
 	const [existingConfigEmail, setExistingConfigEmail] = useState("");
 	const [existingConfigEmailError, setExistingConfigEmailError] = useState<string | null>(null);
 	const [existingConfigChecking, setExistingConfigChecking] = useState(false);
+	const [loadedFromOrder, setLoadedFromOrder] = useState(false);
+	const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
 
 	useEffect(() => {
 		async function loadPrices() {
@@ -66,13 +68,83 @@ export default function ConfigPage() {
 		loadPrices();
 	}, []);
 
+	useEffect(() => {
+		async function loadExistingOrder() {
+			if (loadedFromOrder) return;
+			let email: string | null = null;
+			let isEditMode = false;
+			if (typeof window !== "undefined") {
+				try {
+					const url = new URL(window.location.href);
+					isEditMode = url.searchParams.get("edit") === "1";
+					if (isEditMode) {
+						email = window.localStorage.getItem("vwebOrderEmail");
+					}
+				} catch {
+					isEditMode = false;
+					email = null;
+				}
+			}
+
+			if (!isEditMode || !email) return;
+
+			try {
+				const res = await fetch("/api/orders/find-by-email", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email }),
+				});
+
+				if (!res.ok) return;
+
+				const data = await res.json();
+				if (!data.success || !data.found || !data.order) return;
+
+				const order = data.order as any;
+				setExistingOrderId(order.id);
+				setTheme(order.theme === "svetla" ? "svetla" : "tmava");
+				setAccent(typeof order.accent_color === "string" ? order.accent_color : "purple");
+				setMail(order.mail_option === "mam" ? "mam" : "potrebujem");
+				setMailLocalPart(order.mail_local_part ?? "");
+				setSectionAbout(Boolean(order.section_about));
+				setSectionCards(Boolean(order.section_cards));
+				setSectionFaq(Boolean(order.section_faq));
+				setSectionGallery(Boolean(order.section_gallery));
+				setSectionOffer(Boolean(order.section_offer));
+				setSectionContactForm(Boolean(order.section_contact_form));
+				setCustomFont(order.custom_font ?? "");
+				setDomainOption(order.domain_option === "own" ? "own" : "request");
+				setDomainOwn(order.domain_own ?? "");
+				setDomainRequest(order.domain_request ?? "");
+				setLoadedFromOrder(true);
+			} catch (e) {
+				console.error("Failed to preload existing order into config", e);
+			}
+		}
+
+		loadExistingOrder();
+	}, [loadedFromOrder]);
+
 	async function checkDomainAvailability() {
 		if (domainOption !== "request") return;
 
-		const domain = domainRequest.trim();
-		if (!domain) {
+		const rawDomain = domainRequest;
+		const trimmedDomain = rawDomain.trim();
+		const cleanedDomain = trimmedDomain
+			.replace(/^https?:\/\//i, "")
+			.replace(/^www\./i, "");
+		const lowerRaw = trimmedDomain.toLowerCase();
+		const domainPattern = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+		if (!cleanedDomain) {
 			setDomainAvailable(null);
 			setDomainCheckMessage("Prosím zadaj doménu, ktorú chceš skontrolovať.");
+			return;
+		}
+
+		if (!domainPattern.test(cleanedDomain) || /^ww[^.]/.test(lowerRaw)) {
+			setDomainAvailable(null);
+			setDomainCheckMessage("Doména nie je v správnom tvare.");
 			return;
 		}
 
@@ -85,7 +157,7 @@ export default function ConfigPage() {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ domain }),
+				body: JSON.stringify({ domain: cleanedDomain }),
 			});
 
 			if (!response.ok) {
@@ -126,11 +198,15 @@ export default function ConfigPage() {
 		const cleanedDomain = trimmedDomain
 			.replace(/^https?:\/\//i, "")
 			.replace(/^www\./i, "");
-		const domainPattern = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		const domainPattern = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+		const lowerRaw = trimmedDomain.toLowerCase();
 
 		if (!domainOption || cleanedDomain.length === 0) {
 			missing.push("doménu");
 		} else if (!domainPattern.test(cleanedDomain)) {
+			setMissingFieldsError("Doména nie je v správnom tvare.");
+			return false;
+		} else if (/^ww[^.]/.test(lowerRaw)) {
 			setMissingFieldsError("Doména nie je v správnom tvare.");
 			return false;
 		} else if (domainOption === "request" && domainAvailable === false) {
@@ -183,28 +259,34 @@ export default function ConfigPage() {
 		}
 
 		try {
-			const response = await fetch("/api/orders", {
+			const payload = {
+				theme,
+				accentColor: accent,
+				accentCustom,
+				mailOption: mail,
+				mailLocalPart: mail === "potrebujem" ? mailLocalPart.trim() : null,
+				sectionAbout,
+				sectionCards,
+				sectionFaq,
+				sectionGallery,
+				sectionOffer,
+				sectionContactForm,
+				customFont,
+				domainOption,
+				domainOwn,
+				domainRequest,
+				userEmail: email,
+			};
+
+			const url = existingOrderId ? "/api/orders/update" : "/api/orders";
+			const body = existingOrderId ? { ...payload, orderId: existingOrderId } : payload;
+
+			const response = await fetch(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({
-					theme,
-					accentColor: accent,
-					accentCustom,
-					mailOption: mail,
-					sectionAbout,
-					sectionCards,
-					sectionFaq,
-					sectionGallery,
-					sectionOffer,
-					sectionContactForm,
-					customFont,
-					domainOption,
-					domainOwn,
-					domainRequest,
-					userEmail: email,
-				}),
+				body: JSON.stringify(body),
 			});
 
 			if (!response.ok) {
@@ -295,7 +377,11 @@ export default function ConfigPage() {
 
 		// ak chceš novú doménu, over jej dostupnosť pri Pokračovať
 		if (domainOption === "request") {
-			const domain = domainRequest.trim();
+			const trimmedDomain = domainRequest.trim();
+			const cleanedDomain = trimmedDomain
+				.replace(/^https?:\/\//i, "")
+				.replace(/^www\./i, "");
+			const domain = cleanedDomain;
 			try {
 				setDomainChecking(true);
 				setDomainCheckMessage(null);
@@ -335,7 +421,27 @@ export default function ConfigPage() {
 			}
 		}
 
-		// ak sme prešli všetky kontroly, otvoríme email popup
+		// ak už máme email v localStorage (napr. po "už mám konfiguráciu"),
+		// nepýtame si ho znova a rovno odošleme konfiguráciu
+		let storedEmail: string | null = null;
+		let isEditMode = false;
+		if (typeof window !== "undefined") {
+			try {
+				const url = new URL(window.location.href);
+				isEditMode = url.searchParams.get("edit") === "1";
+				storedEmail = window.localStorage.getItem("vwebOrderEmail");
+			} catch {
+				storedEmail = null;
+				isEditMode = false;
+			}
+		}
+
+		if (isEditMode && storedEmail && storedEmail.trim().length > 0) {
+			await handleSubmit(storedEmail.trim());
+			return;
+		}
+
+		// ak sme prešli všetky kontroly a nemáme (alebo nechceme použiť) email, otvoríme email popup
 		setEmailDialogOpen(true);
 	}
 
@@ -380,7 +486,7 @@ export default function ConfigPage() {
 			}
 			setExistingDialogOpen(false);
 			setExistingConfigEmail("");
-			router.push("/upload");
+			router.push("/summary");
 		} catch (error) {
 			console.error("Error looking up existing configuration", error);
 			setExistingConfigEmailError("Pri overovaní nastala chyba. Skús to neskôr.");
@@ -758,9 +864,12 @@ export default function ConfigPage() {
 												/>
 												<span>Chcem takúto:</span>
 												<div className="flex flex-1 items-center gap-2">
+													<span className="rounded-lg border border-white/15 bg-black/60 px-3 py-2 text-sm text-zinc-400">
+														www.
+													</span>
 													<input
 														type="text"
-														placeholder="napr. www.vasweb.sk"
+														placeholder="napr. vasweb.sk"
 														className="flex-1 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 														value={domainRequest}
 														onChange={(e) => {
@@ -782,9 +891,9 @@ export default function ConfigPage() {
 											{domainOption === "request" && domainCheckMessage && (
 												<div
 													className={`mt-2 rounded-lg border px-3 py-2 text-xs ${
-														domainAvailable === false
-															? "border-red-500/50 bg-red-500/15 text-red-200"
-															: "border-emerald-500/50 bg-emerald-500/15 text-emerald-200"
+														domainAvailable === true
+															? "border-emerald-500/50 bg-emerald-500/15 text-emerald-200"
+															: "border-red-500/50 bg-red-500/15 text-red-200"
 													}`}
 												>
 													{domainCheckMessage}
