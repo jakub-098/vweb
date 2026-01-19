@@ -49,6 +49,7 @@ export default function UploadPage() {
 	const [sections, setSections] = useState<SectionDescriptor[]>([]);
 	const [values, setValues] = useState<Record<string, string>>({});
 	const [imagesBySection, setImagesBySection] = useState<Record<string, File[]>>({});
+	const [defaultItemsBySection, setDefaultItemsBySection] = useState<Record<string, number[]>>({});
 	const [imageModalOpen, setImageModalOpen] = useState(false);
 	const [imageModalSectionKey, setImageModalSectionKey] = useState<string | null>(null);
 	const [imageModalLimit, setImageModalLimit] = useState(0);
@@ -117,6 +118,13 @@ export default function UploadPage() {
 					});
 				}
 
+				const initialDefaults: Record<string, number[]> = {};
+				for (const { key, project } of active) {
+					if (project && project.default > 0) {
+						initialDefaults[key] = [0];
+					}
+				}
+				setDefaultItemsBySection(initialDefaults);
 				setSections(active);
 				setLoading(false);
 			} catch (err) {
@@ -172,6 +180,24 @@ export default function UploadPage() {
 		});
 	}
 
+	function addDefaultItem(sectionKey: string, maxItems: number) {
+		if (maxItems <= 0) return;
+		setDefaultItemsBySection((prev) => {
+			const current = prev[sectionKey] ?? [];
+			if (current.length >= maxItems) return prev;
+			const nextId = current.length === 0 ? 0 : Math.max(...current) + 1;
+			return { ...prev, [sectionKey]: [...current, nextId] };
+		});
+	}
+
+	function removeDefaultItem(sectionKey: string, itemId: number) {
+		setDefaultItemsBySection((prev) => {
+			const current = prev[sectionKey] ?? [];
+			const next = current.filter((id) => id !== itemId);
+			return { ...prev, [sectionKey]: next };
+		});
+	}
+
 	return (
 		<section className="min-h-screen w-full bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-16 text-zinc-50 sm:px-8">
 			<div className="mx-auto w-full max-w-4xl">
@@ -199,6 +225,9 @@ export default function UploadPage() {
 								{sections.map(({ key, project }) => {
 									const imagesForSection = imagesBySection[key] ?? [];
 									const defaultProject = findDefaultProjectForSection(key);
+									const defaultItemIds = defaultItemsBySection[key] ?? [];
+									const maxDefaultItems = project?.default ?? 0;
+									const currentDefaultCount = defaultItemIds.length;
 									return (
 										<div
 											key={key}
@@ -304,20 +333,32 @@ export default function UploadPage() {
 															{defaultProject ? (
 																<>
 																	<p className="font-semibold text-zinc-100">
-																		Predvolené položky ({project.default}×)
+																		Predvolené položky
+																		<span className="ml-2 text-[0.7rem] font-normal text-zinc-400">
+																			{currentDefaultCount}/{maxDefaultItems}
+																		</span>
 																	</p>
-																	{Array.from({ length: project.default }).map((_, itemIndex) => {
-																		const baseKey = `${key}.default.${itemIndex}`;
+																	{defaultItemIds.map((itemId, visualIndex) => {
+																		const baseKey = `${key}.default.${itemId}`;
 																		const itemImageKey = `${baseKey}.images`;
 																		const itemImages = imagesBySection[itemImageKey] ?? [];
 																		return (
 																			<div
 																				key={baseKey}
-																				className="rounded-lg border border-white/10 bg-black/40 px-3 py-3 space-y-2"
+																				className="space-y-2 rounded-lg border border-white/10 bg-black/40 px-3 py-3"
 																			>
-																				<p className="text-[0.7rem] font-medium text-zinc-400">
-																					Položka {itemIndex + 1}
-																				</p>
+																				<div className="flex items-center justify-between gap-3">
+																					<p className="text-[0.7rem] font-medium text-zinc-400">
+																						Položka {visualIndex + 1}
+																					</p>
+																					<button
+																						type="button"
+																						className="rounded-md border border-red-500/60 bg-red-500/15 px-2 py-0.5 text-[0.7rem] font-medium text-red-100 hover:bg-red-500/25"
+																						onClick={() => removeDefaultItem(key, itemId)}
+																					>
+																						Odstrániť
+																					</button>
+																				</div>
 																				{defaultProject.small_title > 0 && (
 																					<div className="space-y-1">
 																						<p className="font-semibold text-zinc-100">
@@ -333,9 +374,9 @@ export default function UploadPage() {
 																									type="text"
 																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																									placeholder={`Malý nadpis ${j + 1}`}
-																									value={values[storageKey] ?? presetValue}
+																										value={values[storageKey] ?? presetValue}
 																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemIndex}`, "small_title", j, e.target.value)
+																										updateValue(`${key}.default.${itemId}`, "small_title", j, e.target.value)
 																									}
 																								/>
 																							);
@@ -354,9 +395,9 @@ export default function UploadPage() {
 																									type="text"
 																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																									placeholder={`Hlavný nadpis ${j + 1}`}
-																									value={values[storageKey] ?? presetValue}
+																										value={values[storageKey] ?? presetValue}
 																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemIndex}`, "title", j, e.target.value)
+																										updateValue(`${key}.default.${itemId}`, "title", j, e.target.value)
 																									}
 																								/>
 																							);
@@ -375,9 +416,9 @@ export default function UploadPage() {
 																									rows={3}
 																									className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																									placeholder={`Text ${j + 1}`}
-																									value={values[storageKey] ?? presetValue}
+																										value={values[storageKey] ?? presetValue}
 																									onChange={(e) =>
-																										updateValue(`${key}.default.${itemIndex}`, "text", j, e.target.value)
+																										updateValue(`${key}.default.${itemId}`, "text", j, e.target.value)
 																									}
 																								/>
 																							);
@@ -399,19 +440,30 @@ export default function UploadPage() {
 																						</button>
 																					</div>
 																					{itemImages.length > 0 && (
-																							<ul className="space-y-1 text-[0.7rem] text-zinc-300">
-																								{itemImages.map((file, idx) => (
-																									<li key={`${itemImageKey}-img-${idx}`} className="truncate">
-																										{file.name}
-																									</li>
-																								))}
-																						</ul>
-																					)}
+																									<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																										{itemImages.map((file, idx) => (
+																											<li key={`${itemImageKey}-img-${idx}`} className="truncate">
+																												{file.name}
+																											</li>
+																									))}
+																								</ul>
+																						)}
 																				</div>
-																				)}
+																			)}
 																		</div>
 																	);
 																})}
+																<button
+																	type="button"
+																	className="mt-1 inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/15 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/25 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
+																	onClick={() => addDefaultItem(key, maxDefaultItems)}
+																	disabled={currentDefaultCount >= maxDefaultItems}
+																>
+																	Pridať položku
+																	<span className="ml-2 text-[0.7rem] text-zinc-300">
+																		{currentDefaultCount}/{maxDefaultItems}
+																	</span>
+																</button>
 															</>
 														) : (
 																<p>

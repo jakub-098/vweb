@@ -40,7 +40,7 @@ export const projects: Project[] = [
     title_value: "Naše Služby",
     text: 1,
     images: 0,
-    default: 3,
+    default: 10,
   },
   {
     name: "section_gallery",
@@ -60,7 +60,7 @@ export const projects: Project[] = [
     title_value: "Často kladené otázky",
     text: 0,
     images: 0,
-    default: 3,
+    default: 20,
   },
   {
     name: "section_contatct_form",
