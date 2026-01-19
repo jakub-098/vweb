@@ -19,6 +19,10 @@ type SectionDescriptor = {
 	project: Project | null;
 };
 
+function formatSectionHeader(sectionKey: string): string {
+	return sectionKey.replace(/_/g, " ");
+}
+
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
 	if (value == null) return false;
 	if (typeof value === "boolean") return value;
@@ -233,8 +237,8 @@ export default function UploadPage() {
 											key={key}
 											className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
 										>
-											<p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-purple-200">
-												{key}
+											<p className="text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
+												{project?.small_title_value ?? formatSectionHeader(key)}
 											</p>
 											{!project ? (
 												<p className="mt-2 text-xs text-zinc-400">
