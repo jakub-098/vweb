@@ -16,6 +16,7 @@ type Order = {
   delivery_speed?: string | null;
   domain_option?: string | null;
   mail_option?: string | null;
+  status?: number | null;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -180,9 +181,19 @@ export default function SummaryPage() {
               <button
                 type="button"
                 disabled={!termsAccepted}
-                onClick={() => {
-                  if (!termsAccepted) return;
-                  // TODO: Integrácia platby
+                onClick={async () => {
+                  if (!termsAccepted || !order) return;
+                  try {
+                    await fetch("/api/orders/status", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ orderId: order.id, status: 0 }),
+                    });
+                  } catch (err) {
+                    console.error("Failed to update status to submitted", err);
+                  }
+                  // tu môže ísť redirect na platobnú bránu / ďakovnú stránku
+                  // router.push("/dakujeme");
                 }}
                 className="inline-flex items-center rounded-full bg-purple-500/90 px-6 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(168,85,247,0.6)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
               >
