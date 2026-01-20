@@ -73,6 +73,13 @@ export async function POST(request: Request) {
         ? body.userEmail.trim()
         : null;
 
+    const totalPrice: number | null =
+      typeof body.totalPrice === "number" && !Number.isNaN(body.totalPrice)
+        ? body.totalPrice
+        : null;
+
+    const deliverySpeed: "24h" | "48h" = body.deliverySpeed === "24h" ? "24h" : "48h";
+
     const [result] = await pool.execute<ResultSetHeader>(
       `UPDATE orders SET
         section_about = ?,
@@ -90,7 +97,9 @@ export async function POST(request: Request) {
         hosting_option = ?,
         mail_option = ?,
         mail_local_part = ?,
-        user_email = ?
+        user_email = ?,
+        total_price = ?,
+        delivery_speed = ?
       WHERE id = ?`,
       [
         sectionAbout ? 1 : 0,
@@ -109,6 +118,8 @@ export async function POST(request: Request) {
         mailOption,
         mailLocalPart,
         userEmail,
+        totalPrice,
+        deliverySpeed,
         orderId,
       ]
     );

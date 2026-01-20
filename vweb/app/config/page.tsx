@@ -116,6 +116,7 @@ export default function ConfigPage() {
 				setDomainOption(order.domain_option === "own" ? "own" : "request");
 				setDomainOwn(order.domain_own ?? "");
 				setDomainRequest(order.domain_request ?? "");
+				setFastDelivery(order.delivery_speed === "24h" ? "yes" : "no");
 				setLoadedFromOrder(true);
 			} catch (e) {
 				console.error("Failed to preload existing order into config", e);
@@ -276,6 +277,8 @@ export default function ConfigPage() {
 				domainOwn,
 				domainRequest,
 				userEmail: email,
+				totalPrice: estimatedPrice,
+				deliverySpeed: fastDelivery === "yes" ? "24h" : "48h",
 			};
 
 			const url = existingOrderId ? "/api/orders/update" : "/api/orders";
