@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const endpoint = process.env.ENDPOINT;
 const accessKeyId = process.env.KEY;
@@ -56,4 +56,32 @@ export async function uploadFileToSpace(opts: {
   );
 
   return { key };
+}
+
+export async function deleteFileFromSpace(opts: {
+  email: string;
+  sectionKey: string;
+  fileName: string;
+}): Promise<void> {
+  if (!bucket || !endpoint || !accessKeyId || !secretAccessKey) {
+    console.error("DigitalOcean Spaces is not configured; skipping delete");
+    return;
+  }
+
+  const emailPart = sanitizePathPart(opts.email);
+  const sectionPart = sanitizePathPart(opts.sectionKey);
+  const filePart = sanitizePathPart(opts.fileName);
+
+  const key = `${emailPart}/${sectionPart}/${filePart}`;
+
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+  } catch (error) {
+    console.error("Failed to delete file from Space", { key, error });
+  }
 }

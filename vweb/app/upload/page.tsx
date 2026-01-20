@@ -55,6 +55,7 @@ export default function UploadPage() {
 	const [sections, setSections] = useState<SectionDescriptor[]>([]);
 	const [values, setValues] = useState<Record<string, string>>({});
 	const [imagesBySection, setImagesBySection] = useState<Record<string, File[]>>({});
+	const [existingImagesBySection, setExistingImagesBySection] = useState<Record<string, string[]>>({});
 	const [defaultItemsBySection, setDefaultItemsBySection] = useState<Record<string, number[]>>({});
 	const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 	const [sectionError, setSectionError] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export default function UploadPage() {
 		try {
 			const newValues: Record<string, string> = {};
 			const newDefaults: Record<string, number[]> = {};
+			const newExistingImages: Record<string, string[]> = {};
 
 			for (const { key, project } of active) {
 				if (!project) continue;
@@ -80,6 +82,9 @@ export default function UploadPage() {
 					newValues["section_about.small_title.0"] = section.small_title ?? "";
 					newValues["section_about.title.0"] = section.title ?? "";
 					newValues["section_about.text.0"] = section.text ?? "";
+					if (section.image_name && typeof section.image_name === "string" && section.image_name.trim().length > 0) {
+						newExistingImages["section_about"] = [section.image_name];
+					}
 				}
 
 				if (key === "section_cards") {
@@ -147,6 +152,10 @@ export default function UploadPage() {
 							const baseKey = `section_offer.default.${id}`;
 							newValues[`${baseKey}.title.0`] = item.title ?? "";
 							newValues[`${baseKey}.text.0`] = item.text ?? "";
+							if (item.image_name && typeof item.image_name === "string" && item.image_name.trim().length > 0) {
+								const itemImageKey = `${baseKey}.images`;
+								newExistingImages[itemImageKey] = [item.image_name];
+							}
 						});
 						newDefaults["section_offer"] = ids;
 					}
@@ -160,6 +169,25 @@ export default function UploadPage() {
 					const section = data.section as any;
 					newValues["section_gallery.small_title.0"] = section.small_title ?? "";
 					newValues["section_gallery.title.0"] = section.title ?? "";
+					if (section.images_json) {
+						let names: string[] = [];
+						const raw = section.images_json;
+						if (Array.isArray(raw)) {
+							names = raw.filter((n: any) => typeof n === "string");
+						} else if (typeof raw === "string") {
+							try {
+								const parsed = JSON.parse(raw);
+								if (Array.isArray(parsed)) {
+									names = parsed.filter((n: any) => typeof n === "string");
+								}
+							} catch {
+								names = [];
+							}
+						}
+						if (names.length > 0) {
+							newExistingImages["section_gallery"] = names;
+						}
+					}
 				}
 
 				if (key === "section_faq") {
@@ -212,6 +240,9 @@ export default function UploadPage() {
 			}
 			if (Object.keys(newDefaults).length > 0) {
 				setDefaultItemsBySection((prev) => ({ ...prev, ...newDefaults }));
+			}
+			if (Object.keys(newExistingImages).length > 0) {
+				setExistingImagesBySection((prev) => ({ ...prev, ...newExistingImages }));
 			}
 		} catch (err) {
 			console.error("Failed to load existing section content", err);
@@ -338,6 +369,58 @@ export default function UploadPage() {
 				);
 			} else {
 				setImageModalError(null);
+			}
+			return next;
+		});
+	}
+
+	async function deleteExistingImage(sectionKey: string, fileName: string, itemIndex?: number) {
+		if (!order) return;
+		const orderId = order.id;
+		try {
+			let url = "";
+			if (sectionKey === "section_about") {
+				url = `/api/sections/about?orderId=${orderId}`;
+			} else if (sectionKey === "section_gallery") {
+				url = `/api/sections/gallery?orderId=${orderId}&imageName=${encodeURIComponent(fileName)}`;
+			} else if (sectionKey.startsWith("section_offer.default.")) {
+				const match = sectionKey.match(/section_offer\.default\.(\d+)\.images/);
+				const idx = match ? Number(match[1]) : Number.isFinite(itemIndex ?? NaN) ? (itemIndex as number) : NaN;
+				if (!Number.isNaN(idx)) {
+					url = `/api/sections/offer?orderId=${orderId}&itemIndex=${idx}`;
+				}
+			}
+
+			if (!url) return;
+			const res = await fetch(url, { method: "DELETE" });
+			if (!res.ok) return;
+
+			setExistingImagesBySection((prev) => {
+				const current = prev[sectionKey] ?? [];
+				const nextArray = current.filter((name) => name !== fileName);
+				const next: Record<string, string[]> = { ...prev };
+				if (nextArray.length > 0) {
+					next[sectionKey] = nextArray;
+				} else {
+					delete next[sectionKey];
+				}
+				return next;
+			});
+		} catch (err) {
+			console.error("Failed to delete existing image", err);
+		}
+	}
+
+	function removeImageFromSection(sectionKey: string, index: number) {
+		setImagesBySection((prev) => {
+			const current = prev[sectionKey] ?? [];
+			if (!current.length || index < 0 || index >= current.length) return prev;
+			const nextArray = current.filter((_, i) => i !== index);
+			const next: Record<string, File[]> = { ...prev };
+			if (nextArray.length > 0) {
+				next[sectionKey] = nextArray;
+			} else {
+				delete next[sectionKey];
 			}
 			return next;
 		});
@@ -663,7 +746,8 @@ export default function UploadPage() {
 						<div className="space-y-5">
 							{sections[currentSectionIndex] && (() => {
 								const { key, project } = sections[currentSectionIndex]!;
-								const imagesForSection = imagesBySection[key] ?? [];
+										const imagesForSection = imagesBySection[key] ?? [];
+										const existingSectionImages = existingImagesBySection[key] ?? [];
 								const defaultProject = findDefaultProjectForSection(key);
 								const defaultItemIds = defaultItemsBySection[key] ?? [];
 								const maxDefaultItems = project?.default ?? 0;
@@ -763,9 +847,9 @@ export default function UploadPage() {
 												{project.images > 0 && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-3">
-															<p>
-																Obrázky: {imagesForSection.length}/{project.images} nahraných
-															</p>
+														<p>
+															Obrázky: {existingSectionImages.length + imagesForSection.length}/{project.images} nahraných
+														</p>
 															<button
 																type="button"
 																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"
@@ -774,11 +858,36 @@ export default function UploadPage() {
 																Nahrať obrázky
 															</button>
 														</div>
-														{imagesForSection.length > 0 && (
+														{(existingSectionImages.length > 0 || imagesForSection.length > 0) && (
 															<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																{existingSectionImages.map((name, idx) => (
+																	<li
+																		key={`${key}-existing-img-${idx}`}
+																		className="flex items-center justify-between gap-2 truncate text-zinc-300"
+																	>
+																		<span className="truncate">{name}</span>
+																		<button
+																			type="button"
+																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																			onClick={() => deleteExistingImage(key, name)}
+																		>
+																			×
+																		</button>
+																	</li>
+																))}
 																{imagesForSection.map((file, idx) => (
-																	<li key={`${key}-img-${idx}`} className="truncate">
-																		{file.name}
+																	<li
+																		key={`${key}-img-${idx}`}
+																		className="flex items-center justify-between gap-2 truncate"
+																	>
+																		<span className="truncate">{file.name}</span>
+																		<button
+																			type="button"
+																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																			onClick={() => removeImageFromSection(key, idx)}
+																		>
+																			×
+																		</button>
 																	</li>
 																))}
 															</ul>
@@ -799,6 +908,7 @@ export default function UploadPage() {
 																	const baseKey = `${key}.default.${itemId}`;
 																	const itemImageKey = `${baseKey}.images`;
 																	const itemImages = imagesBySection[itemImageKey] ?? [];
+																	const existingItemImages = existingImagesBySection[itemImageKey] ?? [];
 																	return (
 																		<div
 																			key={baseKey}
@@ -889,7 +999,7 @@ export default function UploadPage() {
 																				<div className="space-y-1">
 																					<div className="flex items-center justify-between gap-3">
 																						<p>
-																							Obrázky položky: {itemImages.length}/{defaultProject.images} nahraných
+																							Obrázky položky: {existingItemImages.length + itemImages.length}/{defaultProject.images} nahraných
 																						</p>
 																						<button
 																							type="button"
@@ -899,13 +1009,38 @@ export default function UploadPage() {
 																							Nahrať obrázky
 																						</button>
 																					</div>
-																					{itemImages.length > 0 && (
-																							<ul className="space-y-1 text-[0.7rem] text-zinc-300">
-																								{itemImages.map((file, idx) => (
-																									<li key={`${itemImageKey}-img-${idx}`} className="truncate">
-																										{file.name}
-																									</li>
-																								))}
+																					{(existingItemImages.length > 0 || itemImages.length > 0) && (
+																						<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																							{existingItemImages.map((name, idx) => (
+																								<li
+																									key={`${itemImageKey}-existing-img-${idx}`}
+																									className="flex items-center justify-between gap-2 truncate text-zinc-300"
+																								>
+																									<span className="truncate">{name}</span>
+																									<button
+																										type="button"
+																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																										onClick={() => deleteExistingImage(itemImageKey, name, visualIndex)}
+																									>
+																										×
+																									</button>
+																								</li>
+																							))}
+																							{itemImages.map((file, idx) => (
+																								<li
+																									key={`${itemImageKey}-img-${idx}`}
+																									className="flex items-center justify-between gap-2 truncate"
+																								>
+																									<span className="truncate">{file.name}</span>
+																									<button
+																										type="button"
+																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																										onClick={() => removeImageFromSection(itemImageKey, idx)}
+																									>
+																										×
+																									</button>
+																								</li>
+																							))}
 																						</ul>
 																					)}
 																				</div>
@@ -1004,8 +1139,18 @@ export default function UploadPage() {
 								</p>
 								<ul className="max-h-32 space-y-1 overflow-y-auto rounded-md bg-black/40 px-2 py-2">
 									{imagesBySection[imageModalSectionKey]!.map((file, idx) => (
-										<li key={`modal-${imageModalSectionKey}-${idx}`} className="truncate">
-											{file.name}
+										<li
+											key={`modal-${imageModalSectionKey}-${idx}`}
+											className="flex items-center justify-between gap-2 truncate"
+										>
+											<span className="truncate">{file.name}</span>
+											<button
+												type="button"
+												className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+												onClick={() => removeImageFromSection(imageModalSectionKey, idx)}
+											>
+												×
+											</button>
 										</li>
 									))}
 								</ul>
