@@ -70,9 +70,7 @@ export async function deleteFileFromSpace(opts: {
 
   const emailPart = sanitizePathPart(opts.email);
   const sectionPart = sanitizePathPart(opts.sectionKey);
-  const filePart = sanitizePathPart(opts.fileName);
-
-  const key = `${emailPart}/${sectionPart}/${filePart}`;
+  const key = `${emailPart}/${sectionPart}/${opts.fileName}`;
 
   try {
     await s3.send(
