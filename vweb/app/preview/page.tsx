@@ -148,7 +148,7 @@ export default function PreviewPage() {
       </section>
 
       {/* CARDS / BENEFITS */}
-      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0">
+      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0 mt-100">
         <div className="relative mx-auto w-full">
           <div className="mb-8 text-center">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-sky-500">
@@ -186,7 +186,7 @@ export default function PreviewPage() {
       </section>
 
       {/* SERVICES / SEKCIA AKO E-SHOPY */}
-      <section id="services" className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0">
+      <section id="services" className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0 mt-100">
         <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl">
           <div className="relative px-8 py-10 sm:px-12 sm:py-14">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-sky-500">
@@ -220,7 +220,7 @@ export default function PreviewPage() {
       </section>
 
       {/* GALLERY */}
-      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0">
+      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0 mt-100">
         <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/80 px-8 py-10 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-12 sm:py-14">
           <div className="mb-8 flex items-baseline justify-between gap-4">
             <div>
@@ -260,7 +260,7 @@ export default function PreviewPage() {
       </section>
 
       {/* FAQ */}
-      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0">
+      <section className="w-full max-w-6xl px-4 pt-16 sm:w-4/5 lg:w-2/3 sm:px-0 mt-100">
         <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/80 px-8 py-10 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-12 sm:py-14">
           <div className="mb-8">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-sky-500">
@@ -292,7 +292,7 @@ export default function PreviewPage() {
       {/* CONTACT - light preview-styled form */}
       <section
         id="kontakt"
-        className="w-full max-w-6xl px-4 pt-16 pb-10 sm:w-4/5 lg:w-2/3 sm:px-0"
+        className="w-full max-w-6xl px-4 pt-16 pb-10 sm:w-4/5 lg:w-2/3 sm:px-0 mt-100 mb-100"
       >
         <div className="relative overflow-hidden rounded-2xl border border-white/70 bg-white/80 px-8 py-10 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-12 sm:py-14">
           <div className="mb-8 text-left">
