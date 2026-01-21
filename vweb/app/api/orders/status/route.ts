@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { sendNewOrderNotification, type OrderForEmail } from "@/lib/mail";
+import {
+  sendNewOrderNotification,
+  sendPaymentReceivedEmail,
+  sendOrderCompletedEmail,
+  type OrderForEmail,
+} from "@/lib/mail";
 
 export async function POST(request: Request) {
   try {
@@ -52,25 +57,48 @@ export async function POST(request: Request) {
 
     const previousStatus = current.status;
 
+    // Do not move status backwards or reapply the same status
+    if (previousStatus !== null && typeof previousStatus !== "undefined" && status <= previousStatus) {
+      return NextResponse.json({ success: true });
+    }
+
     await pool.query("UPDATE orders SET status = ? WHERE id = ?", [status, orderId]);
+
+    const orderForEmail: OrderForEmail = {
+      id: current.id,
+      user_email: current.user_email,
+      total_price: current.total_price,
+      delivery_speed: current.delivery_speed,
+      domain_option: current.domain_option,
+      domain_own: current.domain_own,
+      domain_request: current.domain_request,
+      created_at: current.created_at ?? null,
+    };
 
     // Send notification when order is submitted: status NULL -> 0
     if ((previousStatus === null || typeof previousStatus === "undefined") && status === 0) {
-      const orderForEmail: OrderForEmail = {
-        id: current.id,
-        user_email: current.user_email,
-        total_price: current.total_price,
-        delivery_speed: current.delivery_speed,
-        domain_option: current.domain_option,
-        domain_own: current.domain_own,
-        domain_request: current.domain_request,
-        created_at: current.created_at ?? null,
-      };
-
       try {
         await sendNewOrderNotification(orderForEmail);
       } catch (emailError) {
         console.error("Failed to send new order notification", emailError);
+      }
+    }
+
+    // Send payment received email when status changes to 1
+    if (previousStatus !== 1 && status === 1) {
+      try {
+        await sendPaymentReceivedEmail(orderForEmail);
+      } catch (emailError) {
+        console.error("Failed to send payment received email", emailError);
+      }
+    }
+
+    // Send order completed email when status changes to 2
+    if (previousStatus !== 2 && status === 2) {
+      try {
+        await sendOrderCompletedEmail(orderForEmail);
+      } catch (emailError) {
+        console.error("Failed to send order completed email", emailError);
       }
     }
 

@@ -137,6 +137,9 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
     return "Neznáma";
   })();
 
+  const isPaid = order?.status === 1 || order?.status === 2;
+  const isCompleted = order?.status === 2;
+
   return (
     <section className="min-h-screen w-full bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-16 text-zinc-50 sm:px-8">
       <div className="mx-auto w-full max-w-5xl">
@@ -166,10 +169,11 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
                   <p><span className="text-zinc-400">Dodanie:</span> {order.delivery_speed}</p>
                 )}
               </div>
-              <div className="flex items-start justify-end">
+              <div className="flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={async () => {
+                    if (isPaid) return;
                     try {
                       await fetch("/api/orders/status", {
                         method: "POST",
@@ -181,9 +185,39 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
                       console.error("Failed to set status to paid", err);
                     }
                   }}
-                  className="inline-flex items-center rounded-full bg-emerald-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-[0_0_18px_rgba(16,185,129,0.7)] transition hover:bg-emerald-400"
+                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold shadow-[0_0_18px_rgba(16,185,129,0.7)] transition
+                    ${
+                      isPaid
+                        ? "bg-emerald-500/90 text-white hover:bg-emerald-400"
+                        : "bg-emerald-500/20 text-emerald-100/80 hover:bg-emerald-500/40"
+                    }`}
                 >
                   Zaplatené
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (isCompleted) return;
+                    try {
+                      await fetch("/api/orders/status", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderId: order.id, status: 2 }),
+                      });
+                      setOrder((prev) => (prev ? { ...prev, status: 2 } : prev));
+                    } catch (err) {
+                      console.error("Failed to set status to completed", err);
+                    }
+                  }}
+                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold shadow-[0_0_18px_rgba(249,115,22,0.7)] transition
+                    ${
+                      isCompleted
+                        ? "bg-orange-500/90 text-white hover:bg-orange-400"
+                        : "bg-orange-500/20 text-orange-100/80 hover:bg-orange-500/40"
+                    }`}
+                >
+                  Dokončené
                 </button>
               </div>
             </div>

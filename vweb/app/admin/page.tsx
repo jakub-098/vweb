@@ -153,16 +153,21 @@ export default function AdminPage() {
 
           {!loading && !error && orders.length > 0 && (
             <div className="mt-6 space-y-3">
-              {orders.map((order) => (
-                <Link
-                  key={order.id}
-                  href={`/admin/${order.id}`}
-                  className={`flex items-center justify-between rounded-lg border px-4 py-3 text-xs text-zinc-100 transition hover:border-purple-100 hover:bg-black/80 ${
-                    order.status === 1
-                      ? "border-emerald-400/70 bg-emerald-950/40"
-                      : "border-purple-300/30 bg-black/60"
-                  }`}
-                >
+              {orders.map((order) => {
+    const isPaid = order.status === 1;
+    const isCompleted = order.status === 2;
+    const statusClasses = isCompleted
+      ? "border-orange-400/70 bg-orange-950/40"
+      : isPaid
+        ? "border-emerald-400/70 bg-emerald-950/40"
+        : "border-purple-300/30 bg-black/60";
+
+    return (
+      <Link
+        key={order.id}
+        href={`/admin/${order.id}`}
+        className={`flex items-center justify-between rounded-lg border px-4 py-3 text-xs text-zinc-100 transition hover:border-purple-100 hover:bg-black/80 ${statusClasses}`}
+      >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-semibold text-sm">Objednávka #{order.id}</span>
                     <span className="text-zinc-400">{order.user_email ?? "(bez e-mailu)"}</span>
@@ -175,7 +180,8 @@ export default function AdminPage() {
                     )}
                   </div>
                 </Link>
-              ))}
+	      );
+	    })}
             </div>
           )}
         </div>

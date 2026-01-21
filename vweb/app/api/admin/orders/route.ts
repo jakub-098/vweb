@@ -15,8 +15,8 @@ export async function GET(request: Request) {
     }
 
     const [rows] = await pool.query<any[]>(
-      "SELECT id, user_email, total_price, status, delivery_speed FROM orders WHERE status IS NOT NULL ORDER BY id DESC"
-    );
+    "SELECT id, user_email, total_price, status, delivery_speed FROM orders WHERE status IS NOT NULL ORDER BY created_at DESC, id DESC"
+  );
 
     return NextResponse.json({ success: true, orders: rows });
   } catch (error) {
