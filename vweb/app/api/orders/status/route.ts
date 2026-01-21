@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { sendNewOrderNotification, type OrderForEmail } from "@/lib/mail";
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +25,54 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch current status and order data before updating
+    const [rows] = await pool.query<any[]>(
+      "SELECT id, status, user_email, total_price, delivery_speed, domain_option, domain_own, domain_request, created_at FROM orders WHERE id = ?",
+      [orderId]
+    );
+
+    if (!rows || rows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    const current = rows[0] as {
+      id: number;
+      status: number | null;
+      user_email: string | null;
+      total_price: number | null;
+      delivery_speed: "24h" | "48h" | null;
+      domain_option: "own" | "request" | null;
+      domain_own: string | null;
+      domain_request: string | null;
+      created_at?: string | null;
+    };
+
+    const previousStatus = current.status;
+
     await pool.query("UPDATE orders SET status = ? WHERE id = ?", [status, orderId]);
+
+    // Send notification when order is submitted: status NULL -> 0
+    if ((previousStatus === null || typeof previousStatus === "undefined") && status === 0) {
+      const orderForEmail: OrderForEmail = {
+        id: current.id,
+        user_email: current.user_email,
+        total_price: current.total_price,
+        delivery_speed: current.delivery_speed,
+        domain_option: current.domain_option,
+        domain_own: current.domain_own,
+        domain_request: current.domain_request,
+        created_at: current.created_at ?? null,
+      };
+
+      try {
+        await sendNewOrderNotification(orderForEmail);
+      } catch (emailError) {
+        console.error("Failed to send new order notification", emailError);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
