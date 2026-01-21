@@ -363,6 +363,31 @@ export default function ConfigPage() {
 			return;
 		}
 
+		// Ak už existuje objednávka s týmto emailom a statusom 0,
+		// len zobrazíme informáciu o registrácii a čakaní na úhradu
+		// a novú objednávku nevytvárame.
+		try {
+			const res = await fetch("/api/orders/find-by-email", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email: trimmed }),
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				if (data.success && data.found && data.order && typeof data.order.status === "number") {
+					if (data.order.status === 0) {
+						alert("Vasu objednávku registrujeme a čakáme na jej úhradu, Podrobné informácie boli zaslané na Váš email.");
+						setEmailDialogOpen(false);
+						setUserEmail("");
+						return;
+					}
+				}
+			}
+		} catch (err) {
+			console.error("Failed to check existing order by email", err);
+		}
+
 		if (typeof window !== "undefined") {
 			try {
 				window.localStorage.setItem("vwebOrderEmail", trimmed);
@@ -480,6 +505,32 @@ export default function ConfigPage() {
 			const data = await res.json();
 			if (!data.success || !data.found) {
 				setExistingConfigEmailError("Pre tento e-mail sme nenašli konfiguráciu.");
+				return;
+			}
+
+			// Ak má objednávka status 0 (odoslaná, čaká sa na platbu),
+			// zobrazíme informačný alert a nepresmerujeme na zhrnutie.
+			const orderStatus = (data.order && typeof data.order.status === "number") ? data.order.status : null;
+			if (orderStatus === 0) {
+				alert("Vasu objednávku registrujeme a čakáme na jej úhradu, Podrobné informácie boli zaslané na Váš email.");
+				setExistingDialogOpen(false);
+				setExistingConfigEmail("");
+				return;
+			}
+
+			// Ak má objednávka status 1 alebo 2, používateľ dostane prázdnu konfiguráciu
+			// a jeho ďalšie odoslanie sa zaregistruje ako nová objednávka.
+			if (orderStatus === 1 || orderStatus === 2) {
+				if (typeof window !== "undefined") {
+					try {
+						window.localStorage.setItem("vwebOrderEmail", trimmed);
+					} catch {}
+				}
+				setExistingDialogOpen(false);
+				setExistingConfigEmail("");
+				if (typeof window !== "undefined") {
+					window.location.href = "/config";
+				}
 				return;
 			}
 			if (typeof window !== "undefined") {

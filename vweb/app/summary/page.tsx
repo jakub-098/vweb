@@ -31,6 +31,7 @@ export default function SummaryPage() {
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [thankYouOpen, setThankYouOpen] = useState(false);
 
   useEffect(() => {
     async function loadOrder() {
@@ -192,8 +193,9 @@ export default function SummaryPage() {
                   } catch (err) {
                     console.error("Failed to update status to submitted", err);
                   }
-                  // tu môže ísť redirect na platobnú bránu / ďakovnú stránku
-                  // router.push("/dakujeme");
+
+            // po odoslaní objednávky zobrazíme ďakovné okno
+            setThankYouOpen(true);
                 }}
                 className="inline-flex items-center rounded-full bg-purple-500/90 px-6 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(168,85,247,0.6)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
               >
@@ -203,6 +205,34 @@ export default function SummaryPage() {
           </>
         )}
       </div>
-    </section>
+
+    {thankYouOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+        <div className="w-full max-w-md rounded-2xl border border-purple-300/40 bg-black/90 px-6 py-7 text-sm text-zinc-100 shadow-[0_20px_60px_rgba(0,0,0,0.95)]">
+          <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+            Ďakujeme za vašu objednávku
+          </h2>
+          <p className="mt-3 text-xs text-zinc-300 sm:text-sm">
+            Vašu objednávku sme prijali a informácie k úhrade sme
+            odoslali na váš e-mail. Skontrolujte si prosím schránku,
+            prípadne aj priečinok nevyžiadanej pošty.
+          </p>
+          <div className="mt-5 flex justify-end gap-2 text-xs sm:text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setThankYouOpen(false);
+                router.push("/");
+              }}
+              className="rounded-full bg-purple-500/90 px-5 py-2 text-[0.75rem] font-semibold text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] transition hover:bg-purple-400"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+  </section>
   );
 }
