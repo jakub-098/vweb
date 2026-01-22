@@ -7,12 +7,14 @@ import { projects } from "@/data/preset";
 
 type Order = {
 	id: number;
+	section_header?: number | boolean;
 	section_about?: number | boolean;
 	section_cards?: number | boolean;
 	section_faq?: number | boolean;
 	section_gallery?: number | boolean;
 	section_offer?: number | boolean;
 	section_contact_form?: number | boolean;
+	section_footer?: number | boolean;
 };
 
 type SectionDescriptor = {
@@ -72,6 +74,24 @@ export default function UploadPage() {
 
 			for (const { key, project } of active) {
 				if (!project) continue;
+
+				if (key === "section_header") {
+					const res = await fetch(`/api/sections/header?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_header.small_title.0"] = section.small_title ?? "";
+					newValues["section_header.title.0"] = section.title ?? "";
+					newValues["section_header.text.0"] = section.text ?? "";
+					if (
+						section.image_name &&
+						typeof section.image_name === "string" &&
+						section.image_name.trim().length > 0
+					) {
+						newExistingImages["section_header"] = [section.image_name];
+					}
+				}
 
 				if (key === "section_about") {
 					const res = await fetch(`/api/sections/about?orderId=${orderId}`);
@@ -233,6 +253,17 @@ export default function UploadPage() {
 					newValues["section_contact_form.title.0"] = section.title ?? "";
 					newValues["section_contact_form.text.0"] = section.text ?? "";
 				}
+
+				if (key === "section_footer") {
+					const res = await fetch(`/api/sections/footer?orderId=${orderId}`);
+					if (!res.ok) continue;
+					const data = await res.json();
+					if (!data.success || !data.found || !data.section) continue;
+					const section = data.section as any;
+					newValues["section_footer.title.0"] = section.title ?? "";
+					newValues["section_footer.text.0"] = section.text ?? "";
+					newValues["section_footer.mobile.0"] = section.mobile ?? "";
+				}
 			}
 
 			if (Object.keys(newValues).length > 0) {
@@ -309,17 +340,29 @@ export default function UploadPage() {
 					});
 				}
 
+				// Header a footer sú povinné sekcie – pridáme ich na začiatok a koniec.
+				const activeWithFixed: SectionDescriptor[] = [];
+				const headerProject = findProjectForSection("section_header");
+				if (headerProject) {
+					activeWithFixed.push({ key: "section_header", project: headerProject });
+				}
+				activeWithFixed.push(...active);
+				const footerProject = findProjectForSection("section_footer");
+				if (footerProject) {
+					activeWithFixed.push({ key: "section_footer", project: footerProject });
+				}
+
 				const initialDefaults: Record<string, number[]> = {};
-				for (const { key, project } of active) {
+				for (const { key, project } of activeWithFixed) {
 					if (project && project.default > 0) {
 						initialDefaults[key] = [0];
 					}
 				}
 				setDefaultItemsBySection(initialDefaults);
-				setSections(active);
+				setSections(activeWithFixed);
 				setCurrentSectionIndex(0);
 
-				await loadExistingSections(fetchedOrder.id, active);
+				await loadExistingSections(fetchedOrder.id, activeWithFixed);
 				setLoading(false);
 			} catch (err) {
 				console.error("Failed to load order for upload page", err);
@@ -513,6 +556,15 @@ export default function UploadPage() {
 			return false;
 		}
 
+		// Špeciálna validácia pre footer – vyžadujeme aj telefónne číslo.
+		if (sectionKey === "section_footer") {
+			const mobileRaw = (values["section_footer.mobile.0"] ?? "").trim();
+			if (!mobileRaw) {
+				setSectionError("Vyplň prosím telefónne číslo v päte webu.");
+				return false;
+			}
+		}
+
 		setSectionError(null);
 		return true;
 	}
@@ -565,6 +617,32 @@ export default function UploadPage() {
 		if (!project) return true; // nothing to send
 
 		try {
+			if (sectionKey === "section_header") {
+				const smallTitle = (
+					values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? ""
+				).trim();
+				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
+				const text = (values[`${sectionKey}.text.0`] ?? "").trim();
+				const imageFiles = imagesBySection[sectionKey] ?? [];
+				const imageFile = imageFiles[0];
+
+				const formData = new FormData();
+				formData.append("orderId", String(orderId));
+				formData.append("userEmail", String(userEmail));
+				formData.append("smallTitle", smallTitle);
+				formData.append("title", title);
+				formData.append("text", text);
+				if (imageFile) {
+					formData.append("image", imageFile);
+				}
+
+				const res = await fetch("/api/sections/header", {
+					method: "POST",
+					body: formData,
+				});
+				return res.ok;
+			}
+
 			if (sectionKey === "section_about") {
 				const smallTitle = (values[`${sectionKey}.small_title.0`] ?? project.small_title_value ?? "").trim();
 				const title = (values[`${sectionKey}.title.0`] ?? project.title_value ?? "").trim();
@@ -713,6 +791,19 @@ export default function UploadPage() {
 				return res.ok;
 			}
 
+			if (sectionKey === "section_footer") {
+				const title = (values["section_footer.title.0"] ?? project.title_value ?? "").trim();
+				const text = (values["section_footer.text.0"] ?? "").trim();
+				const mobile = (values["section_footer.mobile.0"] ?? "").trim();
+
+				const res = await fetch("/api/sections/footer", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ orderId, userEmail, title, text, mobile }),
+				});
+				return res.ok;
+			}
+
 			return true;
 		} catch (e) {
 			console.error("Error sending section", e);
@@ -844,6 +935,19 @@ export default function UploadPage() {
 														})}
 													</div>
 												)}
+													{key === "section_footer" && (
+														<div className="space-y-1">
+															<p className="font-semibold text-zinc-100">Telefón</p>
+															<input
+																type="text"
+																required
+																className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																placeholder="Napíš telefónne číslo, ktoré zobrazíme v päte"
+																value={values["section_footer.mobile.0"] ?? ""}
+																onChange={(e) => updateValue("section_footer", "mobile", 0, e.target.value)}
+															/>
+														</div>
+													)}
 												{project.images > 0 && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-3">

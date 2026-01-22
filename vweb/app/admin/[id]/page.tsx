@@ -15,6 +15,8 @@ type Order = {
   section_gallery?: number | boolean;
   section_offer?: number | boolean;
   section_contact_form?: number | boolean;
+  // header/footer sú povinné sekcie, takže ich v objednávke nemusíme mať ako flagy,
+  // ale v detaile ich chceme vedieť zobraziť
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -90,6 +92,9 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
           }
         };
 
+        // Header a footer sú povinné sekcie – načítame ich vždy.
+        sectionPromises.push(fetchSection("header", `/api/sections/header?orderId=${orderId}`));
+
         if (isTruthyFlag(loadedOrder.section_about)) {
           sectionPromises.push(fetchSection("about", `/api/sections/about?orderId=${orderId}`));
         }
@@ -108,6 +113,8 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
         if (isTruthyFlag(loadedOrder.section_contact_form)) {
           sectionPromises.push(fetchSection("contactForm", `/api/sections/contact-form?orderId=${orderId}`));
         }
+
+        sectionPromises.push(fetchSection("footer", `/api/sections/footer?orderId=${orderId}`));
 
         await Promise.all(sectionPromises);
         setSections(newSections);
@@ -223,6 +230,15 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
             </div>
 
             <div className="mt-8 space-y-6">
+              {sections.header && (
+                <div className="rounded-2xl border border-purple-300/25 bg-black/60 px-5 py-4">
+                  <h2 className="text-lg font-semibold text-zinc-50">Sekcia: Header</h2>
+                  <pre className="mt-3 whitespace-pre-wrap break-words text-xs text-zinc-300">
+                    {JSON.stringify(sections.header, null, 2)}
+                  </pre>
+                </div>
+              )}
+
               {isTruthyFlag(order.section_about) && (
                 <div className="rounded-2xl border border-purple-300/25 bg-black/60 px-5 py-4">
                   <h2 className="text-lg font-semibold text-zinc-50">Sekcia: O projekte</h2>
@@ -273,6 +289,15 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
                   <h2 className="text-lg font-semibold text-zinc-50">Sekcia: Kontaktný formulár</h2>
                   <pre className="mt-3 whitespace-pre-wrap break-words text-xs text-zinc-300">
                     {JSON.stringify(sections.contactForm, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {sections.footer && (
+                <div className="rounded-2xl border border-purple-300/25 bg-black/60 px-5 py-4">
+                  <h2 className="text-lg font-semibold text-zinc-50">Sekcia: Footer</h2>
+                  <pre className="mt-3 whitespace-pre-wrap break-words text-xs text-zinc-300">
+                    {JSON.stringify(sections.footer, null, 2)}
                   </pre>
                 </div>
               )}

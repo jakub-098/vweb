@@ -338,6 +338,152 @@ export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<vo
   });
 }
 
+type ContactPayload = {
+  fromEmail: string;
+  message: string;
+};
+
+export async function sendContactEmails(payload: ContactPayload): Promise<void> {
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    return;
+  }
+
+  const fromEmail = payload.fromEmail.trim();
+  const message = payload.message.trim();
+
+  if (!fromEmail || !message) {
+    return;
+  }
+
+  const clientSubject = "Prijali sme vašu správu";
+  const adminSubject = "Nový dopyt z hlavnej stránky";
+
+  const plainText = [
+    "Prijali sme vašu správu z vweb.sk.",
+    "",
+    "Text správy:",
+    message,
+  ].join("\n");
+
+  const clientHtml = `<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prijali sme vašu správu</title>
+</head>
+<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
+
+          <tr>
+            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td align="left" style="font-size:14px; color:#6b7280;">
+                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
+                      Správa prijatá
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 32px 8px 32px;">
+              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu správu</h1>
+              <p style="margin:0 0 12px 0; font-size:14px; line-height:1.6; color:#4b5563;">
+                Ďakujeme, že ste nás kontaktovali. Čoskoro sa vám ozveme späť.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 32px 24px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
+                <tr>
+                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">
+                    Kópia vašej správy
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;">
+                    <div style="margin:0; padding:8px 10px; font-size:13px; line-height:1.6; color:#111827; background-color:#ffffff; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
+              <p style="margin:16px 0 4px 0;">Tento e-mail je potvrdenie o prijatí vašej správy na <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">vweb.sk</a>.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  // email pre zákazníka
+  await transporter.sendMail({
+    from: `vweb.sk <${smtpUser}>`,
+    to: fromEmail,
+    subject: clientSubject,
+    text: plainText,
+    html: clientHtml,
+  });
+
+  const adminHtml = `<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charSet="UTF-8" />
+  <title>Nový dopyt z vweb.sk</title>
+</head>
+<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif; color:#111827;">
+  <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
+    <tr>
+      <td align="center" style="padding:24px 16px;">
+        <table width="600" cellPadding="0" cellSpacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
+          <tr>
+            <td style="padding:18px 22px; border-bottom:1px solid #e5e7eb;">
+              <p style="margin:0; font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#6b21a8; font-weight:600;">Nový dopyt</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 22px 8px 22px;">
+              <p style="margin:0 0 8px 0; font-size:14px; color:#111827;">Niekto vyplnil kontaktný formulár na hlavnej stránke.</p>
+              <p style="margin:0 0 4px 0; font-size:13px; color:#4b5563;"><strong>E-mail:</strong> ${fromEmail}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 22px 22px 22px;">
+              <p style="margin:0 0 6px 0; font-size:13px; color:#4b5563;">Text správy:</p>
+              <div style="margin:0; padding:10px 12px; font-size:13px; line-height:1.6; color:#111827; background-color:#f9fafb; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  // email pre admina (na SMTP_USER)
+  await transporter.sendMail({
+    from: `vweb.sk <${smtpUser}>`,
+    to: smtpUser,
+    subject: adminSubject,
+    text: `Nový dopyt z hlavnej stránky. E-mail: ${fromEmail}\n\nSpráva:\n${message}`,
+    html: adminHtml,
+  });
+}
+
 export async function sendOrderCompletedEmail(order: OrderForEmail): Promise<void> {
   if (!smtpHost || !smtpUser || !smtpPass) {
     return;

@@ -13,6 +13,16 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    name: "section_header",
+    small_title: 1,
+    small_title_value: "Náhľad",
+    title: 1,
+    title_value: "",
+    text: 1,
+    images: 1,
+    default: 0,
+  },
+  {
     name: "section_about",
     small_title: 1,
     small_title_value: "O projekte",
@@ -98,6 +108,16 @@ export const projects: Project[] = [
     small_title_value: "",
     title: 1,
     title_value: "",
+    text: 1,
+    images: 0,
+    default: 0,
+  },
+  {
+    name: "section_footer",
+    small_title: 0,
+    small_title_value: "Pätička",
+    title: 1,
+    title_value: "Váš názov / meno",
     text: 1,
     images: 0,
     default: 0,

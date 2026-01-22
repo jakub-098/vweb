@@ -1,4 +1,48 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Contact() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    setSuccess(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, message }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        const apiError = data?.error || "Nepodarilo sa odoslať správu. Skús to neskôr.";
+        setError(apiError);
+        return;
+      }
+
+      setSuccess("Správa bola odoslaná. Skontroluj prosím svoj e-mail.");
+      setEmail("");
+      setMessage("");
+    } catch (err) {
+      console.error("Failed to send contact form", err);
+      setError("Pri odosielaní nastala chyba. Skús to prosím znova.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <section
       id="kontakt"
@@ -18,7 +62,7 @@ export default function Contact() {
           </p>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -32,6 +76,8 @@ export default function Contact() {
               required
               className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-zinc-50 outline-none ring-0 transition placeholder:text-zinc-500 focus:border-purple-400 focus:bg-black/60"
               placeholder="vas@email.sk"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
@@ -48,15 +94,25 @@ export default function Contact() {
               rows={4}
               className="w-full resize-none rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-zinc-50 outline-none ring-0 transition placeholder:text-zinc-500 focus:border-purple-400 focus:bg-black/60"
               placeholder="Sem nám napíšte, čo potrebujete..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
             />
           </div>
+
+          {error && (
+            <p className="text-xs text-red-300">{error}</p>
+          )}
+          {success && (
+            <p className="text-xs text-emerald-300">{success}</p>
+          )}
 
           <div className="pt-2">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400"
+              className="inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={submitting}
             >
-              Odoslať
+              {submitting ? "Odosielam..." : "Odoslať"}
             </button>
           </div>
         </form>
