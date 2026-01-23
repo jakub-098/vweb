@@ -163,7 +163,7 @@ export async function sendNewOrderNotification(order: OrderForEmail): Promise<vo
 
           <tr>
             <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk"; style="color:#7c3aed; font-weight:600;">Vveb</a>.</p>
+              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk"; style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
             </td>
           </tr>
 
@@ -318,7 +318,7 @@ export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<vo
 
           <tr>
             <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vveb</a>.</p>
+              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
             </td>
           </tr>
 
@@ -584,7 +584,7 @@ export async function sendOrderCompletedEmail(order: OrderForEmail): Promise<voi
 
           <tr>
             <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vveb</a>.</p>
+              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
             </td>
           </tr>
 

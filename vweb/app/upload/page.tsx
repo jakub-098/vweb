@@ -5,6 +5,16 @@ import { useRouter } from "next/navigation";
 import type { Project } from "@/data/preset";
 import { projects } from "@/data/preset";
 
+const SECTION_PREVIEW_IMAGES: Record<string, string> = {
+    section_header: "/previews/header.png",
+	section_about: "/previews/about.png",
+	section_cards: "/previews/cards.png",
+	section_offer: "/previews/services.png",
+	section_gallery: "/previews/gallery.png",
+	section_faq: "/previews/faq.png",
+	section_contact_form: "/previews/mailer.png",
+};
+
 type Order = {
 	id: number;
 	section_header?: number | boolean;
@@ -843,28 +853,38 @@ export default function UploadPage() {
 								const defaultItemIds = defaultItemsBySection[key] ?? [];
 								const maxDefaultItems = project?.default ?? 0;
 								const currentDefaultCount = defaultItemIds.length;
+								const previewImage = SECTION_PREVIEW_IMAGES[key];
 
 								return (
 									<div
 										key={key}
 										className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
 									>
-										<div className="flex items-center justify-between gap-3">
+										<p className="mt-2 mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
+											{project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}
+										</p>
+										<div className="flex items-center justify-between gap-3 mb-3">
 											<button
-													type="button"
-													className="text-xs font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
-													onClick={handlePrevSection}
-													disabled={currentSectionIndex === 0}
+												type="button"
+												className="text-xs font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
+												onClick={handlePrevSection}
+												disabled={currentSectionIndex === 0}
 											>
 												<span className="mr-1">←</span> Späť
-											</button>
-											<p className="text-xs font-medium text-zinc-400">
-												Sekcia {currentSectionIndex + 1} / {sections.length}
-											</p>
+												</button>
+												<p className="text-xs font-medium text-zinc-400">
+													Sekcia {currentSectionIndex + 1} / {sections.length}
+												</p>
 										</div>
-										<p className="mt-2 text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
-											{project?.small_title_value ?? formatSectionHeader(key)}
-										</p>
+										{previewImage && (
+											<div className="mb-4 overflow-hidden rounded-lg border border-white/10 bg-black/60 w-full">
+												<div
+													className="h-40 w-full bg-cover bg-center sm:h-52 md:h-64"
+													style={{ backgroundImage: `url(${previewImage})` }}
+													aria-label={`Náhľad sekcie ${project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}`}
+												/>
+											</div>
+										)}
 										{!project ? (
 											<p className="mt-2 text-xs text-zinc-400">
 												Pre túto sekciu nemáme definovaný preset – dohodneme sa individuálne.
@@ -885,8 +905,8 @@ export default function UploadPage() {
 																	type="text"
 																	required
 																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																	placeholder={`Malý nadpis ${i + 1}`}
-																	value={values[storageKey] ?? presetValue}
+																	    placeholder={presetValue || `Malý nadpis ${i + 1}`}
+																		    value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "small_title", i, e.target.value)}
 																/>
 															);
@@ -907,8 +927,8 @@ export default function UploadPage() {
 																	type="text"
 																	required
 																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																	placeholder={`Hlavný nadpis ${i + 1}`}
-																	value={values[storageKey] ?? presetValue}
+																	placeholder={presetValue || `Hlavný nadpis ${i + 1}`}
+																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "title", i, e.target.value)}
 																/>
 															);
@@ -927,8 +947,8 @@ export default function UploadPage() {
 																	rows={3}
 																	required
 																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																	placeholder={`Text ${i + 1}`}
-																	value={values[storageKey] ?? presetValue}
+																	placeholder={presetValue || `Text ${i + 1}`}
+																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "text", i, e.target.value)}
 																/>
 															);
@@ -1045,8 +1065,8 @@ export default function UploadPage() {
 																								type="text"
 																								required
 																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																								placeholder={`Malý nadpis ${j + 1}`}
-																								value={values[storageKey] ?? presetValue}
+																								placeholder={presetValue || `Malý nadpis ${j + 1}`}
+																									value={values[storageKey] ?? ""}
 																								onChange={(e) =>
 																									updateValue(`${key}.default.${itemId}`, "small_title", j, e.target.value)
 																								}
@@ -1067,8 +1087,8 @@ export default function UploadPage() {
 																								type="text"
 																								required
 																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																								placeholder={`Hlavný nadpis ${j + 1}`}
-																								value={values[storageKey] ?? presetValue}
+																								placeholder={presetValue || `Hlavný nadpis ${j + 1}`}
+																								value={values[storageKey] ?? ""}
 																								onChange={(e) =>
 																									updateValue(`${key}.default.${itemId}`, "title", j, e.target.value)
 																								}
@@ -1089,8 +1109,8 @@ export default function UploadPage() {
 																								rows={3}
 																								required
 																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																								placeholder={`Text ${j + 1}`}
-																								value={values[storageKey] ?? presetValue}
+																								placeholder={presetValue || `Text ${j + 1}`}
+																								value={values[storageKey] ?? ""}
 																								onChange={(e) =>
 																									updateValue(`${key}.default.${itemId}`, "text", j, e.target.value)
 																								}
