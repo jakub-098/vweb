@@ -31,6 +31,12 @@ export default function SummaryPage() {
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isCompany, setIsCompany] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [ico, setIco] = useState("");
+  const [dic, setDic] = useState("");
+  const [companyError, setCompanyError] = useState<string | null>(null);
   const [thankYouOpen, setThankYouOpen] = useState(false);
 
   useEffect(() => {
@@ -145,6 +151,42 @@ export default function SummaryPage() {
 
         {!loading && !error && order && (
           <>
+            <div className="mt-6 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-4 text-sm text-zinc-200">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-purple-500"
+                  checked={isCompany}
+                  onChange={(e) => setIsCompany(e.target.checked)}
+                />
+                <span className="text-sm">Som firma</span>
+              </label>
+
+              {isCompany && (
+                <div className="mt-3 space-y-3 text-xs text-zinc-200">
+                  <div>
+                    <label className="block text-[0.75rem] text-zinc-400">Názov firmy</label>
+                    <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-zinc-100" />
+                  </div>
+                  <div>
+                    <label className="block text-[0.75rem] text-zinc-400">Sídlo</label>
+                    <input value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-zinc-100" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[0.75rem] text-zinc-400">IČO</label>
+                      <input value={ico} onChange={(e) => setIco(e.target.value.replace(/\D/g, ""))} maxLength={8} className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-zinc-100" placeholder="8 číslic" />
+                    </div>
+                    <div>
+                      <label className="block text-[0.75rem] text-zinc-400">DIČ</label>
+                      <input value={dic} onChange={(e) => setDic(e.target.value.replace(/\D/g, ""))} maxLength={10} className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-zinc-100" placeholder="10 číslic" />
+                    </div>
+                  </div>
+                  {companyError && <p className="text-xs text-red-300">{companyError}</p>}
+                </div>
+              )}
+            </div>
+
             <div className="mt-5 rounded-2xl border border-purple-400/40 bg-black/40 px-5 py-4 text-sm text-zinc-100 shadow-[0_18px_60px_rgba(0,0,0,0.9)] sm:px-6 sm:py-5">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200">
                 Cena projektu
@@ -184,6 +226,48 @@ export default function SummaryPage() {
                 disabled={!termsAccepted}
                 onClick={async () => {
                   if (!termsAccepted || !order) return;
+
+                  // validate company fields if enabled
+                  if (isCompany) {
+                    if (ico.length !== 8) {
+                      setCompanyError("IČO musí mať presne 8 číslic.");
+                      return;
+                    }
+                    if (dic.length !== 10) {
+                      setCompanyError("DIČ musí mať presne 10 číslic.");
+                      return;
+                    }
+                    setCompanyError(null);
+
+                    try {
+                      await fetch("/api/orders/company", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          orderId: order.id,
+                          is_company: true,
+                          company_name: companyName || null,
+                          company_address: companyAddress || null,
+                          ico: ico || null,
+                          dic: dic || null,
+                        }),
+                      });
+                    } catch (err) {
+                      console.error("Failed to save company info", err);
+                    }
+                  } else {
+                    // if unchecked, clear any existing company info on order
+                    try {
+                      await fetch("/api/orders/company", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderId: order.id, is_company: false }),
+                      });
+                    } catch (err) {
+                      console.error("Failed to clear company info", err);
+                    }
+                  }
+
                   try {
                     await fetch("/api/orders/status", {
                       method: "POST",
@@ -194,8 +278,8 @@ export default function SummaryPage() {
                     console.error("Failed to update status to submitted", err);
                   }
 
-            // po odoslaní objednávky zobrazíme ďakovné okno
-            setThankYouOpen(true);
+                  // po odoslaní objednávky zobrazíme ďakovné okno
+                  setThankYouOpen(true);
                 }}
                 className="inline-flex items-center rounded-full bg-purple-500/90 px-6 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(168,85,247,0.6)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
               >

@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 type Order = {
   id: number;
   user_email: string | null;
+  is_company?: number | boolean | null;
+  company_name?: string | null;
+  company_address?: string | null;
+  ico?: string | null;
+  dic?: string | null;
   total_price?: number | string | null;
   status?: number | null;
   delivery_speed?: string | null;
@@ -170,6 +175,13 @@ export default function AdminOrderDetail({ params }: { params: Promise<{ id: str
             <div className="mt-6 grid gap-6 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-sm text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)] sm:grid-cols-[2fr,1fr]">
               <div className="space-y-2">
                 <p><span className="text-zinc-400">E-mail:</span> {order.user_email ?? "(bez e-mailu)"}</p>
+                {order.is_company ? (
+                  <>
+                    <p><span className="text-zinc-400">Firma:</span> {order.company_name ?? "(nešpecifikované)"}</p>
+                    <p><span className="text-zinc-400">Sídlo:</span> {order.company_address ?? "(nešpecifikované)"}</p>
+                    <p><span className="text-zinc-400">IČO / DIČ:</span> {order.ico ?? "-"} / {order.dic ?? "-"}</p>
+                  </>
+                ) : null}
                 <p><span className="text-zinc-400">Stav:</span> {statusText}</p>
                 <p><span className="text-zinc-400">Cena:</span> {priceText}</p>
                 {order.delivery_speed && (
