@@ -8,6 +8,7 @@ import Eshops from "./components/eshops";
 import CustomWeb from "./components/custom-web";
 import Contact from "./components/contact";
 import Navbar from "./components/navbar";
+import HappyCustomers from "./components/happy-customers";
 
 export default function Home() {
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function Home() {
       {/* <Eshops /> */}
       <CustomWeb />
       <Contact />
+      <HappyCustomers />
       <footer className="w-full border-t border-purple-500/30 bg-black/70 px-4 py-8 text-xs text-zinc-400 sm:px-8 sm:text-sm">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 sm:w-4/5 sm:flex-row lg:w-2/3">
           <div className="text-center sm:text-left">
