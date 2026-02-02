@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://www.vweb.sk"),
   themeColor: "#000000",
   icons: {
-    icon: "/logo_white_s.png",
-    shortcut: "/logo_white_s.png",
-    apple: "/logo_white_s.png",
+    icon: "/Logo_white_s.png",
+    shortcut: "/Logo_white_s.png",
+    apple: "/Logo_white_s.png",
   },
   openGraph: {
     title: "Vas Web – Moderný web do 24 hodín",
