@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -634,7 +635,15 @@ export default function ConfigPage() {
 											checked={sectionAbout}
 											onChange={(e) => setSectionAbout(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/about.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+												src="/previews/about.png"
+												alt="Náhľad sekcie O nás"
+												width={288}
+												height={160}
+												className="h-full w-full object-cover"
+											/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">O nás</div>
 											<p className="mt-1 text-xs text-zinc-400/90">
@@ -650,7 +659,15 @@ export default function ConfigPage() {
 											checked={sectionCards}
 											onChange={(e) => setSectionCards(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/cards.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+													src="/previews/cards.png"
+													alt="Náhľad sekcie Karty"
+													width={288}
+													height={160}
+													className="h-full w-full object-cover"
+												/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">Karty</div>
 											<p className="mt-1 text-xs text-zinc-400/90">
@@ -666,7 +683,15 @@ export default function ConfigPage() {
 											checked={sectionFaq}
 											onChange={(e) => setSectionFaq(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/faq.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+													src="/previews/faq.png"
+													alt="Náhľad sekcie Často kladené otázky"
+													width={288}
+													height={160}
+													className="h-full w-full object-cover"
+												/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">Často kladené otázky</div>
 											<p className="mt-1 text-xs text-zinc-400/90">
@@ -682,7 +707,15 @@ export default function ConfigPage() {
 											checked={sectionGallery}
 											onChange={(e) => setSectionGallery(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/gallery.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+													src="/previews/gallery.png"
+													alt="Náhľad sekcie Galéria"
+													width={288}
+													height={160}
+													className="h-full w-full object-cover"
+												/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">Galéria</div>
 											<p className="mt-1 text-xs text-zinc-400/90">
@@ -698,7 +731,15 @@ export default function ConfigPage() {
 											checked={sectionOffer}
 											onChange={(e) => setSectionOffer(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/services.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+													src="/previews/services.png"
+													alt="Náhľad sekcie Ponuka"
+													width={288}
+													height={160}
+													className="h-full w-full object-cover"
+												/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">Ponuka</div>
 											<p className="mt-1 text-xs text-zinc-400/90">
@@ -714,7 +755,15 @@ export default function ConfigPage() {
 											checked={sectionContactForm}
 											onChange={(e) => setSectionContactForm(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none rounded-lg bg-[url('/previews/mailer.png')] bg-cover bg-center" />
+										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+											<Image
+													src="/previews/mailer.png"
+													alt="Náhľad sekcie Kontaktný formulár"
+													width={288}
+													height={160}
+													className="h-full w-full object-cover"
+												/>
+										</div>
 										<div>
 											<div className="text-lg font-semibold sm:text-xl">Kontaktný formulár</div>
 											<p className="mt-1 text-xs text-zinc-400/90">

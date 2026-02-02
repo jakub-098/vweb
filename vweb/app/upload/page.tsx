@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/data/preset";
@@ -898,12 +899,17 @@ export default function UploadPage() {
 												</p>
 										</div>
 										{previewImage && (
-											<div className="mb-4 overflow-hidden rounded-lg border border-white/10 bg-black/60 w-full">
-												<div
-													className="h-40 w-full bg-cover bg-center sm:h-52 md:h-64"
-													style={{ backgroundImage: `url(${previewImage})` }}
-													aria-label={`Náhľad sekcie ${project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}`}
-												/>
+											<div className="mb-4 w-full overflow-hidden rounded-lg border border-white/10 bg-black/60">
+												<div className="relative h-40 w-full sm:h-52 md:h-64">
+													<Image
+														src={previewImage}
+														alt={`Náhľad sekcie ${project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}`}
+														fill
+														className="object-cover"
+														sizes="(min-width: 1024px) 768px, (min-width: 640px) 600px, 100vw"
+														priority={currentSectionIndex === 0}
+													/>
+												</div>
 											</div>
 										)}
 										{!project ? (
