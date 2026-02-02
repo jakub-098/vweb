@@ -7,9 +7,12 @@ export type Project = {
   title_value: string;
   text: number;
   images: number;
-  default: number
+  default: number;
 
-  
+	// Optional per-field preset overrides used in the upload/config flows
+	small_title_defaults?: string[];
+	title_defaults?: string[];
+	text_defaults?: string[];
 };
 
 export const projects: Project[] = [
