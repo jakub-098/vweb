@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://www.vweb.sk"),
   themeColor: "#000000",
   icons: {
-    icon: "/Logo_White.png",
-    shortcut: "/Logo_White.png",
-    apple: "/Logo_White.png",
+    icon: "/logo_white_s.png",
+    shortcut: "/logo_white_s.png",
+    apple: "/logo_white_s.png",
   },
   openGraph: {
     title: "Vas Web – Moderný web do 24 hodín",
@@ -32,10 +32,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/previews/header.png",
-        width: 1200,
-        height: 630,
-        alt: "Vas Web – moderný web do 24 hodín",
+        url: "/Logo_Black.png",
+        width: 800,
+        height: 800,
+        alt: "Vas Web – logo",
       },
     ],
   },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: "Vas Web – Moderný web do 24 hodín",
     description:
       "Tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s dôrazom na rýchlosť a prvý dojem.",
-    images: ["/previews/header.png"],
+    images: ["/Logo_Black.png"],
   },
 };
 

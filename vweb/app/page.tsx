@@ -77,8 +77,8 @@ export default function Home() {
             <a href="mailto:info@vvweb.sk" className="transition hover:text-zinc-100">
               info@vvweb.sk
             </a>
-            <a href="tel:+421917641370" className="transition hover:text-zinc-100">
-              0917 641 370
+            <a href="tel:+421917641379" className="transition hover:text-zinc-100">
+              0917 641 379
             </a>
           </div>
         </div>
