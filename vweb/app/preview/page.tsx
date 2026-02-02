@@ -27,7 +27,7 @@ export default function PreviewPage() {
         }`}
       >
         <div
-          className={`flex w-full max-w-6xl items-center justify-between text-sm text-slate-700 sm:w-4/5 lg:w-2/3 transition-all duration-300 ${
+          className={`grid grid-cols-3 items-center w-full max-w-6xl text-sm text-slate-700 sm:w-4/5 lg:w-2/3 transition-all duration-300 ${
             navScrolled
               ? "px-4 py-2 sm:px-8 rounded-none shadow-none"
               : "mt-4 px-5 py-3 sm:px-8 rounded-full border border-white/70 bg-white/80 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl"
@@ -36,35 +36,52 @@ export default function PreviewPage() {
           <span className="text-sm font-semibold tracking-tight text-slate-900">
             <span className="text-sky-600">vas</span>web.sk
           </span>
-          <nav className="flex items-center gap-4 text-xs font-medium text-slate-600 sm:text-sm">
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className="transition hover:text-slate-900"
-            >
-              O projekte
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className="transition hover:text-slate-900"
-            >
-              Služby
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className="transition hover:text-slate-900"
-            >
-              Kontakt
-            </button>
-          </nav>
+          {/* Center toggle */}
+          <div className="justify-self-center">
+            <label className="relative inline-flex cursor-pointer items-center select-none">
+              <input
+                type="checkbox"
+                aria-label="Prepnúť na tmavú ukážku"
+                className="peer sr-only"
+                onChange={() => {
+                  if (typeof window !== "undefined") window.location.href = "/preview_dark";
+                }}
+              />
+              <div className="peer h-6 w-10 rounded-full bg-slate-300 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition peer-focus:outline-none peer-checked:bg-sky-600 peer-checked:after:translate-x-4" />
+              <span className="ml-2 text-[0.7rem] text-slate-600">Tmavá</span>
+            </label>
+          </div>
+          <div className="justify-self-end flex items-center gap-5">
+            <nav className="flex items-center gap-4 text-xs font-medium text-slate-600 sm:text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="transition hover:text-slate-900"
+              >
+                O projekte
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="transition hover:text-slate-900"
+              >
+                Služby
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="transition hover:text-slate-900"
+              >
+                Kontakt
+              </button>
+            </nav>
+          </div>
         </div>
       </header>
 

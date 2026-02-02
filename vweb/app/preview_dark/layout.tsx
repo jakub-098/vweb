@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+export const metadata = {
+  title: "Site Template",
+  description: "Next.js TSX template",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="bg-white text-black antialiased">
+        {children}
+      </body>
+    </html>
+  );
+}
