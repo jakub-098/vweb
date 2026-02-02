@@ -558,6 +558,27 @@ export default function UploadPage() {
 						checkField(storageKey, presetValue);
 					}
 				}
+
+				// Ak majú predvolené položky obrázky (napr. ponuka služieb), vyžadujeme aspoň jeden obrázok na položku
+				if (defaultProject.images > 0) {
+					const itemImageKey = `${sectionKey}.default.${itemId}.images`;
+					const existingItemImages = existingImagesBySection[itemImageKey]?.length ?? 0;
+					const newItemImages = imagesBySection[itemImageKey]?.length ?? 0;
+					if (existingItemImages + newItemImages === 0) {
+						setSectionError("Nahraj prosím aspoň jeden obrázok pre každú položku v tejto sekcii.");
+						return false;
+					}
+				}
+			}
+		}
+
+		// Ak má sekcia obrázky (okrem sekcie O nás), vyžadujeme aspoň jeden obrázok
+		if (project.images > 0 && sectionKey !== "section_about") {
+			const existingSectionImages = existingImagesBySection[sectionKey]?.length ?? 0;
+			const newSectionImages = imagesBySection[sectionKey]?.length ?? 0;
+			if (existingSectionImages + newSectionImages === 0) {
+				setSectionError("Nahraj prosím aspoň jeden obrázok pre túto sekciu.");
+				return false;
 			}
 		}
 
@@ -968,12 +989,19 @@ export default function UploadPage() {
 															/>
 														</div>
 													)}
-												{project.images > 0 && (
+												{project.images > 0 && key !== "section_about" && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-3">
-														<p>
-															Obrázky: {existingSectionImages.length + imagesForSection.length}/{project.images} nahraných
-														</p>
+															<div className="flex flex-col gap-0.5">
+																<p>
+																	Obrázky: {existingSectionImages.length + imagesForSection.length}/{project.images} nahraných
+																</p>
+																{key === "section_header" && (
+																	<p className="text-[0.65rem] text-zinc-400">
+																		Pre túto sekciu nahraj 2 obrázky: <span className="font-medium">BG image</span> (pozadie) a <span className="font-medium">logo</span>.
+																	</p>
+																)}
+															</div>
 															<button
 																type="button"
 																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"

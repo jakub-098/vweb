@@ -107,6 +107,22 @@ export default function AdminPage() {
     await loadOrders(password, true);
   };
 
+  const sortedOrders = [...orders].sort((a, b) => {
+    const orderPriority = (status: AdminOrder["status"]): number => {
+      if (status === 1) return 0; // Zaplatená
+      if (status === 0 || status == null) return 1; // Odoslaná / in progress
+      if (status === 2) return 2; // Hotová
+      return 3;
+    };
+
+    const pa = orderPriority(a.status ?? null);
+    const pb = orderPriority(b.status ?? null);
+    if (pa !== pb) return pa - pb;
+
+    // Within the same status, show newer orders first
+    return (b.id ?? 0) - (a.id ?? 0);
+  });
+
   return (
     <section className="min-h-screen w-full bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-16 text-zinc-50 sm:px-8">
       <div className="mx-auto w-full max-w-5xl">
@@ -153,11 +169,11 @@ export default function AdminPage() {
 
           {!loading && !error && orders.length > 0 && (
             <div className="mt-6 space-y-3">
-              {orders.map((order) => {
+              {sortedOrders.map((order) => {
     const isPaid = order.status === 1;
     const isCompleted = order.status === 2;
     const statusClasses = isCompleted
-      ? "border-orange-400/70 bg-orange-950/40"
+	  ? "border-zinc-200/80 bg-zinc-50/10"
       : isPaid
         ? "border-emerald-400/70 bg-emerald-950/40"
         : "border-purple-300/30 bg-black/60";

@@ -21,7 +21,7 @@ export const projects: Project[] = [
     title: 1,
     title_value: "Tučný čierny text",
     text: 1,
-    images: 1,
+    images: 2,
     default: 0,
   },
   {

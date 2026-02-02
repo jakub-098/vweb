@@ -215,7 +215,7 @@ export default function SummaryPage() {
                   rel="noreferrer"
                   className="underline underline-offset-2"
                 >
-                  všeobecnými podmienkami vweb.sk
+                  všeobecnými obchodnými podmienkami vweb.sk
                 </a>
               </label>
             </div>

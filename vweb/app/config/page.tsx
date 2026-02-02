@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ConfigPage() {
 	const router = useRouter();
+	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [theme, setTheme] = useState<"tmava" | "svetla">("tmava");
 	const [accent, setAccent] = useState<
 		"purple" | "blue" | "green" | "orange" | "pink" | "red" | "yellow" | "teal" | "gray"
@@ -41,6 +42,22 @@ export default function ConfigPage() {
 	const [existingConfigChecking, setExistingConfigChecking] = useState(false);
 	const [loadedFromOrder, setLoadedFromOrder] = useState(false);
 	const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		if (!emailDialogOpen && !existingDialogOpen) return;
+
+		// Scroll the main config card into view so the popup is visible
+		if (containerRef.current) {
+			containerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+		} else {
+			const middle = Math.max(
+				0,
+				(document.documentElement.scrollHeight - window.innerHeight) / 2,
+			);
+			window.scrollTo({ top: middle, behavior: "smooth" });
+		}
+	}, [emailDialogOpen, existingDialogOpen]);
 
 	useEffect(() => {
 		async function loadPrices() {
@@ -551,7 +568,7 @@ export default function ConfigPage() {
 
 	return (
 		<section className="flex min-h-screen w-full items-center justify-center px-4 py-16 text-zinc-50 sm:px-8">
-			<div className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
+			<div ref={containerRef} className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
 				<div
 					className="pointer-events-none absolute -inset-[3px] rounded-2xl bg-gradient-to-b from-purple-500/45 via-transparent to-transparent opacity-70 blur-xl"
 					aria-hidden
@@ -589,6 +606,8 @@ export default function ConfigPage() {
 								</p>
 								<a
 									href="/preview"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="inline-flex items-center justify-center rounded-full border border-purple-300/70 bg-purple-500/90 px-6 py-2.5 text-xs font-semibold text-white shadow-[0_12px_36px_rgba(88,28,135,0.75)] transition hover:bg-purple-400 hover:border-purple-200 hover:shadow-[0_16px_48px_rgba(88,28,135,0.9)] sm:text-sm"
 								>
 									Pozrieť demo stránku
