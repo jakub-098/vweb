@@ -8,11 +8,11 @@ interface PriceRow {
 
 export async function GET() {
   try {
-    const [rows] = await pool.query<PriceRow[]>(
-      "SELECT code, amount FROM prices"
-    );
+  const [rows] = await pool.query(
+    "SELECT code, amount FROM prices"
+  );
 
-    return NextResponse.json({ prices: rows });
+  return NextResponse.json({ prices: rows as PriceRow[] });
   } catch (error) {
     console.error("Error fetching prices", error);
     return NextResponse.json(
