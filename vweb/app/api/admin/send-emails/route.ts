@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
     const emails = await readEmails();
     const html = await readHtml();
-    const subject = process.env.AUTO_MAIL_SUBJECT || "Automatická správa";
+    const subject = process.env.AUTO_MAIL_SUBJECT || "web bez zbytočných starostí";
 
     let sent = 0;
     let failed = 0;
