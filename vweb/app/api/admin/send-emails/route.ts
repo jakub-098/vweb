@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs/promises";
-import nodemailer from "nodemailer";
+import FormData from "form-data";
+import Mailgun from "mailgun.js";
 
 function checkAdminPassword(request: Request): boolean {
   const configured = process.env.PASSWORD;
@@ -10,20 +11,15 @@ function checkAdminPassword(request: Request): boolean {
   return header === configured;
 }
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = Number(process.env.SMTP_PORT ?? 465);
-const smtpSecure = String(process.env.SMTP_SECURE ?? "true").toLowerCase() === "true";
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS;
+const mailgunApiKey = process.env.API_KEY || "API_KEY";
+const mailgunDomain = "vweb.tech";
 
-const transporter = smtpHost && smtpUser && smtpPass
-  ? nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: { user: smtpUser, pass: smtpPass },
-    })
-  : null;
+const mailgun = new Mailgun(FormData);
+const mgClient = mailgun.client({
+  username: "api",
+  key: mailgunApiKey,
+  url: "https://api.eu.mailgun.net",
+});
 
 const ROOT_DIR = process.cwd();
 const EMAILS_JSON_PATH = path.join(ROOT_DIR, "data", "emails.json");
@@ -72,9 +68,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!transporter) {
+    if (!process.env.API_KEY || mailgunApiKey === "API_KEY") {
       return NextResponse.json(
-        { success: false, error: "SMTP nie je správne nastavené" },
+        { success: false, error: "Mailgun API kľúč nie je správne nastavený" },
         { status: 500 }
       );
     }
@@ -86,25 +82,26 @@ export async function POST(request: Request) {
     let sent = 0;
     let failed = 0;
 
-    const minDelay = 10000; // 10s
-    const maxDelay = 20000; // 20s
+    // 10–15 minutes between individual sends to avoid rate limits
+    const minDelay = 10 * 60 * 1000; // 10 min
+    const maxDelay = 15 * 60 * 1000; // 15 min
 
     for (let i = 0; i < emails.length; i++) {
       const to = emails[i];
       try {
-        await transporter.sendMail({
-          from: `Vweb <${smtpUser}>`,
-          to,
+        await mgClient.messages.create(mailgunDomain, {
+          from: "Vweb <team@vweb.tech>",
+          to: [to],
           subject,
           html,
         });
         sent += 1;
       } catch (err) {
-        console.error("Failed to send bulk email to", to, err);
+        console.error("Failed to send email to", to, err);
         failed += 1;
       }
 
-      // Add 5–10s delay between sends, except after the last one
+      // Add 10–15min delay between sends, except after the last one
       if (i < emails.length - 1) {
         const delay = randomDelayMs(minDelay, maxDelay);
         await sleep(delay);
@@ -113,7 +110,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, sent, failed });
   } catch (error) {
-    console.error("Failed to send bulk emails", error);
+    console.error("Failed to send emails", error);
     return NextResponse.json(
       { success: false, error: (error as Error).message ?? "Nepodarilo sa odoslať e-maily" },
       { status: 500 }
