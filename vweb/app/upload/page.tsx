@@ -1236,7 +1236,7 @@ export default function UploadPage() {
 																		className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-5 py-2 text-base font-semibold text-purple-50 hover:bg-purple-500/40"
 												onClick={handleNextSection}
 											>
-												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Dalej"}
+												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Ďalej"}
 											</button>
 										</div>
 									</div>
