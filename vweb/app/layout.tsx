@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vas Web",
+  title: "Váš Web",
   description:
-    "Vas Web – tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s jasným procesom od nápadu po hotové riešenie.",
+    "Váš Web – tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s jasným procesom od nápadu po hotové riešenie.",
   metadataBase: new URL("https://www.vweb.sk"),
   themeColor: "#000000",
   icons: {
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
     apple: "/Logo_white_s.png",
   },
   openGraph: {
-    title: "Vas Web – Moderný web do 24 hodín",
+    title: "Váš Web – Moderný web do 24 hodín",
     description:
-      "Vas Web stavia moderné, rýchle a responzívne weby a e‑shopy do 24 hodín. Pozri si proces, ponuku a kontakt na jednej stránke.",
+      "Váš Web stavia moderné, rýchle a responzívne weby a e‑shopy do 24 hodín. Pozri si proces, ponuku a kontakt na jednej stránke.",
     url: "https://www.vweb.sk",
     locale: "sk_SK",
     type: "website",
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
         url: "/Logo_Black.png",
         width: 800,
         height: 800,
-        alt: "Vas Web – logo",
+        alt: "Váš Web – logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vas Web – Moderný web do 24 hodín",
+    title: "Váš Web – Moderný web do 24 hodín",
     description:
       "Tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s dôrazom na rýchlosť a prvý dojem.",
     images: ["/Logo_Black.png"],
