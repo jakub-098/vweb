@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vweb – 3:4 Video BG</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --purple: #8B5CF6;
+      --purple-100: #F5F3FF;
+      --purple-200: #EDE9FE;
+      --purple-300: #DDD6FE;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* 3:4 CANVAS */
+    .canvas {
+      width: 75vh;
+    height: 100vh;
+    max-height: 75vh;
+    aspect-ratio: 3 / 4;
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
+        border: none;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.08);
+    }
+
+    /* Badge */
+    .badge {
+      position: absolute;
+      top: 64px;
+      left: 64px;
+      padding: 14px 26px;
+      background: var(--purple-100);
+      color: var(--purple);
+      font-weight: 700;
+      font-size: 22px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      z-index: 5;
+    }
+
+    /* Decorative dots */
+    .dots {
+      position: absolute;
+      bottom: 260px;
+      left: 64px;
+      width: 160px;
+      height: 160px;
+      background-image: radial-gradient(var(--purple) 1.5px, transparent 1.5px);
+      background-size: 16px 16px;
+      opacity: 0.16;
+      z-index: 4;
+    }
+
+    /* Waves wrapper */
+    .waves {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 520px;
+    }
+
+    svg {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="canvas">
+    <div class="badge">VÁŠ WEB</div>
+    <div class="dots"></div>
+
+    <div class="waves">
+      <!-- Back wave -->
+      <svg viewBox="0 0 1440 520" preserveAspectRatio="none">
+        <path
+          d="M0,280 
+             C240,240 360,360 600,340
+             C840,320 960,400 1200,380
+             C1320,370 1440,420 1440,420
+             L1440,520 L0,520 Z"
+          fill="#DDD6FE"
+          opacity="0.6"
+        />
+      </svg>
+
+      <!-- Mid wave -->
+      <svg viewBox="0 0 1440 520" preserveAspectRatio="none">
+        <path
+          d="M0,320 
+             C200,280 420,420 640,380
+             C860,340 1020,440 1240,420
+             C1360,410 1440,450 1440,450
+             L1440,520 L0,520 Z"
+          fill="#C4B5FD"
+          opacity="0.5"
+        />
+      </svg>
+
+      <!-- Front wave -->
+      <svg viewBox="0 0 1440 520" preserveAspectRatio="none">
+        <path
+          d="M0,360 
+             C220,330 460,460 720,420
+             C980,380 1120,480 1360,460
+             L1440,470 L1440,520 L0,520 Z"
+          fill="#8B5CF6"
+          opacity="0.18"
+        />
+      </svg>
+    </div>
+  </div>
+
+</body>
+</html>

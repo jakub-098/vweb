@@ -23,7 +23,43 @@ const mgClient = mailgun.client({
 
 const ROOT_DIR = process.cwd();
 const EMAILS_JSON_PATH = path.join(ROOT_DIR, "data", "emails.json");
+const STATUS_JSON_PATH = path.join(ROOT_DIR, "data", "emails-status.json");
 const HTML_PATH = path.join(ROOT_DIR, "public", "reachout.html");
+
+async function writeStatus(partial: any) {
+  const now = new Date().toISOString();
+  let current: any = {
+    status: "idle",
+    total: 0,
+    sent: 0,
+    failed: 0,
+    startedAt: null,
+    lastUpdatedAt: null,
+    errorMessage: null,
+  };
+
+  try {
+    const raw = await fs.readFile(STATUS_JSON_PATH, "utf8");
+    current = { ...current, ...JSON.parse(raw) };
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") {
+      console.error("Failed to read existing emails-status.json", err);
+    }
+  }
+
+  const next = {
+    ...current,
+    lastUpdatedAt: now,
+    ...partial,
+  };
+
+  if (partial.status === "running" && !current.startedAt) {
+    next.startedAt = now;
+  }
+
+  await fs.mkdir(path.dirname(STATUS_JSON_PATH), { recursive: true });
+  await fs.writeFile(STATUS_JSON_PATH, JSON.stringify(next, null, 2), "utf8");
+}
 
 async function readEmails(): Promise<string[]> {
   const raw = await fs.readFile(EMAILS_JSON_PATH, "utf8");
@@ -82,9 +118,17 @@ export async function POST(request: Request) {
     let sent = 0;
     let failed = 0;
 
-    // 10–15 minutes between individual sends to avoid rate limits
-    const minDelay = 10 * 60 * 1000; // 10 min
-    const maxDelay = 15 * 60 * 1000; // 15 min
+    await writeStatus({
+      status: "running",
+      total: emails.length,
+      sent,
+      failed,
+      errorMessage: null,
+    });
+
+    // 7–13 minutes between individual sends to avoid rate limits
+    const minDelay = 7 * 60 * 1000; // 7 min
+    const maxDelay = 13 * 60 * 1000; // 13 min
 
     for (let i = 0; i < emails.length; i++) {
       const to = emails[i];
@@ -101,16 +145,39 @@ export async function POST(request: Request) {
         failed += 1;
       }
 
-      // Add 10–15min delay between sends, except after the last one
+      await writeStatus({ sent, failed });
+
+      // Add 7–13min delay between sends, except after the last one
       if (i < emails.length - 1) {
         const delay = randomDelayMs(minDelay, maxDelay);
         await sleep(delay);
       }
     }
 
+    // When there are no remaining emails (we processed the whole list),
+    // delete the source JSON file so it can't be accidentally reused.
+    try {
+      await fs.unlink(EMAILS_JSON_PATH);
+    } catch (err: any) {
+      if (err?.code !== "ENOENT") {
+        console.error("Failed to delete emails.json after sending", err);
+      }
+    }
+
+    await writeStatus({ status: "finished" });
+
     return NextResponse.json({ success: true, sent, failed });
   } catch (error) {
     console.error("Failed to send emails", error);
+    try {
+      await writeStatus({
+        status: "error",
+        errorMessage: (error as Error).message ?? "Nepodarilo sa odoslať e-maily",
+      });
+    } catch (e) {
+      console.error("Failed to write error status for emails-status.json", e);
+    }
+
     return NextResponse.json(
       { success: false, error: (error as Error).message ?? "Nepodarilo sa odoslať e-maily" },
       { status: 500 }

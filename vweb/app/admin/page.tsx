@@ -110,44 +110,9 @@ export default function AdminPage() {
   };
 
   const handleSendEmails = async () => {
-    if (!password || sendingEmails) return;
-    try {
-      setSendingEmails(true);
-      setEmailJobResult(null);
-
-      const res = await fetch("/api/admin/send-emails", {
-        method: "POST",
-        headers: {
-          "x-admin-password": password,
-        },
-      });
-
-      if (res.status === 401) {
-        setEmailJobResult("Nesprávne admin heslo pre odoslanie e-mailov.");
-        setSendingEmails(false);
-        return;
-      }
-
-      if (!res.ok) {
-        setEmailJobResult("Nepodarilo sa odoslať e-maily.");
-        setSendingEmails(false);
-        return;
-      }
-
-      const data = await res.json();
-      if (!data.success) {
-        setEmailJobResult(data.error || "Nepodarilo sa odoslať e-maily.");
-      } else {
-        setEmailJobResult(
-          `Odoslané e-maily: ${data.sent ?? 0}, zlyhané: ${data.failed ?? 0}.`
-        );
-      }
-    } catch (err) {
-      console.error("Failed to trigger bulk email send", err);
-      setEmailJobResult("Pri odosielaní e-mailov nastala chyba.");
-    } finally {
-      setSendingEmails(false);
-    }
+    // Deprecated inline sending - keep state for backward compatibility if needed
+    console.warn("handleSendEmails is deprecated. Use the dedicated /admin/emails page.");
+    setEmailJobResult("Pre hromadné e-maily použi novú stránku 'Admin – e-maily'.");
   };
 
   const sortedOrders = [...orders].sort((a, b) => {
@@ -200,14 +165,12 @@ export default function AdminPage() {
           </form>
 
           <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
-            <button
-              type="button"
-              onClick={handleSendEmails}
-              className="inline-flex items-center rounded-full border border-purple-400/60 bg-purple-500/20 px-4 py-1.5 text-[0.7rem] font-semibold text-purple-100 hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!password || sendingEmails}
+            <Link
+                href="/admin/emails"
+                className="inline-flex items-center rounded-full border border-purple-400/60 bg-purple-500/20 px-4 py-1.5 text-[0.7rem] font-semibold text-purple-100 hover:bg-purple-500/30"
             >
-              {sendingEmails ? "Odosielam e-maily..." : "Poslať e-maily z emails.json"}
-            </button>
+              Spravovať e-maily
+            </Link>
             {emailJobResult && (
               <p className="text-[0.7rem] text-zinc-300">{emailJobResult}</p>
             )}
