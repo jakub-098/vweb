@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,10 +12,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+
 export const metadata: Metadata = {
-  title: "Vas Web",
+  title: "Váš Web",
   description:
-    "Vas Web – tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s jasným procesom od nápadu po hotové riešenie.",
+    "Váš Web – tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s jasným procesom od nápadu po hotové riešenie.",
   metadataBase: new URL("https://www.vweb.sk"),
   themeColor: "#000000",
   icons: {
@@ -25,9 +26,9 @@ export const metadata: Metadata = {
     apple: "/Logo_white_s.png",
   },
   openGraph: {
-    title: "Vas Web – Moderný web do 24 hodín",
+    title: "Váš Web – Moderný web do 24 hodín",
     description:
-      "Vas Web stavia moderné, rýchle a responzívne weby a e‑shopy do 24 hodín. Pozri si proces, ponuku a kontakt na jednej stránke.",
+      "Váš Web stavia moderné, rýchle a responzívne weby a e‑shopy do 24 hodín. Pozri si proces, ponuku a kontakt na jednej stránke.",
     url: "https://www.vweb.sk",
     locale: "sk_SK",
     type: "website",
@@ -36,13 +37,13 @@ export const metadata: Metadata = {
         url: "/Logo_Black.png",
         width: 800,
         height: 800,
-        alt: "Vas Web – logo",
+        alt: "Váš Web – logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vas Web – Moderný web do 24 hodín",
+    title: "Váš Web – Moderný web do 24 hodín",
     description:
       "Tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s dôrazom na rýchlosť a prvý dojem.",
     images: ["/Logo_Black.png"],
@@ -63,19 +64,35 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-NX5P0ZDE14"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-NX5P0ZDE14');
-          `}
-        </Script>
+        {FB_PIXEL_ID && (
+          <>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  !function(f,b,e,v,n,t,s)
+                  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                  if(!f._fbq)n=f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                  n.queue=[];t=b.createElement(e);t.async=!0;
+                  t.src='https://connect.facebook.net/en_US/fbevents.js';
+                  s=b.getElementsByTagName(e)[0];
+                  s.parentNode.insertBefore(t,s)}(window, document,'script');
+                  fbq('init', '${FB_PIXEL_ID}');
+                  fbq('track', 'PageView');
+                `.replace(/\s+/g, " "),
+              }}
+            />
+            <noscript>
+              <img
+                alt="fb pixel"
+                height="1"
+                width="1"
+                style={{ display: "none" }}
+                src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`}
+              />
+            </noscript>
+          </>
+        )}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

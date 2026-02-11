@@ -846,15 +846,15 @@ export default function UploadPage() {
 	return (
 		<section className="min-h-screen w-full bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-16 text-zinc-50 sm:px-8">
 			<div className="mx-auto w-full max-w-4xl">
-				<h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
+				<h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
 					Nahraj podklady k tvojej webke
 				</h1>
-				<p className="mt-3 max-w-2xl text-sm text-zinc-300 sm:text-base">
+				<p className="mt-3 max-w-2xl text-base text-zinc-300 sm:text-lg">
 					Nižšie vidíš prehľad sekcií, ktoré si si vybral v konfigurátore,
 					spolu s typmi podkladov, ktoré k nim budeme potrebovať.
 				</p>
 
-				<div className="mt-8 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-sm text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
+				<div className="mt-8 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-base text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
 					{loading && <p>Načítavam tvoju konfiguráciu...</p>}
 					{!loading && error && (
 						<p className="text-sm text-red-300">{error}</p>
@@ -882,19 +882,19 @@ export default function UploadPage() {
 										key={key}
 										className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
 									>
-										<p className="mt-2 mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-lg">
+												<p className="mt-2 mb-3 text-base font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-xl">
 											{project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}
 										</p>
 										<div className="flex items-center justify-between gap-3 mb-3">
 											<button
 												type="button"
-												className="text-xs font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
+													className="text-sm font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
 												onClick={handlePrevSection}
 												disabled={currentSectionIndex === 0}
 											>
 												<span className="mr-1">←</span> Späť
 												</button>
-												<p className="text-xs font-medium text-zinc-400">
+													<p className="text-sm font-medium text-zinc-400">
 													Sekcia {currentSectionIndex + 1} / {sections.length}
 												</p>
 										</div>
@@ -912,12 +912,12 @@ export default function UploadPage() {
 												</div>
 											</div>
 										)}
-										{!project ? (
-											<p className="mt-2 text-xs text-zinc-400">
+											{!project ? (
+												<p className="mt-2 text-sm text-zinc-400">
 												Pre túto sekciu nemáme definovaný preset – dohodneme sa individuálne.
 											</p>
 										) : (
-											<div className="mt-3 space-y-3 text-xs text-zinc-200">
+												<div className="mt-3 space-y-3 text-sm text-zinc-200">
 												{project.small_title > 0 && (
 													<div className="space-y-1">
 														<p className="font-semibold text-zinc-100">Malý nadpis</p>
@@ -931,7 +931,7 @@ export default function UploadPage() {
 																	key={storageKey}
 																	type="text"
 																	required
-																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																	    placeholder={presetValue || `Malý nadpis ${i + 1}`}
 																		    value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "small_title", i, e.target.value)}
@@ -953,7 +953,7 @@ export default function UploadPage() {
 																	key={storageKey}
 																	type="text"
 																	required
-																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																	placeholder={presetValue || `Hlavný nadpis ${i + 1}`}
 																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "title", i, e.target.value)}
@@ -973,7 +973,7 @@ export default function UploadPage() {
 																	key={storageKey}
 																	rows={3}
 																	required
-																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																	placeholder={presetValue || `Text ${i + 1}`}
 																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "text", i, e.target.value)}
@@ -988,7 +988,7 @@ export default function UploadPage() {
 															<input
 																type="text"
 																required
-																className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.75rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																placeholder="Napíš telefónne číslo, ktoré zobrazíme v päte"
 																value={values["section_footer.mobile.0"] ?? ""}
 																onChange={(e) => updateValue("section_footer", "mobile", 0, e.target.value)}
@@ -1003,21 +1003,21 @@ export default function UploadPage() {
 																	Obrázky: {existingSectionImages.length + imagesForSection.length}/{project.images} nahraných
 																</p>
 																{key === "section_header" && (
-																	<p className="text-[0.65rem] text-zinc-400">
+																	<p className="text-xs text-zinc-400">
 																		Pre túto sekciu nahraj 2 obrázky: <span className="font-medium">BG image</span> (pozadie) a <span className="font-medium">logo</span>.
 																	</p>
 																)}
 															</div>
 															<button
 																type="button"
-																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"
+																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/30"
 																onClick={() => openImageModal(key, project.images)}
 															>
 																Nahrať obrázky
 															</button>
 														</div>
-														{(existingSectionImages.length > 0 || imagesForSection.length > 0) && (
-															<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+															{(existingSectionImages.length > 0 || imagesForSection.length > 0) && (
+																<ul className="space-y-1 text-sm text-zinc-300">
 																{existingSectionImages.map((name, idx) => (
 																	<li
 																		key={`${key}-existing-img-${idx}`}
@@ -1026,7 +1026,7 @@ export default function UploadPage() {
 																		<span className="truncate">{name}</span>
 																		<button
 																			type="button"
-																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
 																			onClick={() => deleteExistingImage(key, name)}
 																		>
 																			×
@@ -1041,7 +1041,7 @@ export default function UploadPage() {
 																		<span className="truncate">{file.name}</span>
 																		<button
 																			type="button"
-																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																			className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
 																			onClick={() => removeImageFromSection(key, idx)}
 																		>
 																			×
@@ -1058,7 +1058,7 @@ export default function UploadPage() {
 															<>
 																<p className="font-semibold text-zinc-100">
 																	Predvolené položky
-																	<span className="ml-2 text-[0.7rem] font-normal text-zinc-400">
+																	<span className="ml-2 text-sm font-normal text-zinc-400">
 																		{currentDefaultCount}/{maxDefaultItems}
 																	</span>
 																</p>
@@ -1073,12 +1073,12 @@ export default function UploadPage() {
 																			className="space-y-2 rounded-lg border border-white/10 bg-black/40 px-3 py-3"
 																		>
 																			<div className="flex items-center justify-between gap-3">
-																				<p className="text-[0.7rem] font-medium text-zinc-400">
+																				<p className="text-sm font-medium text-zinc-400">
 																					Položka {visualIndex + 1}
 																				</p>
 																				<button
 																					type="button"
-																					className="rounded-md border border-red-500/60 bg-red-500/15 px-2 py-0.5 text-[0.7rem] font-medium text-red-100 hover:bg-red-500/25"
+																					className="rounded-md border border-red-500/60 bg-red-500/15 px-3 py-1 text-sm font-medium text-red-100 hover:bg-red-500/25"
 																					onClick={() => removeDefaultItem(key, itemId)}
 																				>
 																					Odstrániť
@@ -1098,7 +1098,7 @@ export default function UploadPage() {
 																								key={storageKey}
 																								type="text"
 																								required
-																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																								placeholder={presetValue || `Malý nadpis ${j + 1}`}
 																									value={values[storageKey] ?? ""}
 																								onChange={(e) =>
@@ -1120,7 +1120,7 @@ export default function UploadPage() {
 																								key={storageKey}
 																								type="text"
 																								required
-																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																								placeholder={presetValue || `Hlavný nadpis ${j + 1}`}
 																								value={values[storageKey] ?? ""}
 																								onChange={(e) =>
@@ -1142,7 +1142,7 @@ export default function UploadPage() {
 																								key={storageKey}
 																								rows={3}
 																								required
-																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-[0.7rem] text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																								placeholder={presetValue || `Text ${j + 1}`}
 																								value={values[storageKey] ?? ""}
 																								onChange={(e) =>
@@ -1161,14 +1161,14 @@ export default function UploadPage() {
 																						</p>
 																						<button
 																							type="button"
-																							className="rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30"
+																							className="rounded-md border border-purple-400/70 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/30"
 																							onClick={() => openImageModal(itemImageKey, defaultProject.images)}
 																						>
 																							Nahrať obrázky
 																						</button>
 																					</div>
-																					{(existingItemImages.length > 0 || itemImages.length > 0) && (
-																						<ul className="space-y-1 text-[0.7rem] text-zinc-300">
+																						{(existingItemImages.length > 0 || itemImages.length > 0) && (
+																							<ul className="space-y-1 text-sm text-zinc-300">
 																							{existingItemImages.map((name, idx) => (
 																								<li
 																									key={`${itemImageKey}-existing-img-${idx}`}
@@ -1177,7 +1177,7 @@ export default function UploadPage() {
 																									<span className="truncate">{name}</span>
 																									<button
 																										type="button"
-																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
 																										onClick={() => deleteExistingImage(itemImageKey, name, visualIndex)}
 																									>
 																										×
@@ -1192,7 +1192,7 @@ export default function UploadPage() {
 																									<span className="truncate">{file.name}</span>
 																									<button
 																										type="button"
-																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+																										className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
 																										onClick={() => removeImageFromSection(itemImageKey, idx)}
 																									>
 																										×
@@ -1206,14 +1206,14 @@ export default function UploadPage() {
 																	</div>
 																);
 															})}
-															<button
-																type="button"
-																className="mt-1 inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/15 px-3 py-1 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/25 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
+																<button
+																	type="button"
+																	className="mt-1 inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/15 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/25 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
 																onClick={() => addDefaultItem(key, maxDefaultItems)}
 																disabled={currentDefaultCount >= maxDefaultItems}
 															>
 																Pridať položku
-																<span className="ml-2 text-[0.7rem] text-zinc-300">
+																	<span className="ml-2 text-xs text-zinc-300">
 																	{currentDefaultCount}/{maxDefaultItems}
 																</span>
 															</button>
@@ -1227,16 +1227,16 @@ export default function UploadPage() {
 												)}
 											</div>
 										)}
-										{sectionError && (
-											<p className="mt-4 text-xs text-red-300">{sectionError}</p>
-										)}
-										<div className="mt-4 flex justify-end">
+															{sectionError && (
+																<p className="mt-4 text-sm text-red-300">{sectionError}</p>
+															)}
+															<div className="mt-4 flex justify-end">
 											<button
-													type="button"
-													className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-4 py-1.5 text-[0.8rem] font-semibold text-purple-50 hover:bg-purple-500/40"
+																		type="button"
+																		className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-5 py-2 text-base font-semibold text-purple-50 hover:bg-purple-500/40"
 												onClick={handleNextSection}
 											>
-												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Dalej"}
+												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Ďalej"}
 											</button>
 										</div>
 									</div>
@@ -1249,21 +1249,21 @@ export default function UploadPage() {
 
 			{imageModalOpen && imageModalSectionKey && (
 				<div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4">
-					<div className="w-full max-w-md rounded-2xl border border-purple-400/40 bg-zinc-950/95 p-6 text-sm text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
-						<h2 className="text-base font-semibold text-zinc-50">
+								<div className="w-full max-w-md rounded-2xl border border-purple-400/40 bg-zinc-950/95 p-6 text-sm text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
+									<h2 className="text-lg font-semibold text-zinc-50">
 							Obrázky pre sekciu {imageModalSectionKey}
 						</h2>
-						<p className="mt-2 text-xs text-zinc-400">
+									<p className="mt-2 text-sm text-zinc-400">
 							Sem presuň obrázky alebo klikni na tlačidlo nižšie. Môžeš pridať
 							 maximálne {imageModalLimit} obrázkov.
 						</p>
-						{imageModalError && (
-							<p className="mt-3 rounded-md bg-red-500/15 px-3 py-2 text-[0.7rem] text-red-200">
+									{imageModalError && (
+										<p className="mt-3 rounded-md bg-red-500/15 px-3 py-2 text-sm text-red-200">
 								{imageModalError}
 							</p>
 						)}
-						<div
-							className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-purple-400/60 bg-purple-950/20 px-4 py-8 text-center text-xs text-zinc-300"
+									<div
+										className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-purple-400/60 bg-purple-950/20 px-4 py-8 text-center text-sm text-zinc-300"
 							onDragOver={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -1274,11 +1274,11 @@ export default function UploadPage() {
 								addFilesToCurrentSection(e.dataTransfer.files);
 							}}
 						>
-							<p className="font-medium text-zinc-100">Presuň sem svoje obrázky</p>
-							<p className="mt-1 text-[0.7rem] text-zinc-400">
+										<p className="font-medium text-zinc-100">Presuň sem svoje obrázky</p>
+										<p className="mt-1 text-sm text-zinc-400">
 								Podporujeme bežné formáty (JPG, PNG, WEBP...).
 							</p>
-							<label className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-purple-400/70 bg-purple-500/20 px-3 py-1.5 text-[0.7rem] font-medium text-purple-100 hover:bg-purple-500/30">
+										<label className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-purple-400/70 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/30">
 								<input
 									type="file"
 									accept="image/*"
@@ -1289,8 +1289,8 @@ export default function UploadPage() {
 								<span>Vybrať súbory</span>
 							</label>
 						</div>
-						{imagesBySection[imageModalSectionKey]?.length ? (
-							<div className="mt-4 space-y-1 text-[0.7rem] text-zinc-300">
+									{imagesBySection[imageModalSectionKey]?.length ? (
+										<div className="mt-4 space-y-1 text-sm text-zinc-300">
 								<p className="font-medium">
 									Aktuálne nahraté: {imagesBySection[imageModalSectionKey]!.length}/
 									{imageModalLimit}
@@ -1302,9 +1302,9 @@ export default function UploadPage() {
 											className="flex items-center justify-between gap-2 truncate"
 										>
 											<span className="truncate">{file.name}</span>
-											<button
-												type="button"
-												className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-[0.6rem] text-white hover:bg-red-500"
+														<button
+															type="button"
+															className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
 												onClick={() => removeImageFromSection(imageModalSectionKey, idx)}
 											>
 												×
@@ -1314,7 +1314,7 @@ export default function UploadPage() {
 								</ul>
 							</div>
 						) : null}
-						<div className="mt-6 flex justify-end gap-2 text-[0.75rem]">
+									<div className="mt-6 flex justify-end gap-2 text-sm">
 							<button
 								type="button"
 								className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-zinc-200 hover:bg-zinc-800"
