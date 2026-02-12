@@ -117,6 +117,7 @@ export default function SummaryPage() {
           Tu nájdeš prehľad sekcií, ktoré si si vybral. Odtiaľto sa môžeš vrátiť späť do konfigurátora a upraviť svoje nastavenia.
         </p>
 
+
         <div className="mt-8 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-sm text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
           {loading && <p>Načítavam tvoju konfiguráciu...</p>}
           {!loading && error && <p className="text-sm text-red-300">{error}</p>}
@@ -186,7 +187,16 @@ export default function SummaryPage() {
                 </div>
               )}
             </div>
-
+            <div className="mt-10 mb-10">
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
+                  Čo bude ďalej?
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm text-zinc-300 sm:text-base">
+                  Po obdržaní platby vám zašleme na e-mail vstup do nášho formulára, ktorý vyplníte detailmi. Tieto údaje následne použijeme na vytvorenie vašej webovej stránky.
+Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručíme v zvolenom termíne (24 alebo 48 hodín). Po doručení máte možnosť požiadať o úpravy, aby sme zabezpečili, že budete s výsledkom maximálne spokojní.
+              </p>
+            </div>
+              
             <div className="mt-5 rounded-2xl border border-purple-400/40 bg-black/40 px-5 py-4 text-sm text-zinc-100 shadow-[0_18px_60px_rgba(0,0,0,0.9)] sm:px-6 sm:py-5">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200">
                 Cena projektu
@@ -220,7 +230,24 @@ export default function SummaryPage() {
               </label>
             </div>
 
-            <div className="mt-5 flex justify-end">
+            <p className="mt-2 text-xs text-zinc-400 sm:text-[0.8rem]">
+              Čas dodania začína po odoslaní vyplneného Formulára, ktorý po uhradení sumy obdržíte na email.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+              <div className="flex items-center gap-2">
+                <img
+                  src="/ApplePay.png"
+                  alt="Apple Pay"
+                  className="h-8 w-auto opacity-80"
+                />
+                <img
+                  src="/GooglePay.png"
+                  alt="Google Pay"
+                  className="h-8 w-auto rounded-md bg-white px-2 py-0.5"
+                />
+              </div>
+
               <button
                 type="button"
                 disabled={!termsAccepted}

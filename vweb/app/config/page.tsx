@@ -315,7 +315,7 @@ export default function ConfigPage() {
 			}
 
 			setSubmitMessage("Konfigurácia bola odoslaná. Čoskoro sa ti ozvem.");
-			router.push("/upload");
+			router.push("/summary");
 		} catch (error) {
 			console.error("Error submitting order", error);
 			setSubmitMessage(
