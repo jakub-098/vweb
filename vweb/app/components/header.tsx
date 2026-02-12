@@ -1,5 +1,17 @@
 "use client";
 
+async function trackConfigStart() {
+  try {
+    await fetch("/api/analytics/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: 1 }),
+    });
+  } catch {
+    // swallow tracking errors
+  }
+}
+
 export default function Header() {
   return (
     <div
@@ -49,6 +61,11 @@ export default function Header() {
               </a>
               <a
                 href="/config"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  await trackConfigStart();
+                  window.location.href = "/config";
+                }}
                 className="inline-flex items-center justify-center rounded-2xl border border-purple-300/60 bg-white/5 px-10 py-3.5 text-sm font-semibold text-zinc-100 backdrop-blur-md transition duration-200 hover:bg-white/10 hover:border-purple-200/80"
               >
                 spustiť Config

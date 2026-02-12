@@ -227,6 +227,17 @@ export default function SummaryPage() {
                 onClick={async () => {
                   if (!termsAccepted || !order) return;
 
+                  // track final purchase click
+                  try {
+                    await fetch("/api/analytics/increment", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: 3 }),
+                    });
+                  } catch (err) {
+                    console.error("Failed to track purchase", err);
+                  }
+
                   // validate company fields if enabled
                   if (isCompany) {
                     if (ico.length !== 8) {

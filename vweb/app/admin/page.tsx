@@ -171,6 +171,12 @@ export default function AdminPage() {
             >
               Spravovať e-maily
             </Link>
+            <Link
+              href="/admin/analytics"
+              className="inline-flex items-center rounded-full border border-zinc-600 bg-zinc-900 px-4 py-1.5 text-[0.7rem] font-semibold text-zinc-100 hover:bg-zinc-800"
+            >
+              Analitics
+            </Link>
             {emailJobResult && (
               <p className="text-[0.7rem] text-zinc-300">{emailJobResult}</p>
             )}

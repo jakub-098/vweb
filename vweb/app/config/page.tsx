@@ -412,6 +412,17 @@ export default function ConfigPage() {
 			} catch {}
 		}
 
+		// track finished configuration (email submitted)
+		try {
+			await fetch("/api/analytics/increment", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ id: 2 }),
+			});
+		} catch (err) {
+			console.error("Failed to track finished config", err);
+		}
+
 		await handleSubmit(trimmed);
 		setEmailDialogOpen(false);
 		setUserEmail("");
