@@ -21,10 +21,13 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
   background: radial-gradient(circle at top, #020617 0, #02010a 40%, #000 100%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;

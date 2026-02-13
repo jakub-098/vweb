@@ -40,25 +40,12 @@ export default function Header() {
             </h1>
 
             <p className="mb-9 max-w-xl text-pretty text-sm leading-relaxed text-zinc-200/90 sm:text-base md:text-lg">
-              Moderny a responzívny web do 24h — od prvého návrhu po hotovú stránku,
+              Moderný a responzívny web do 24h — od prvého návrhu po hotovú stránku,
               optimalizovanú pre mobil, rýchlosť a silný prvý dojem.
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="#ako-to-funguje"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const el = document.getElementById("ako-to-funguje");
-                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
-              >
-                <span className="mr-1">Zistiť viac</span>
-                <span className="text-xs opacity-80 transition-transform duration-200 group-hover:translate-x-0.5">
-                  ↗
-                </span>
-              </a>
+              
               <a
                 href="/config"
                 onClick={async (e) => {
@@ -66,9 +53,24 @@ export default function Header() {
                   await trackConfigStart();
                   window.location.href = "/config";
                 }}
+                className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
+              >
+                Vytvoriť môj Web
+                <span className="text-xs opacity-80 transition-transform duration-200 group-hover:translate-x-0.5">
+                  ↗
+                </span>
+              </a>
+              <a
+                href="#ako-to-funguje"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.getElementById("ako-to-funguje");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className="inline-flex items-center justify-center rounded-2xl border border-purple-300/60 bg-white/5 px-10 py-3.5 text-sm font-semibold text-zinc-100 backdrop-blur-md transition duration-200 hover:bg-white/10 hover:border-purple-200/80"
               >
-                spustiť Config
+                <span className="mr-1">Zistiť viac</span>
+                
               </a>
             </div>
           </div>

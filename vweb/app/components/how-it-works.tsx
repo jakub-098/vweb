@@ -1,5 +1,7 @@
 "use client";
 
+import HappyCustomers from "./happy-customers";
+
 async function trackConfigStart() {
   try {
     await fetch("/api/analytics/increment", {
@@ -16,7 +18,7 @@ export default function HowItWorks() {
   return (
     <section
       id="ako-to-funguje"
-      className="relative w-full max-w-6xl -mt-24 scroll-mt-28 pt-0 pb-24 sm:w-4/5 lg:w-2/3 sm:-mt-32 sm:scroll-mt-32 sm:pb-32"
+      className="relative w-full max-w-6xl -mt-24 scroll-mt-28 pt-0 pb-24 sm:w-4/5 lg:w-2/3 sm:-mt-32 sm:scroll-mt-32 sm:pb-32 "
     >
       <div className="relative mx-auto w-full">
         <div className="mb-12 text-center">
@@ -32,7 +34,7 @@ export default function HowItWorks() {
         <div className="relative overflow-hidden rounded-2xl border border-purple-300/40 bg-black/60 px-6 py-6 text-center text-zinc-200/90 shadow-[0_24px_80px_rgba(0,0,0,0.9)] backdrop-blur-3xl sm:px-10 sm:py-8">
           <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent opacity-70" />
           <p className="text-[0.75rem] font-semibold uppercase tracking-[0.3em] text-purple-200/80">
-            Web online, bez starostí
+            Web bez starostí
           </p>
           <p className="mt-4 text-sm leading-relaxed sm:text-base">
             Potrebujete web rýchlo a bez starostí? Vy si vyberiete dizajn, my vybavíme všetko ostatné.
@@ -46,10 +48,16 @@ export default function HowItWorks() {
           </p>
         </div>
       </div>
-
-        <div className="relative">
+      <div className="mb-10 w-full px-2 sm:px-0 text-center">
+        <p className="text-[0.75rem] font-semibold uppercase tracking-[0.3em] text-purple-200/80">
+            Naši spokojní zákazníci
+          </p>
+      </div>
+      
+        <HappyCustomers />
+        <div className="relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-[2.75rem] border border-purple-300/60 bg-purple-500/20 shadow-[0_40px_120px_rgba(192,132,252,0.55)]" />
-          <div className="pointer-events-none absolute -inset-x-10 -top-10 -bottom-10 -z-20 rounded-[3rem] bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(59,130,246,0.18),_transparent_55%)] opacity-90 blur-3xl" />
+          <div className="pointer-events-none absolute -inset-x-6 sm:-inset-x-10 -top-10 -bottom-10 -z-20 rounded-[3rem] bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(59,130,246,0.18),_transparent_55%)] opacity-90 blur-3xl" />
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div className="group relative overflow-hidden rounded-2xl border border-purple-300/25 bg-black/55 px-7 py-9 text-left shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl transition duration-200 hover:-translate-y-1.5 hover:border-purple-200/60 hover:bg-black/70">

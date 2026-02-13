@@ -127,8 +127,8 @@ export async function POST(request: Request) {
     });
 
     // 7–13 minutes between individual sends to avoid rate limits
-    const minDelay = 5 * 60 * 1000; // 5 min
-    const maxDelay = 10 * 60 * 1000; // 10 min
+    const minDelay = 3 * 60 * 1000; // 3 min
+    const maxDelay = 8 * 60 * 1000; // 8 min
 
     for (let i = 0; i < emails.length; i++) {
       const to = emails[i];

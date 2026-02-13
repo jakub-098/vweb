@@ -579,8 +579,8 @@ export default function ConfigPage() {
 	}
 
 	return (
-		<section className="flex min-h-screen w-full items-center justify-center px-4 py-16 text-zinc-50 sm:px-8">
-			<div ref={containerRef} className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
+		<section className="flex min-h-screen w-full justify-center px-4 py-8 text-zinc-50 sm:items-center sm:px-8 sm:py-16">
+				<div ref={containerRef} className="relative w-full max-w-6xl sm:w-4/5 lg:w-2/3">
 				<div
 					className="pointer-events-none absolute -inset-[3px] rounded-2xl bg-gradient-to-b from-purple-500/45 via-transparent to-transparent opacity-70 blur-xl"
 					aria-hidden
@@ -639,14 +639,14 @@ export default function ConfigPage() {
 								</p>
 
 								<div className="space-y-4">
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionAbout}
 											onChange={(e) => setSectionAbout(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 												src="/previews/about.png"
 												alt="Náhľad sekcie O nás"
@@ -663,14 +663,14 @@ export default function ConfigPage() {
 										</div>
 									</label>
 
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionCards}
 											onChange={(e) => setSectionCards(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 													src="/previews/cards.png"
 													alt="Náhľad sekcie Karty"
@@ -687,14 +687,14 @@ export default function ConfigPage() {
 										</div>
 									</label>
 
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionFaq}
 											onChange={(e) => setSectionFaq(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 													src="/previews/faq.png"
 													alt="Náhľad sekcie Často kladené otázky"
@@ -711,14 +711,14 @@ export default function ConfigPage() {
 										</div>
 									</label>
 
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionGallery}
 											onChange={(e) => setSectionGallery(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 													src="/previews/gallery.png"
 													alt="Náhľad sekcie Galéria"
@@ -735,14 +735,14 @@ export default function ConfigPage() {
 										</div>
 									</label>
 
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionOffer}
 											onChange={(e) => setSectionOffer(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 													src="/previews/services.png"
 													alt="Náhľad sekcie Ponuka"
@@ -759,14 +759,14 @@ export default function ConfigPage() {
 										</div>
 									</label>
 
-									<label className="group flex cursor-pointer items-center gap-6 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70">
+									<label className="group flex flex-col cursor-pointer items-start gap-4 rounded-xl border border-purple-300/40 bg-black/40 p-4 text-left text-base text-zinc-100 transition hover:border-purple-200/80 hover:bg-black/70 sm:flex-row sm:items-center sm:gap-6">
 										<input
 											type="checkbox"
 											className="h-4 w-4 accent-purple-500"
 											checked={sectionContactForm}
 											onChange={(e) => setSectionContactForm(e.target.checked)}
 										/>
-										<div className="h-40 w-72 flex-none overflow-hidden rounded-lg bg-black/40">
+										<div className="h-40 w-full flex-none overflow-hidden rounded-lg bg-black/40 sm:w-72">
 											<Image
 													src="/previews/mailer.png"
 													alt="Náhľad sekcie Kontaktný formulár"
@@ -983,7 +983,7 @@ export default function ConfigPage() {
 											)}
 										</p>
 										<div className="space-y-2 text-base">
-											<label className="flex items-center gap-3 text-base">
+											<label className="flex flex-col gap-2 text-base sm:flex-row sm:items-center sm:gap-3">
 												<input
 													type="radio"
 													name="domain"
@@ -996,7 +996,7 @@ export default function ConfigPage() {
 													}}
 												/>
 												<span>Chcem takúto:</span>
-												<div className="flex flex-1 items-center gap-2">
+												<div className="flex flex-col flex-1 gap-2 sm:flex-row sm:items-center">
 													<span className="rounded-lg border border-white/15 bg-black/60 px-3 py-2.5 text-base text-zinc-400">
 														www.
 													</span>
@@ -1015,7 +1015,7 @@ export default function ConfigPage() {
 														type="button"
 														onClick={checkDomainAvailability}
 														disabled={domainChecking}
-														className="whitespace-nowrap rounded-full bg-purple-500/90 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60"
+														className="w-full whitespace-nowrap rounded-full bg-purple-500/90 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
 													>
 														{domainChecking ? "Kontrolujem..." : "Skontrolovať"}
 													</button>
