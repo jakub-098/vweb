@@ -394,7 +394,7 @@ export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<vo
                 <strong style="color:#111827;">Celková suma:</strong>
                 <span style="font-weight:700; color:#7c3aed;"> ${order.total_price} &euro;</span>
               </p>` : ""}
-              <a href="www.vweb.sk/upload"
+              <a href="https://www.vweb.sk/upload"
                  style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:12px 28px; font-size:14px; font-weight:600; border-radius:999px; display:inline-block; box-shadow:0 10px 15px -3px rgba(124,58,237,0.35);">
                 Spustiť Konfigurátor
               </a>
