@@ -26,6 +26,7 @@ type Order = {
 	section_offer?: number | boolean;
 	section_contact_form?: number | boolean;
 	section_footer?: number | boolean;
+	status?: number | null;
 };
 
 type SectionDescriptor = {
@@ -76,6 +77,14 @@ export default function UploadPage() {
 	const [imageModalSectionKey, setImageModalSectionKey] = useState<string | null>(null);
 	const [imageModalLimit, setImageModalLimit] = useState(0);
 	const [imageModalError, setImageModalError] = useState<string | null>(null);
+	const [loginOpen, setLoginOpen] = useState(false);
+	const [loginEmail, setLoginEmail] = useState("");
+	const [loginError, setLoginError] = useState<string | null>(null);
+	const [loginChecking, setLoginChecking] = useState(false);
+	const [statusMessage, setStatusMessage] = useState<string | null>(null);
+	const [finishDialogOpen, setFinishDialogOpen] = useState(false);
+	const [finishSubmitting, setFinishSubmitting] = useState(false);
+	const [finishDone, setFinishDone] = useState(false);
 
 	async function loadExistingSections(orderId: number, active: SectionDescriptor[]) {
 		try {
@@ -291,42 +300,208 @@ export default function UploadPage() {
 		}
 	}
 
+	async function loadOrderByEmail(email: string) {
+		setError(null);
+		setStatusMessage(null);
+		setLoginError(null);
+		setLoading(true);
+
+		try {
+			const res = await fetch("/api/orders/find-by-email", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email }),
+			});
+
+			if (!res.ok) {
+				setLoginOpen(true);
+				setLoginError("Nepodarilo sa overiť objednávku. Skús to neskôr.");
+				setLoading(false);
+				return;
+			}
+
+			const data = await res.json();
+			if (!data.success || !data.found || !data.order) {
+				setLoginOpen(true);
+				setLoginError("Pre tento e-mail sme nenašli objednávku.");
+				setLoading(false);
+				return;
+			}
+
+			const fetchedOrder: Order = data.order;
+			const rawStatus = typeof fetchedOrder.status === "number" ? fetchedOrder.status : null;
+
+			// status 0: objednávka odoslaná, čaká sa na úhradu
+			if (rawStatus === 0) {
+				setOrder(null);
+				setSections([]);
+				setStatusMessage("Vašu objednávku registrujeme a čakáme na jej úhradu.");
+				setLoginOpen(false);
+				setLoading(false);
+				return;
+			}
+
+			// status 3: tím pracuje na objednávke
+			if (rawStatus === 3) {
+				setOrder(null);
+				setSections([]);
+				setStatusMessage("Náš tím sa púšťa do práce na vašom webe. Ak niečo treba, kontaktujte nás na info@vweb.sk.");
+				setLoginOpen(false);
+				setLoading(false);
+				return;
+			}
+
+			// status 2: objednávka je už dokončená
+			if (rawStatus === 2) {
+				setOrder(null);
+				setSections([]);
+				setStatusMessage("Vašu objednávku sme už dokončili. Ak chcete nový web, môžete vytvoriť novú objednávku.");
+				setLoginOpen(false);
+				setLoading(false);
+				return;
+			}
+
+			// status 1 (alebo iný neznámy) – povolené nahrávanie podkladov
+			setOrder(fetchedOrder);
+
+			if (typeof window !== "undefined") {
+				try {
+					window.localStorage.setItem("vwebOrderEmail", email);
+				} catch {}
+			}
+
+			const active: SectionDescriptor[] = [];
+			if (isTruthyFlag(fetchedOrder.section_about)) {
+				active.push({ key: "section_about", project: findProjectForSection("section_about") });
+			}
+			if (isTruthyFlag(fetchedOrder.section_cards)) {
+				active.push({ key: "section_cards", project: findProjectForSection("section_cards") });
+			}
+			if (isTruthyFlag(fetchedOrder.section_offer)) {
+				active.push({ key: "section_offer", project: findProjectForSection("section_offer") });
+			}
+			if (isTruthyFlag(fetchedOrder.section_gallery)) {
+				active.push({ key: "section_gallery", project: findProjectForSection("section_gallery") });
+			}
+			if (isTruthyFlag(fetchedOrder.section_faq)) {
+				active.push({ key: "section_faq", project: findProjectForSection("section_faq") });
+			}
+			if (isTruthyFlag(fetchedOrder.section_contact_form)) {
+				active.push({
+					key: "section_contact_form",
+					project: findProjectForSection("section_contact_form"),
+				});
+			}
+
+			// Header a footer sú povinné sekcie – pridáme ich na začiatok a koniec.
+			const activeWithFixed: SectionDescriptor[] = [];
+			const headerProject = findProjectForSection("section_header");
+			if (headerProject) {
+				activeWithFixed.push({ key: "section_header", project: headerProject });
+			}
+			activeWithFixed.push(...active);
+			const footerProject = findProjectForSection("section_footer");
+			if (footerProject) {
+				activeWithFixed.push({ key: "section_footer", project: footerProject });
+			}
+
+			const initialDefaults: Record<string, number[]> = {};
+			for (const { key, project } of activeWithFixed) {
+				if (project && project.default > 0) {
+					initialDefaults[key] = [0];
+				}
+			}
+			setDefaultItemsBySection(initialDefaults);
+			setSections(activeWithFixed);
+			setCurrentSectionIndex(0);
+
+			await loadExistingSections(fetchedOrder.id, activeWithFixed);
+			setLoginOpen(false);
+			setLoading(false);
+		} catch (err) {
+			console.error("Failed to load order for upload page", err);
+			setError("Pri načítaní konfigurácie nastala chyba. Skús to neskôr.");
+			setLoading(false);
+		}
+	}
+
 	useEffect(() => {
-		async function loadOrder() {
+		async function init() {
+			let email: string | null = null;
+			if (typeof window !== "undefined") {
+				try {
+					email = window.localStorage.getItem("vwebOrderEmail");
+				} catch {
+					email = null;
+				}
+			}
+
+			if (!email || email.trim().length === 0) {
+				setLoading(false);
+				setLoginOpen(true);
+				return;
+			}
+
+			const trimmedEmail = email.trim();
+
 			try {
-				let email: string | null = null;
-				if (typeof window !== "undefined") {
-					try {
-						email = window.localStorage.getItem("vwebOrderEmail");
-					} catch {
-						email = null;
-					}
-				}
-
-				if (!email) {
-					router.replace("/config");
-					return;
-				}
-
 				const res = await fetch("/api/orders/find-by-email", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ email }),
+					body: JSON.stringify({ email: trimmedEmail }),
 				});
 
 				if (!res.ok) {
-					router.replace("/config");
+					setLoginOpen(true);
+					setLoading(false);
 					return;
 				}
 
 				const data = await res.json();
 				if (!data.success || !data.found || !data.order) {
-					router.replace("/config");
+					setLoginOpen(true);
+					setLoading(false);
 					return;
 				}
 
 				const fetchedOrder: Order = data.order;
+				const rawStatus = typeof fetchedOrder.status === "number" ? fetchedOrder.status : null;
+
+				// status 0: objednávka odoslaná, čaká sa na úhradu
+				if (rawStatus === 0) {
+					setOrder(null);
+					setSections([]);
+					setStatusMessage("Vašu objednávku registrujeme a čakáme na jej úhradu.");
+					setLoading(false);
+					return;
+				}
+
+				// status 3: tím pracuje na objednávke
+				if (rawStatus === 3) {
+					setOrder(null);
+					setSections([]);
+					setStatusMessage("Náš tím sa púšťa do práce na vašom webe. Ak niečo treba, kontaktujte nás na info@vweb.sk.");
+					setLoading(false);
+					return;
+				}
+
+				// status 2: objednávka je už dokončená
+				if (rawStatus === 2) {
+					setOrder(null);
+					setSections([]);
+					setStatusMessage("Vašu objednávku sme už dokončili. Ak chcete nový web, môžete vytvoriť novú objednávku.");
+					setLoading(false);
+					return;
+				}
+
+				// status 1 (alebo iný neznámy) – povolené nahrávanie podkladov
 				setOrder(fetchedOrder);
+
+				if (typeof window !== "undefined") {
+					try {
+						window.localStorage.setItem("vwebOrderEmail", trimmedEmail);
+					} catch {}
+				}
 
 				const active: SectionDescriptor[] = [];
 				if (isTruthyFlag(fetchedOrder.section_about)) {
@@ -382,7 +557,7 @@ export default function UploadPage() {
 			}
 		}
 
-		loadOrder();
+		init();
 	}, []);
 
 	function updateValue(sectionKey: string, field: string, index: number, value: string) {
@@ -402,6 +577,25 @@ export default function UploadPage() {
 		setImageModalSectionKey(null);
 		setImageModalLimit(0);
 		setImageModalError(null);
+	}
+
+	async function handleLoginSubmit() {
+		setLoginError(null);
+		const trimmed = loginEmail.trim();
+		if (!trimmed) {
+			setLoginError("Prosím zadaj e-mail použitý pri objednávke.");
+			return;
+		}
+
+		const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailPattern.test(trimmed)) {
+			setLoginError("Zadaj prosím platnú e-mailovú adresu.");
+			return;
+		}
+
+		setLoginChecking(true);
+		await loadOrderByEmail(trimmed);
+		setLoginChecking(false);
 	}
 
 	function addFilesToCurrentSection(fileList: FileList | null) {
@@ -616,7 +810,7 @@ export default function UploadPage() {
 				if (currentSectionIndex < sections.length - 1) {
 					setCurrentSectionIndex((prev) => prev + 1);
 				} else {
-					router.push("/summary");
+					setFinishDialogOpen(true);
 				}
 			})
 			.catch((err) => {
@@ -843,6 +1037,27 @@ export default function UploadPage() {
 		}
 	}
 
+	async function handleFinishConfirm() {
+		if (!order) {
+			setFinishDialogOpen(false);
+			return;
+		}
+
+		setFinishSubmitting(true);
+		try {
+			await fetch("/api/orders/status", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ orderId: order.id, status: 3 }),
+			});
+			setFinishDone(true);
+		} catch (err) {
+			console.error("Failed to update order status to 3", err);
+		} finally {
+			setFinishSubmitting(false);
+		}
+	}
+
 	return (
 		<section className="min-h-screen w-full bg-gradient-to-b from-black via-zinc-950 to-black px-4 py-16 text-zinc-50 sm:px-8">
 			<div className="mx-auto w-full max-w-4xl">
@@ -856,16 +1071,19 @@ export default function UploadPage() {
 
 				<div className="mt-8 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-base text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
 					{loading && <p>Načítavam tvoju konfiguráciu...</p>}
-					{!loading && error && (
+					{!loading && statusMessage && (
+						<p className="text-sm text-zinc-300">{statusMessage}</p>
+					)}
+					{!loading && !statusMessage && error && (
 						<p className="text-sm text-red-300">{error}</p>
 					)}
-					{!loading && !error && sections.length === 0 && (
+					{!loading && !statusMessage && !error && sections.length === 0 && (
 						<p>
 							Pre túto konfiguráciu nemáme žiadne aktívne sekcie. Skús sa vrátiť do
 							konfigurátora a vybrať aspoň jednu.
 						</p>
 					)}
-					{!loading && !error && sections.length > 0 && (
+					{!loading && !statusMessage && !error && sections.length > 0 && (
 						<div className="space-y-5">
 							{sections[currentSectionIndex] && (() => {
 								const { key, project } = sections[currentSectionIndex]!;
@@ -882,10 +1100,20 @@ export default function UploadPage() {
 										key={key}
 										className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
 									>
-												<p className="mt-2 mb-3 text-base font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-xl">
-											{project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}
-										</p>
-										<div className="flex items-center justify-between gap-3 mb-3">
+												<div className="mt-2 mb-3 flex items-center justify-between gap-3">
+													<p className="text-base font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-xl">
+														{project?.visible_name ?? project?.small_title_value ?? formatSectionHeader(key)}
+													</p>
+													<a
+														href="/preview"
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center justify-center rounded-full bg-purple-500/90 px-4 py-1.5 text-xs font-semibold text-white shadow-[0_8px_24px_rgba(88,28,135,0.75)] transition hover:bg-purple-400 hover:shadow-[0_12px_32px_rgba(88,28,135,0.9)] sm:text-sm"
+													>
+														Pozrieť demo stránku
+													</a>
+												</div>
+												<div className="flex items-center justify-between gap-3 mb-3">
 											<button
 												type="button"
 													className="text-sm font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
@@ -1246,6 +1474,113 @@ export default function UploadPage() {
 					)}
 				</div>
 			</div>
+
+			{finishDialogOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+					<div className="w-full max-w-md rounded-2xl border border-purple-300/40 bg-black/90 px-6 py-7 text-sm text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
+						{!finishDone ? (
+							<>
+								<h2 className="text-lg font-semibold text-zinc-50">
+									Dokončiť konfiguráciu?
+								</h2>
+								<p className="mt-2 text-sm text-zinc-300">
+									Naozaj chceš dokončiť konfiguráciu a odoslať formulár?
+								</p>
+								<div className="mt-6 flex justify-end gap-2 text-sm">
+									<button
+										type="button"
+										className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-zinc-200 hover:bg-zinc-800"
+										onClick={() => {
+											setFinishDialogOpen(false);
+										}}
+									>
+										Nie
+									</button>
+									<button
+										type="button"
+										className="rounded-md border border-purple-400/70 bg-purple-500/30 px-4 py-1.5 font-medium text-purple-50 hover:bg-purple-500/40 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
+										onClick={handleFinishConfirm}
+										disabled={finishSubmitting}
+									>
+										{finishSubmitting ? "Odosielam..." : "Áno"}
+									</button>
+								</div>
+							</>
+						) : (
+							<>
+								<h2 className="text-lg font-semibold text-zinc-50">
+									Formulár odoslaný
+								</h2>
+								<p className="mt-2 text-sm text-zinc-300">
+									Náš tím sa púšťa do práce na vašom webe. Ak bude niečo potrebné, ozveme sa ti na e-mail.
+								</p>
+								<div className="mt-6 flex justify-end gap-2 text-sm">
+									<button
+										type="button"
+										className="rounded-md border border-purple-400/70 bg-purple-500/40 px-4 py-1.5 font-medium text-purple-50 hover:bg-purple-500/50"
+										onClick={() => {
+											setFinishDialogOpen(false);
+											router.push("/");
+										}}
+									>
+										OK
+									</button>
+								</div>
+							</>
+						)}
+					</div>
+				</div>
+			)}
+
+			{loginOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+					<div className="w-full max-w-md rounded-2xl border border-purple-300/40 bg-black/90 px-6 py-7 text-sm text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
+						<h2 className="text-lg font-semibold text-zinc-50">
+							Prihlásenie k nahratiu podkladov
+						</h2>
+						<p className="mt-2 text-sm text-zinc-300">
+							Zadaj e-mail, ktorý si použil pri objednávke, aby sme načítali tvoju konfiguráciu.
+						</p>
+						{loginError && (
+							<p className="mt-3 rounded-md bg-red-500/15 px-3 py-2 text-sm text-red-200">
+								{loginError}
+							</p>
+						)}
+						<div className="mt-4 space-y-2">
+							<label className="block text-sm font-medium text-zinc-200">
+								E-mail
+							</label>
+							<input
+								type="email"
+								className="mt-1 w-full rounded-md border border-white/20 bg-black/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+								placeholder="napr. klient@firma.sk"
+								value={loginEmail}
+								onChange={(e) => setLoginEmail(e.target.value)}
+							/>
+						</div>
+						<div className="mt-6 flex justify-end gap-2 text-sm">
+							<button
+								type="button"
+								className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-zinc-200 hover:bg-zinc-800"
+								onClick={() => {
+									setLoginOpen(false);
+									router.push("/");
+								}}
+							>
+								Zavrieť
+							</button>
+							<button
+								type="button"
+								className="rounded-md border border-purple-400/70 bg-purple-500/30 px-4 py-1.5 font-medium text-purple-50 hover:bg-purple-500/40 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-800 disabled:text-zinc-400"
+								onClick={handleLoginSubmit}
+								disabled={loginChecking}
+							>
+								{loginChecking ? "Overujem..." : "Pokračovať"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{imageModalOpen && imageModalSectionKey && (
 				<div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4">

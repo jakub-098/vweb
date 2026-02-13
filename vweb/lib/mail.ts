@@ -29,6 +29,117 @@ export type OrderForEmail = {
   created_at?: string | null;
 };
 
+export async function sendUploadCompletedEmails(order: OrderForEmail): Promise<void> {
+	if (!smtpHost || !smtpUser || !smtpPass) {
+		return;
+	}
+
+	// Email pre admina – informácia, že klient dokončil nahrávanie podkladov
+	const adminSubject = "Zákazník dokončil nahrávanie podkladov";
+	const adminLines: string[] = [
+		"Zákazník dokončil nahrávanie podkladov v konfigurátore.",
+		"",
+		`ID objednávky: ${order.id}`,
+	];
+	if (order.user_email) {
+		adminLines.push(`Email zákazníka: ${order.user_email}`);
+	}
+	if (order.delivery_speed) {
+		adminLines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
+	}
+	if (order.created_at) {
+		adminLines.push(`Vytvorené: ${order.created_at}`);
+	}
+
+	const adminText = adminLines.join("\n");
+
+	const adminHtml = `<p>Zákazník dokončil nahrávanie podkladov v konfigurátore.</p>
+<ul>
+  <li><strong>ID objednávky:</strong> ${order.id}</li>
+  ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
+  ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+  ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
+</ul>`;
+
+	await transporter.sendMail({
+		from: `Vweb <${smtpUser}>`,
+		to: smtpUser,
+		subject: adminSubject,
+		text: adminText,
+		html: adminHtml,
+	});
+
+	// Email pre klienta – prijali sme konfiguráciu a púšťame sa do práce
+	if (!order.user_email) {
+		console.warn("Order is missing user_email, skipping upload completed client email", {
+			orderId: order.id,
+		});
+		return;
+	}
+
+	const clientSubject = "Prijali sme vašu konfiguráciu";
+
+	const clientHtml = `<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prijali sme vašu konfiguráciu</title>
+</head>
+<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
+
+          <tr>
+            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td align="left" style="font-size:14px; color:#6b7280;">
+                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
+                      Konfigurácia prijatá
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 32px 8px 32px;">
+              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu konfiguráciu</h1>
+              <p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
+                Všetky podklady sme úspešne prijali a náš tím sa púšťa do práce na vašom webe.
+              </p>
+              ${order.delivery_speed ? `<p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
+                <strong style="color:#111827;">Zvolená rýchlosť dodania:</strong>
+                <span style="font-weight:600;"> ${order.delivery_speed}</span>
+              </p>` : ""}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
+              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+	await transporter.sendMail({
+		from: `Vweb <${smtpUser}>`,
+		to: order.user_email,
+		subject: clientSubject,
+		text: "Prijali sme vašu konfiguráciu a púšťame sa do práce na vašom webe.",
+		html: clientHtml,
+	});
+}
+
 export async function sendNewOrderNotification(order: OrderForEmail): Promise<void> {
   if (!smtpHost || !smtpUser || !smtpPass) {
     return;

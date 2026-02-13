@@ -547,6 +547,14 @@ export default function ConfigPage() {
 				return;
 			}
 
+			// Ak má objednávka status 3, tím už pracuje na objednávke – zobrazíme informáciu.
+			if (orderStatus === 3) {
+				alert("Náš tím sa púšťa do práce na vašej objednávke. Ak niečo treba, kontaktujte nás na info@vweb.sk.");
+				setExistingDialogOpen(false);
+				setExistingConfigEmail("");
+				return;
+			}
+
 			// Ak má objednávka status 1 alebo 2, používateľ dostane prázdnu konfiguráciu
 			// a jeho ďalšie odoslanie sa zaregistruje ako nová objednávka.
 			if (orderStatus === 1 || orderStatus === 2) {

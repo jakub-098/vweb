@@ -22,6 +22,7 @@ function formatStatus(status: AdminOrder["status"]): string {
   if (status === 0) return "Odoslaná";
   if (status === 1) return "Zaplatená";
   if (status === 2) return "Hotová";
+  if (status === 3) return "V práci";
   return "Neznáma";
 }
 
@@ -117,10 +118,11 @@ export default function AdminPage() {
 
   const sortedOrders = [...orders].sort((a, b) => {
     const orderPriority = (status: AdminOrder["status"]): number => {
-      if (status === 1) return 0; // Zaplatená
-      if (status === 0 || status == null) return 1; // Odoslaná / in progress
-      if (status === 2) return 2; // Hotová
-      return 3;
+      if (status === 0 || status == null) return 0; // Odoslaná / in progress
+      if (status === 1) return 1; // Zaplatená
+      if (status === 3) return 2; // V práci
+      if (status === 2) return 3; // Hotová
+      return 4;
     };
 
     const pa = orderPriority(a.status ?? null);
@@ -196,20 +198,23 @@ export default function AdminPage() {
           {!loading && !error && orders.length > 0 && (
             <div className="mt-6 space-y-3">
               {sortedOrders.map((order) => {
-    const isPaid = order.status === 1;
-    const isCompleted = order.status === 2;
-    const statusClasses = isCompleted
-	  ? "border-zinc-200/80 bg-zinc-50/10"
-      : isPaid
-        ? "border-emerald-400/70 bg-emerald-950/40"
-        : "border-purple-300/30 bg-black/60";
+  const isPaid = order.status === 1;
+  const isCompleted = order.status === 2;
+  const inWork = order.status === 3;
+  const statusClasses = isCompleted
+    ? "border-zinc-200/80 bg-zinc-50/10"
+        : inWork
+          ? "border-sky-400/70 bg-sky-950/40"
+          : isPaid
+            ? "border-emerald-400/70 bg-emerald-950/40"
+            : "border-purple-300/30 bg-black/60";
 
-    return (
-      <Link
-        key={order.id}
-        href={`/admin/${order.id}`}
-        className={`flex items-center justify-between rounded-lg border px-4 py-3 text-xs text-zinc-100 transition hover:border-purple-100 hover:bg-black/80 ${statusClasses}`}
-      >
+  return (
+    <Link
+      key={order.id}
+      href={`/admin/${order.id}`}
+      className={`flex items-center justify-between rounded-lg border px-4 py-3 text-xs text-zinc-100 transition hover:border-purple-100 hover:bg-black/80 ${statusClasses}`}
+    >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-semibold text-sm">Objednávka #{order.id}</span>
                     <span className="text-zinc-400">{order.user_email ?? "(bez e-mailu)"}</span>

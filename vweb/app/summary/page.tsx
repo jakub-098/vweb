@@ -38,6 +38,7 @@ export default function SummaryPage() {
   const [dic, setDic] = useState("");
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [thankYouOpen, setThankYouOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function loadOrder() {
@@ -250,9 +251,10 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
 
               <button
                 type="button"
-                disabled={!termsAccepted}
+                disabled={!termsAccepted || submitting}
                 onClick={async () => {
-                  if (!termsAccepted || !order) return;
+                  if (!termsAccepted || !order || submitting) return;
+                  setSubmitting(true);
 
                   // track final purchase click
                   try {
@@ -269,10 +271,12 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
                   if (isCompany) {
                     if (ico.length !== 8) {
                       setCompanyError("IČO musí mať presne 8 číslic.");
+                      setSubmitting(false);
                       return;
                     }
                     if (dic.length !== 10) {
                       setCompanyError("DIČ musí mať presne 10 číslic.");
+                      setSubmitting(false);
                       return;
                     }
                     setCompanyError(null);
@@ -318,10 +322,11 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
 
                   // po odoslaní objednávky zobrazíme ďakovné okno
                   setThankYouOpen(true);
+                  setSubmitting(false);
                 }}
                 className="inline-flex items-center rounded-full bg-purple-500/90 px-6 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(168,85,247,0.6)] transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
               >
-                Dokončiť a zaplatiť
+                {submitting ? "Odosielam..." : "Dokončiť a zaplatiť"}
               </button>
             </div>
           </>

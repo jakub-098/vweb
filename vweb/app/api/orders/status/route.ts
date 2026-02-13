@@ -4,6 +4,7 @@ import {
   sendNewOrderNotification,
   sendPaymentReceivedEmail,
   sendOrderCompletedEmail,
+  sendUploadCompletedEmails,
   type OrderForEmail,
 } from "@/lib/mail";
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (![0, 1, 2].includes(status)) {
+    if (![0, 1, 2, 3].includes(status)) {
       return NextResponse.json(
         { success: false, error: "Invalid status" },
         { status: 400 }
@@ -57,8 +58,8 @@ export async function POST(request: Request) {
 
     const previousStatus = current.status;
 
-    // Do not move status backwards or reapply the same status
-    if (previousStatus !== null && typeof previousStatus !== "undefined" && status <= previousStatus) {
+    // Do not reapply the same status
+    if (previousStatus !== null && typeof previousStatus !== "undefined" && status === previousStatus) {
       return NextResponse.json({ success: true });
     }
 
@@ -101,6 +102,15 @@ export async function POST(request: Request) {
         console.error("Failed to send order completed email", emailError);
       }
     }
+
+	// Send upload completed emails (admin + client) when status changes to 3
+	if (previousStatus !== 3 && status === 3) {
+		try {
+			await sendUploadCompletedEmails(orderForEmail);
+		} catch (emailError) {
+			console.error("Failed to send upload completed emails", emailError);
+		}
+	}
 
     return NextResponse.json({ success: true });
   } catch (error) {
