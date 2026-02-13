@@ -274,16 +274,24 @@ export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<vo
           </tr>
 
           <tr>
-            <td style="padding:24px 32px 8px 32px;">
+            <td style="padding:24px 32px 20px 32px;">
               <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu platbu</h1>
               <p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Ďakujeme, vaša platba prebehla úspešne. Teraz sa púšťame do práce na vašom webe.
+                Ďakujeme, vaša platba prebehla úspešne. Teraz už len vyplníte Konfigurátor a počkáte kým bude vaša nová stránka online. 
               </p>
               ${order.total_price != null ? `<p style="margin:0 0 24px 0; font-size:14px; line-height:1.6; color:#4b5563;">
                 <strong style="color:#111827;">Celková suma:</strong>
                 <span style="font-weight:700; color:#7c3aed;"> ${order.total_price} &euro;</span>
               </p>` : ""}
+              <a href="www.vweb.sk/upload"
+                 style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:12px 28px; font-size:14px; font-weight:600; border-radius:999px; display:inline-block; box-shadow:0 10px 15px -3px rgba(124,58,237,0.35);">
+                Spustiť Konfigurátor
+              </a>
             </td>
+
+            
+              
+            
           </tr>
 
           <tr>
