@@ -78,6 +78,42 @@ export default function RootLayout({
             gtag('config', 'G-NX5P0ZDE14');
           `}
         </Script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: "https://www.vweb.sk/",
+              name: "Váš Web",
+              alternateName: "Vweb",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://www.vweb.sk/?s={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              itemListElement: [
+                {
+                  "@type": "SiteNavigationElement",
+                  position: 1,
+                  name: "Spustiť Konfigurátor",
+                  url: "https://www.vweb.sk/config",
+                },
+                
+                
+              ],
+            }),
+          }}
+        />
         {FB_PIXEL_ID && (
           <>
             <script
