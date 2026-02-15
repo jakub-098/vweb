@@ -19,11 +19,13 @@ type AnalyticsRow = {
   config: number | string | null;
   upload: number | string | null;
   purchase: number | string | null;
+  main?: number | string | null;
 };
 
 type DailyPoint = {
 	id: number | string;
 	config: number | string | null;
+	main?: number | string | null;
 };
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
@@ -113,6 +115,7 @@ export default function AdminAnalyticsPage() {
   }, []);
 
   const metrics = [
+    { key: "main" as const, label: "Návštevy", description: "Počet návštev hlavnej stránky" },
     { key: "config" as const, label: "Config", description: "Počet spustených konfigurácií" },
     { key: "upload" as const, label: "Upload", description: "Počet nahratí konfigurácie" },
     { key: "purchase" as const, label: "Purchase", description: "Počet dokončených nákupov" },
@@ -128,14 +131,15 @@ export default function AdminAnalyticsPage() {
     return idStr;
   });
 
-  const last7Values = dailyAnalytics.map((d) => Number(d.config ?? 0) || 0);
+  const last7ConfigValues = dailyAnalytics.map((d) => Number(d.config ?? 0) || 0);
+	const last7MainValues = dailyAnalytics.map((d) => Number((d as any).main ?? 0) || 0);
 
   const lineData = {
     labels: last7Labels,
     datasets: [
       {
         label: "Config",
-        data: last7Values,
+			data: last7ConfigValues,
         borderColor: "rgba(168, 85, 247, 0.9)",
         backgroundColor: "rgba(168, 85, 247, 0.3)",
         tension: 0.3,
@@ -143,6 +147,16 @@ export default function AdminAnalyticsPage() {
         pointHoverRadius: 4,
         fill: false,
       },
+			{
+				label: "Všetky návštevy (main)",
+				data: last7MainValues,
+				borderColor: "rgba(255, 255, 255, 0.9)",
+				backgroundColor: "rgba(255, 255, 255, 0.25)",
+				borderWidth: 1.5,
+				pointRadius: 2.5,
+				pointHoverRadius: 4,
+				fill: false,
+			},
     ],
   };
 
@@ -214,10 +228,14 @@ export default function AdminAnalyticsPage() {
             Aktuálne čísla len za dnešný deň.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           {metrics.map((metric) => {
             const rawValue = todayAnalytics?.[metric.key] ?? 0;
             const value = Number.isNaN(Number(rawValue)) ? 0 : Number(rawValue);
+            const mainRaw = todayAnalytics?.main ?? 0;
+				const mainValue = Number.isNaN(Number(mainRaw)) ? 0 : Number(mainRaw);
+				const showPercentage = metric.key !== "main" && mainValue > 0;
+				const percent = showPercentage ? Math.round((value / mainValue) * 100) : 0;
             return (
               <div
                 key={`today-${metric.key}`}
@@ -234,6 +252,11 @@ export default function AdminAnalyticsPage() {
                 <p className="mt-2 text-[0.7rem] text-zinc-300">
                   {metric.description}
                 </p>
+					{showPercentage && (
+						<p className="mt-1 text-[0.65rem] text-zinc-400">
+							{percent}% z návštev
+						</p>
+					)}
               </div>
             );
           })}
@@ -250,10 +273,14 @@ export default function AdminAnalyticsPage() {
             Súčet udalostí od pondelka do nedele.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           {metrics.map((metric) => {
             const rawValue = weekAnalytics?.[metric.key] ?? 0;
             const value = Number.isNaN(Number(rawValue)) ? 0 : Number(rawValue);
+            const mainRaw = weekAnalytics?.main ?? 0;
+				const mainValue = Number.isNaN(Number(mainRaw)) ? 0 : Number(mainRaw);
+				const showPercentage = metric.key !== "main" && mainValue > 0;
+				const percent = showPercentage ? Math.round((value / mainValue) * 100) : 0;
             return (
               <div
                 key={`week-${metric.key}`}
@@ -270,6 +297,11 @@ export default function AdminAnalyticsPage() {
                 <p className="mt-2 text-[0.7rem] text-zinc-300">
                   {metric.description}
                 </p>
+					{showPercentage && (
+						<p className="mt-1 text-[0.65rem] text-zinc-400">
+							{percent}% z návštev
+						</p>
+					)}
               </div>
             );
           })}

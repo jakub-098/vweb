@@ -7,7 +7,7 @@ import pool from "@/lib/db";
 export async function POST() {
   try {
     await pool.query(
-      "INSERT IGNORE INTO analytics (id, config, upload, purchase) VALUES (DATE_FORMAT(CURDATE(), '%Y%m%d'), 0, 0, 0)",
+        "INSERT IGNORE INTO analytics (id, config, upload, purchase, main) VALUES (DATE_FORMAT(CURDATE(), '%Y%m%d'), 0, 0, 0, 0)",
     );
 
     return NextResponse.json({ success: true });

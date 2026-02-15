@@ -23,6 +23,19 @@ export default function Home() {
     }
 
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    // track main page visit in analytics (id: 4 -> 'main' column)
+    (async () => {
+      try {
+        await fetch("/api/analytics/increment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: 4 }),
+        });
+      } catch (err) {
+        console.error("Failed to track main page visit", err);
+      }
+    })();
   }, []);
 
   return (
