@@ -1,17 +1,5 @@
 "use client";
 
-async function trackConfigStart() {
-  try {
-    await fetch("/api/analytics/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: 1 }),
-    });
-  } catch {
-    // swallow tracking errors
-  }
-}
-
 export default function Header() {
   return (
     <div
@@ -48,11 +36,6 @@ export default function Header() {
               
               <a
                 href="/config"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  await trackConfigStart();
-                  window.location.href = "/config";
-                }}
                 className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
               >
                 Vytvoriť môj Web

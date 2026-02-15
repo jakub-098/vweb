@@ -46,6 +46,29 @@ export default function ConfigPage() {
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
+		// avoid double-counting within one session
+		try {
+			if (window.sessionStorage.getItem("vwebConfigTracked") === "1") return;
+			window.sessionStorage.setItem("vwebConfigTracked", "1");
+		} catch {
+			// ignore storage errors
+		}
+
+		(async () => {
+			try {
+				await fetch("/api/analytics/increment", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ id: 1 }),
+				});
+			} catch (err) {
+				console.error("Failed to track config visit", err);
+			}
+		})();
+	}, []);
+
+	useEffect(() => {
+		if (typeof window === "undefined") return;
 		if (!emailDialogOpen && !existingDialogOpen) return;
 
 		// Scroll the main config card into view so the popup is visible
@@ -593,6 +616,16 @@ export default function ConfigPage() {
 					className="pointer-events-none absolute -inset-[3px] rounded-2xl bg-gradient-to-b from-purple-500/45 via-transparent to-transparent opacity-70 blur-xl"
 					aria-hidden
 				/>
+
+				<div className="mb-3 flex items-center justify-between text-xs text-zinc-400">
+					<a
+						href="/"
+						className="inline-flex items-center gap-1 text-[0.75rem] font-medium text-zinc-300 hover:text-white"
+					>
+						<span className="text-lg leading-none">←</span>
+						<span>Späť na domovskú stránku</span>
+					</a>
+				</div>
 
 				<div className="relative overflow-hidden rounded-2xl border border-purple-300/20 bg-black/60 px-7 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl sm:px-11 sm:py-12">
 					<div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70" />
