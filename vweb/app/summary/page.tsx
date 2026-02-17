@@ -40,6 +40,20 @@ export default function SummaryPage() {
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Google Ads/Analytics conversion event when user reaches the summary page
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // ensure gtag is available
+    try {
+      const gtag = (window as any).gtag;
+      if (typeof gtag === "function") {
+        gtag("event", "conversion_event_submit_lead_form", {});
+      }
+    } catch {
+      // ignore tracking errors
+    }
+  }, []);
+
   useEffect(() => {
     async function loadOrder() {
       try {
