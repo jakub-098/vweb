@@ -6,6 +6,7 @@ export default function PreviewPage() {
   const [showAllGallery, setShowAllGallery] = useState(false);
   const galleryCount = showAllGallery ? 9 : 6;
   const [navScrolled, setNavScrolled] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,7 +53,8 @@ export default function PreviewPage() {
             </label>
           </div>
           <div className="justify-self-end flex items-center gap-5">
-            <nav className="flex items-center gap-4 text-xs font-medium text-slate-600 sm:text-sm">
+            {/* Desktop nav */}
+            <nav className="hidden items-center gap-4 text-xs font-medium text-slate-600 sm:flex sm:text-sm">
               <button
                 type="button"
                 onClick={() => {
@@ -81,8 +83,57 @@ export default function PreviewPage() {
                 Kontakt
               </button>
             </nav>
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              className="inline-flex h-8 w-8 flex-col items-center justify-center gap-[3px] text-slate-700 sm:hidden"
+              aria-label="Otvoriť menu sekcií"
+            >
+              <span className="h-[2px] w-5 rounded-full bg-slate-800" />
+              <span className="h-[2px] w-5 rounded-full bg-slate-800" />
+              <span className="h-[2px] w-5 rounded-full bg-slate-800" />
+              <span className="sr-only">Menu</span>
+            </button>
           </div>
         </div>
+        {/* Mobile dropdown menu */}
+        {mobileNavOpen && (
+          <div className="fixed inset-x-0 top-[60px] z-10 flex justify-end pr-4 sm:hidden text-sm text-slate-700">
+            <div className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-md transform translate-x-3 animate-slide-in flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileNavOpen(false);
+                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="py-1.5 text-left transition hover:text-slate-900"
+              >
+                O projekte
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileNavOpen(false);
+                  document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="py-1.5 text-left transition hover:text-slate-900"
+              >
+                Služby
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileNavOpen(false);
+                  document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="py-1.5 text-left transition hover:text-slate-900"
+              >
+                Kontakt
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Top hero background image (visible upper 100vh) */}
