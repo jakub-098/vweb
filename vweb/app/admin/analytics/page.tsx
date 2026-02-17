@@ -115,9 +115,9 @@ export default function AdminAnalyticsPage() {
   }, []);
 
   const metrics = [
-    { key: "main" as const, label: "Návštevy", description: "Počet návštev hlavnej stránky" },
+    { key: "main" as const, label: "Visits", description: "Počet návštev hlavnej stránky" },
     { key: "config" as const, label: "Config", description: "Počet spustených konfigurácií" },
-    { key: "upload" as const, label: "Upload", description: "Počet nahratí konfigurácie" },
+    { key: "upload" as const, label: "Finish", description: "Počet nahratí konfigurácie" },
     { key: "purchase" as const, label: "Purchase", description: "Počet dokončených nákupov" },
   ];
 

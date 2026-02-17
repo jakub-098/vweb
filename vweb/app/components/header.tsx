@@ -38,7 +38,7 @@ export default function Header() {
                 href="/config"
                 className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
               >
-                Vytvoriť môj Web
+                Zistiť Cenu (30s)
                 <span className="text-xs opacity-80 transition-transform duration-200 group-hover:translate-x-0.5">
                   ↗
                 </span>

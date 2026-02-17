@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import FormData from "form-data";
 import Mailgun from "mailgun.js";
+import pool from "@/lib/db";
 
 function checkAdminPassword(request: Request): boolean {
   const configured = process.env.PASSWORD;
@@ -22,9 +23,11 @@ const mgClient = mailgun.client({
 });
 
 const ROOT_DIR = process.cwd();
-const EMAILS_JSON_PATH = path.join(ROOT_DIR, "data", "emails.json");
 const STATUS_JSON_PATH = path.join(ROOT_DIR, "data", "emails-status.json");
 const HTML_PATH = path.join(ROOT_DIR, "public", "reachout.html");
+const DAILY_LIMIT = 99;
+const MIN_DELAY_MS = 3 * 60 * 1000; // 3 min
+const MAX_DELAY_MS = 7 * 60 * 1000; // 7 min
 
 async function writeStatus(partial: any) {
   const now = new Date().toISOString();
@@ -61,31 +64,6 @@ async function writeStatus(partial: any) {
   await fs.writeFile(STATUS_JSON_PATH, JSON.stringify(next, null, 2), "utf8");
 }
 
-async function readEmails(): Promise<string[]> {
-  const raw = await fs.readFile(EMAILS_JSON_PATH, "utf8");
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (err) {
-    console.error("Failed to parse emails.json", err);
-    throw new Error("Neplatný formát emails.json");
-  }
-
-  if (!Array.isArray(parsed)) {
-    throw new Error("emails.json musí byť pole reťazcov");
-  }
-
-  const emails = (parsed as unknown[])
-    .map((v) => (typeof v === "string" ? v.trim() : ""))
-    .filter((v) => v && v.includes("@"));
-
-  if (!emails.length) {
-    throw new Error("V emails.json nie sú žiadne platné e-maily");
-  }
-
-  return emails;
-}
-
 async function readHtml(): Promise<string> {
   return fs.readFile(HTML_PATH, "utf8");
 }
@@ -111,9 +89,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const emails = await readEmails();
     const html = await readHtml();
     const subject = process.env.AUTO_MAIL_SUBJECT || "web bez zbytočných starostí";
+
+    // Load up to DAILY_LIMIT pending emails from the mails table
+    const [rows] = await pool.query<any[]>(
+      "SELECT id, mail FROM mails WHERE status = 'pending' ORDER BY id ASC LIMIT ?",
+      [DAILY_LIMIT]
+    );
+
+    const emails = (rows as any[]).map((row) => ({
+      id: Number(row.id),
+      mail: String(row.mail),
+    }));
+
+    if (emails.length === 0) {
+      await writeStatus({
+        status: "idle",
+        total: 0,
+        sent: 0,
+        failed: 0,
+        errorMessage: null,
+      });
+
+      return NextResponse.json({
+        success: true,
+        sent: 0,
+        failed: 0,
+        message: "Žiadne čakajúce e-maily na odoslanie.",
+      });
+    }
+
+    const ids = emails.map((e) => e.id);
+    await pool.query(
+      "UPDATE mails SET status = 'sending' WHERE id IN (?) AND status = 'pending'",
+      [ids]
+    );
 
     let sent = 0;
     let failed = 0;
@@ -126,12 +137,9 @@ export async function POST(request: Request) {
       errorMessage: null,
     });
 
-    // 7–13 minutes between individual sends to avoid rate limits
-    const minDelay = 3 * 60 * 1000; // 3 min
-    const maxDelay = 8 * 60 * 1000; // 8 min
-
-    for (let i = 0; i < emails.length; i++) {
-      const to = emails[i];
+    for (let index = 0; index < emails.length; index++) {
+      const email = emails[index];
+      const to = email.mail;
       try {
         await mgClient.messages.create(mailgunDomain, {
           from: "Vweb <team@vweb.tech>",
@@ -140,33 +148,25 @@ export async function POST(request: Request) {
           html,
         });
         sent += 1;
+        await pool.query("UPDATE mails SET status = 'sent' WHERE id = ?", [email.id]);
       } catch (err) {
         console.error("Failed to send email to", to, err);
         failed += 1;
+        await pool.query("UPDATE mails SET status = 'failed' WHERE id = ?", [email.id]);
       }
 
       await writeStatus({ sent, failed });
 
-      // Add 7–13min delay between sends, except after the last one
-      if (i < emails.length - 1) {
-        const delay = randomDelayMs(minDelay, maxDelay);
+      // Add 3–7 min delay between sends, except after the last one
+      if (index < emails.length - 1) {
+        const delay = randomDelayMs(MIN_DELAY_MS, MAX_DELAY_MS);
         await sleep(delay);
-      }
-    }
-
-    // When there are no remaining emails (we processed the whole list),
-    // delete the source JSON file so it can't be accidentally reused.
-    try {
-      await fs.unlink(EMAILS_JSON_PATH);
-    } catch (err: any) {
-      if (err?.code !== "ENOENT") {
-        console.error("Failed to delete emails.json after sending", err);
       }
     }
 
     await writeStatus({ status: "finished" });
 
-    return NextResponse.json({ success: true, sent, failed });
+    return NextResponse.json({ success: true, sent, failed, total: emails.length });
   } catch (error) {
     console.error("Failed to send emails", error);
     try {

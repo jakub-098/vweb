@@ -79,22 +79,7 @@ export default function Home() {
                 </button>
               ))}
             </nav>
-        <nav className="mt-2 flex justify-center gap-4 text-xs text-zinc-400 sm:justify-start sm:text-sm">
-          {[
-            { href: "/config", label: "Konfigurátor" },
-            { href: "/summary", label: "Zhrnutie objednávky" },
-            { href: "/upload", label: "Nahratie podkladov" },
-            { href: "/podmienky", label: "Obchodné podmienky" },
-          ].map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="transition hover:text-zinc-100"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        
           </div>
           <div className="flex flex-col items-center gap-1 text-center text-xs text-zinc-400 sm:items-end sm:text-right sm:text-sm">
             <p className="text-sm font-semibold text-zinc-50 sm:text-base">
@@ -104,7 +89,7 @@ export default function Home() {
               vedúci webdevelopmentu
             </p>
             <a href="mailto:info@vvweb.sk" className="transition hover:text-zinc-100">
-              info@vvweb.sk
+              info@vweb.sk
             </a>
             <a href="tel:+421917641379" className="transition hover:text-zinc-100">
               0917 641 379

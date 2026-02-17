@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function AdminEmailsPage() {
   const [password, setPassword] = useState("");
   const [emailCount, setEmailCount] = useState<number | null>(null);
+  const [sentCount, setSentCount] = useState<number | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
@@ -36,31 +37,39 @@ export default function AdminEmailsPage() {
       if (res.status === 401) {
         setError("Nesprávne admin heslo.");
         setEmailCount(null);
+        setSentCount(null);
         setLoadingInfo(false);
         return;
       }
 
       if (!res.ok) {
-        setError("Nepodarilo sa načítať emails.json.");
+        setError("Nepodarilo sa načítať informácie o e-mailoch.");
         setEmailCount(null);
+        setSentCount(null);
         setLoadingInfo(false);
         return;
       }
 
       const data = await res.json();
       if (!data.success) {
-        setError(data.error || "Nepodarilo sa načítať emails.json.");
+        setError(data.error || "Nepodarilo sa načítať informácie o e-mailoch.");
         setEmailCount(null);
+        setSentCount(null);
         setLoadingInfo(false);
         return;
       }
 
-      setEmailCount(typeof data.count === "number" ? data.count : 0);
+      const total = typeof data.count === "number" ? data.count : 0;
+      const sent = typeof data.sent === "number" ? data.sent : 0;
+
+      setEmailCount(total);
+      setSentCount(sent);
       setLoadingInfo(false);
     } catch (err) {
       console.error("Failed to load email info", err);
-      setError("Pri načítaní emails.json nastala chyba.");
+      setError("Pri načítaní informácií o e-mailoch nastala chyba.");
       setEmailCount(null);
+      setSentCount(null);
       setLoadingInfo(false);
     }
   }
@@ -144,10 +153,20 @@ export default function AdminEmailsPage() {
         return;
       }
 
-      setEmailCount(typeof data.count === "number" ? data.count : 0);
-      setUploadStatus(`Súbor nahratý. Platných e-mailov: ${data.count}.`);
+      const total = typeof data.count === "number" ? data.count : 0;
+      const added = typeof data.added === "number" ? data.added : undefined;
+
+      setEmailCount(total);
+      // Po nahratí nového súboru znovu načítame info o odoslaných z API
+      await fetchEmailInfo(password);
+
+      if (added !== undefined) {
+        setUploadStatus(`Súbor nahratý. Nové e-maily pridané: ${added}. Celkom v databáze: ${total}.`);
+      } else {
+        setUploadStatus(`Súbor nahratý. Celkom v databáze: ${total} e-mailov.`);
+      }
     } catch (err) {
-      console.error("Failed to upload emails.json", err);
+      console.error("Failed to upload emails file", err);
       setUploadStatus("Pri nahrávaní nastala chyba.");
     }
   };
@@ -209,7 +228,7 @@ export default function AdminEmailsPage() {
               Admin – e-maily
             </h1>
             <p className="mt-2 text-sm text-zinc-300 sm:text-base">
-              Nahraj nový JSON so zoznamom e-mailov a spusti hromadné odosielanie.
+              Nahraj nový JSON so zoznamom e-mailov. Každý deň sa odošle maximálne 99 adresátov.
             </p>
           </div>
           <Link
@@ -248,12 +267,18 @@ export default function AdminEmailsPage() {
 
           <div className="mt-4 space-y-3 text-xs sm:text-sm">
             {loadingInfo && (
-              <p className="text-zinc-300">Načítavam informácie o emails.json...</p>
+              <p className="text-zinc-300">Načítavam informácie o e-mailoch...</p>
             )}
             {error && <p className="text-red-300">{error}</p>}
             {emailCount !== null && !loadingInfo && !error && (
               <p className="text-zinc-200">
-                Aktuálny súbor emails.json obsahuje <strong>{emailCount}</strong> platných e-mailov.
+                V databáze je <strong>{emailCount}</strong> e-mailov.
+                {sentCount !== null && (
+                  <>
+                    {" "}Odoslané: <strong>{sentCount}</strong>{" "}
+                    • Zostáva: <strong>{Math.max(emailCount - sentCount, 0)}</strong>
+                  </>
+                )}
               </p>
             )}
         {status && (
@@ -284,11 +309,11 @@ export default function AdminEmailsPage() {
           <div className="mt-6 space-y-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
-                Nahrať nový JSON so zoznamom e-mailov
+                Nahrať nový súbor so zoznamom e-mailov (CSV alebo JSON)
               </label>
               <input
                 type="file"
-                accept="application/json"
+                accept=".csv,application/json,text/csv,application/vnd.ms-excel"
                 className="mt-2 w-full text-xs text-zinc-300 file:mr-4 file:rounded-full file:border-0 file:bg-purple-500/80 file:px-4 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-purple-400"
                 onChange={(e) => {
                   const selected = e.target.files?.[0] ?? null;
@@ -303,7 +328,7 @@ export default function AdminEmailsPage() {
               disabled={!password || !file}
               className="inline-flex items-center rounded-full border border-purple-400/60 bg-purple-500/20 px-4 py-1.5 text-[0.7rem] font-semibold text-purple-100 hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Nahrať emails.json
+              Nahrať súbor s e-mailami
             </button>
             {uploadStatus && (
               <p className="text-xs text-zinc-300">{uploadStatus}</p>
@@ -319,7 +344,7 @@ export default function AdminEmailsPage() {
             >
               {sending
                 ? "Odosielam e-maily..."
-                : `Spustiť odosielanie e-mailov (${emailCount ?? 0} adresátov)`}
+                : "Spustiť dnešné odosielanie (max 99 e-mailov)"}
             </button>
             {sendResult && (
               <p className="text-xs text-zinc-300">{sendResult}</p>
