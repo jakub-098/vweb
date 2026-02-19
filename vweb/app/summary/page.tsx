@@ -19,17 +19,44 @@ type Order = {
   status?: number | null;
 };
 
+type ConfigSummary = {
+  theme: "tmava" | "svetla";
+  accentColor: string;
+  accentCustom?: string | null;
+  mailOption: "potrebujem" | "mam";
+  sectionAbout: boolean;
+  sectionCards: boolean;
+  sectionFaq: boolean;
+  sectionGallery: boolean;
+  sectionOffer: boolean;
+  sectionContactForm: boolean;
+  customFont?: string | null;
+  domainOption: "own" | "request";
+  domainOwn: string;
+  domainRequest: string;
+  totalPrice: number;
+  deliverySpeed: "24h" | "48h";
+};
+
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
   if (value == null) return false;
   if (typeof value === "boolean") return value;
   return value !== 0;
 }
 
-export default function SummaryPage() {
+type SummaryProps = {
+  onEditConfig?: () => void;
+  liveConfigSummary?: ConfigSummary | null;
+  priceBreakdown?: string[];
+};
+
+export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBreakdown }: SummaryProps = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
+  const [mode, setMode] = useState<"local" | "order" | null>(null);
+  const [configSummary, setConfigSummary] = useState<ConfigSummary | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isCompany, setIsCompany] = useState(false);
   const [companyName, setCompanyName] = useState("");
@@ -39,6 +66,9 @@ export default function SummaryPage() {
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [note, setNote] = useState("");
 
   // Google Ads/Analytics conversion event when user reaches the summary page
   useEffect(() => {
@@ -55,8 +85,32 @@ export default function SummaryPage() {
   }, []);
 
   useEffect(() => {
-    async function loadOrder() {
+    // Inline live mode from configurator
+    if (liveConfigSummary) {
+      setConfigSummary(liveConfigSummary);
+      setMode("local");
+      setLoading(false);
+      return;
+    }
+
+    async function init() {
       try {
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("vwebConfigSummary");
+            if (raw) {
+              const parsed = JSON.parse(raw) as ConfigSummary;
+              setConfigSummary(parsed);
+              setMode("local");
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.error("Failed to read local config summary", err);
+          }
+        }
+
+        // fallback – načítanie existujúcej objednávky podľa e-mailu (pôvodné správanie)
         let email: string | null = null;
         if (typeof window !== "undefined") {
           try {
@@ -89,19 +143,29 @@ export default function SummaryPage() {
         }
 
         setOrder(data.order as Order);
+        setMode("order");
         setLoading(false);
       } catch (err) {
-        console.error("Failed to load order for summary page", err);
+        console.error("Failed to load data for summary page", err);
         setError("Pri načítaní konfigurácie nastala chyba. Skús to neskôr.");
         setLoading(false);
       }
     }
 
-    loadOrder();
-  }, []);
+    if (!liveConfigSummary) {
+      init();
+    }
+  }, [liveConfigSummary, router]);
 
   const selectedSections: { key: string; label: string }[] = [];
-  if (order) {
+  if (mode === "local" && configSummary) {
+    if (configSummary.sectionAbout) selectedSections.push({ key: "section_about", label: "O projekte" });
+    if (configSummary.sectionCards) selectedSections.push({ key: "section_cards", label: "Karty / výhody" });
+    if (configSummary.sectionOffer) selectedSections.push({ key: "section_offer", label: "Ponuka / služby" });
+    if (configSummary.sectionGallery) selectedSections.push({ key: "section_gallery", label: "Galéria" });
+    if (configSummary.sectionFaq) selectedSections.push({ key: "section_faq", label: "FAQ" });
+    if (configSummary.sectionContactForm) selectedSections.push({ key: "section_contact_form", label: "Kontaktný formulár" });
+  } else if (order) {
     if (isTruthyFlag(order.section_about)) selectedSections.push({ key: "section_about", label: "O projekte" });
     if (isTruthyFlag(order.section_cards)) selectedSections.push({ key: "section_cards", label: "Karty / výhody" });
     if (isTruthyFlag(order.section_offer)) selectedSections.push({ key: "section_offer", label: "Ponuka / služby" });
@@ -111,11 +175,19 @@ export default function SummaryPage() {
   }
 
   const deliveryLabel = (() => {
+    if (mode === "local" && configSummary) {
+      return configSummary.deliverySpeed === "24h" ? "24 h (expres)" : "48 h";
+    }
     if (!order || !order.delivery_speed) return "48 h";
     return order.delivery_speed === "24h" ? "24 h (expres)" : "48 h";
   })();
 
   const totalPriceValue = (() => {
+    if (mode === "local" && configSummary) {
+      const num = Number(configSummary.totalPrice);
+      if (Number.isNaN(num)) return null;
+      return num;
+    }
     if (!order || order.total_price == null) return null;
     const num = Number(order.total_price);
     if (Number.isNaN(num)) return null;
@@ -136,7 +208,7 @@ export default function SummaryPage() {
         <div className="mt-8 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-6 text-sm text-zinc-200 shadow-[0_24px_80px_rgba(0,0,0,0.95)]">
           {loading && <p>Načítavam tvoju konfiguráciu...</p>}
           {!loading && error && <p className="text-sm text-red-300">{error}</p>}
-          {!loading && !error && order && (
+          {!loading && !error && (order || (mode === "local" && configSummary)) && (
             <>
               {selectedSections.length === 0 ? (
                 <p>Pre túto konfiguráciu nemáme žiadne aktívne sekcie.</p>
@@ -156,7 +228,13 @@ export default function SummaryPage() {
                 <button
                   type="button"
                   className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-4 py-1.5 text-[0.8rem] font-semibold text-purple-50 hover:bg-purple-500/40"
-                  onClick={() => router.push("/config?edit=1")}
+                  onClick={() => {
+                    if (onEditConfig) {
+                      onEditConfig();
+                    } else {
+                      router.push("/config?edit=1");
+                    }
+                  }}
                 >
                   Upraviť konfiguráciu
                 </button>
@@ -165,7 +243,7 @@ export default function SummaryPage() {
           )}
         </div>
 
-        {!loading && !error && order && (
+        {!loading && !error && (order || (mode === "local" && configSummary)) && (
           <>
             <div className="mt-6 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-4 text-sm text-zinc-200">
               <label className="flex items-center gap-3">
@@ -202,6 +280,37 @@ export default function SummaryPage() {
                 </div>
               )}
             </div>
+
+            {mode === "local" && (
+              <div className="mt-4 rounded-2xl border border-purple-300/25 bg-black/60 px-6 py-4 text-xs text-zinc-200 sm:text-sm">
+                <label className="block text-[0.75rem] text-zinc-400">
+                  Váš e-mail
+                </label>
+                <input
+                  type="email"
+                  className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+                  placeholder="tvojmail@gmail.com"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                />
+                {emailError && (
+                  <p className="mt-1 text-xs text-red-300">{emailError}</p>
+                )}
+
+                <div className="mt-4">
+                  <label className="block text-[0.75rem] text-zinc-400">
+                    Poznámka (voliteľné)
+                  </label>
+                  <textarea
+                    className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+                    rows={3}
+                    placeholder="Sem môžeš doplniť špeciálne požiadavky alebo iné poznámky."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
             <div className="mt-10 mb-10">
               <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
                   Čo bude ďalej?
@@ -221,6 +330,13 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
               </p>
               <div className="mt-3 text-[0.8rem] text-zinc-300">
                 <p>Dodanie: {deliveryLabel}</p>
+                {Array.isArray(priceBreakdown) && priceBreakdown.length > 0 && (
+                  <div className="mt-2 space-y-0.5 text-[0.8rem] text-zinc-300">
+                    {priceBreakdown.map((line, idx) => (
+                      <p key={idx}>{line}</p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -267,7 +383,7 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
                 type="button"
                 disabled={!termsAccepted || submitting}
                 onClick={async () => {
-                  if (!termsAccepted || !order || submitting) return;
+                  if (!termsAccepted || submitting) return;
                   setSubmitting(true);
 
                   // track final purchase click
@@ -279,6 +395,81 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
                     });
                   } catch (err) {
                     console.error("Failed to track purchase", err);
+                  }
+
+                  let finalOrderId: number | null = null;
+
+                  if (mode === "local") {
+                    if (!configSummary) {
+                      setSubmitting(false);
+                      return;
+                    }
+
+                    const trimmedEmail = userEmail.trim();
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!trimmedEmail) {
+                      setEmailError("Prosím zadajte svoj e-mail.");
+                      setSubmitting(false);
+                      return;
+                    }
+                    if (!emailPattern.test(trimmedEmail)) {
+                      setEmailError("Zadajte prosím platnú e-mailovú adresu.");
+                      setSubmitting(false);
+                      return;
+                    }
+                    setEmailError(null);
+
+                    try {
+                      const res = await fetch("/api/orders", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          theme: configSummary.theme,
+                          accentColor: configSummary.accentColor,
+                          accentCustom: configSummary.accentCustom,
+                          mailOption: configSummary.mailOption,
+                          sectionAbout: configSummary.sectionAbout,
+                          sectionCards: configSummary.sectionCards,
+                          sectionFaq: configSummary.sectionFaq,
+                          sectionGallery: configSummary.sectionGallery,
+                          sectionOffer: configSummary.sectionOffer,
+                          sectionContactForm: configSummary.sectionContactForm,
+                          customFont: configSummary.customFont,
+                          domainOption: configSummary.domainOption,
+                          domainOwn: configSummary.domainOwn,
+                          domainRequest: configSummary.domainRequest,
+                          userEmail: trimmedEmail,
+                          totalPrice: configSummary.totalPrice,
+                          deliverySpeed: configSummary.deliverySpeed,
+                          hostingOption: "potrebujem",
+                          note: note || null,
+                        }),
+                      });
+
+                      if (!res.ok) {
+                        throw new Error("Failed to create order");
+                      }
+
+                      const data = await res.json();
+                      finalOrderId = typeof data.orderId === "number" ? data.orderId : null;
+
+                      if (typeof window !== "undefined") {
+                        try {
+                          window.localStorage.setItem("vwebOrderEmail", trimmedEmail);
+                          window.localStorage.removeItem("vwebConfigSummary");
+                        } catch {}
+                      }
+                    } catch (err) {
+                      console.error("Failed to create order from summary", err);
+                      setSubmitting(false);
+                      return;
+                    }
+                  } else {
+                    if (!order) {
+                      setSubmitting(false);
+                      return;
+                    }
+                    finalOrderId = order.id;
                   }
 
                   // validate company fields if enabled
@@ -300,7 +491,7 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          orderId: order.id,
+                          orderId: finalOrderId,
                           is_company: true,
                           company_name: companyName || null,
                           company_address: companyAddress || null,
@@ -311,27 +502,29 @@ Po odoslaní formulára sa okamžite pustíme do práce a stránku vám doručí
                     } catch (err) {
                       console.error("Failed to save company info", err);
                     }
-                  } else {
+                  } else if (finalOrderId != null) {
                     // if unchecked, clear any existing company info on order
                     try {
                       await fetch("/api/orders/company", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ orderId: order.id, is_company: false }),
+                        body: JSON.stringify({ orderId: finalOrderId, is_company: false }),
                       });
                     } catch (err) {
                       console.error("Failed to clear company info", err);
                     }
                   }
 
-                  try {
-                    await fetch("/api/orders/status", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ orderId: order.id, status: 0 }),
-                    });
-                  } catch (err) {
-                    console.error("Failed to update status to submitted", err);
+                  if (finalOrderId != null) {
+                    try {
+                      await fetch("/api/orders/status", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderId: finalOrderId, status: 0 }),
+                      });
+                    } catch (err) {
+                      console.error("Failed to update status to submitted", err);
+                    }
                   }
 
                   // po odoslaní objednávky zobrazíme ďakovné okno

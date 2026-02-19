@@ -28,10 +28,7 @@ export async function POST(request: Request) {
 		const mailOption: "potrebujem" | "mam" =
 			body.mailOption ?? "potrebujem";
 
-		const mailLocalPart: string | null =
-			mailOption === "potrebujem" && typeof body.mailLocalPart === "string" && body.mailLocalPart.trim().length > 0
-				? body.mailLocalPart.trim()
-				: null;
+    const mailLocalPart: string | null = null;
 
 		const sectionAbout: boolean = !!body.sectionAbout;
 		const sectionCards: boolean = !!body.sectionCards;
