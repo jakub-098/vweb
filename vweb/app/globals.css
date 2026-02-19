@@ -47,3 +47,24 @@ body {
 .animate-slide-in {
   animation: slide-in-right 0.2s ease-out;
 }
+
+@keyframes customers-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.customers-marquee-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.customers-marquee-track {
+  display: flex;
+  gap: 2rem;
+  width: max-content;
+  animation: customers-marquee 45s linear infinite;
+}

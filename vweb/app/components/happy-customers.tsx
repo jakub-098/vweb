@@ -1,33 +1,85 @@
 "use client";
 
 import Image from "next/image";
+import { projects } from "@/data/reviews";
 
 export default function HappyCustomers() {
+  const items = [0, 1, 2, 3, 4] as const;
+
   return (
-    
-      <div className="flex flex-wrap items-center justify-center gap-10 mb-12 sm:mb-16">
-        <a href="https://www.easy-project.sk" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/easyproject.png" alt="Easy Project" width={180} height={72} className="h-20 w-auto object-contain mx-auto grayscale hover:grayscale-0 transition" />
-        </a>
-        <a href="https://www.chaletrobinson.sk" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/chalet_robinson.png" alt="Chalet Robinson" width={150} height={84} className="h-[5.5rem] w-auto object-contain mx-auto grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition" />
-        </a>
-        <a href="https://www.zct3.eu" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/zct3.png" alt="ZCT3" width={160} height={64} className="h-16 w-auto object-contain mx-auto grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition" />
-        </a>
-        <a href="https://www.vweb.sk" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/vweb.png" alt="Vas Web" width={180} height={72} className="h-[2.5rem] w-auto object-contain mx-auto grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition" />
-        </a>
-        <a href="https://www.adamvirlic.com" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/adamvirlic.png" alt="Adam Virlic" width={180} height={72} className="h-20 w-auto object-contain mx-auto grayscale hover:grayscale-0 transition" />
-        </a>
-        
-        
-        {/* <a href="https://www.depos.sk" target="_blank" rel="noopener noreferrer" className="block">
-          <Image src="/logos/depos.png" alt="Depos" width={150} height={100} className="h-[2.25rem] w-auto object-contain mx-auto grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition" />
-        </a> */}
-        
+    <div className="customers-marquee-container mb-12 sm:mb-16">
+      <div className="customers-marquee-track">
+        {[...items, ...items].map((index, i) => {
+          const project = projects[index];
+
+          let href = "#";
+          let logoSrc = "";
+          let logoAlt = project?.name || "";
+
+          if (index === 0) {
+            href = "https://www.limetka-jtl.sk";
+            logoSrc = "/logos/limetka.png";
+            
+          } else if (index === 1) {
+            href = "https://www.chaletrobinson.sk";
+            logoSrc = "/logos/chalet_robinson.png";
+          } else if (index === 2) {
+            href = "https://www.zct3.eu";
+            logoSrc = "/logos/zct3.png";
+          }
+          else if (index === 3) {
+            href = "https://www.easy-project.sk";
+            logoSrc = "/logos/easyproject.png";
+          } else if (index === 4) {
+            href = "https://www.adamvirlic.com";
+            logoSrc = "/logos/adamvirlic.png";
+          }
+
+          let logoClass = "mx-auto h-20 w-auto object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
+
+          if (index === 0) {
+            // Limetka – slightly smaller, no hover scale change
+            logoClass = "mx-auto h-20 w-auto origin-center scale-[0.8] object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
+          } else if (index === 1) {
+            // Chalet – slightly larger without affecting text layout
+            logoClass = "mx-auto h-20 w-auto origin-center scale-[1.1] object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
+          }
+
+          return (
+            <div
+              key={`${index}-${i}`}
+              className="w-64 flex-shrink-0 text-center text-sm text-zinc-200"
+            >
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Image
+                  src={logoSrc}
+                  alt={logoAlt}
+                  width={180}
+                  height={72}
+                  className={logoClass}
+                />
+              </a>
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <p className="text-sm font-semibold text-zinc-50">
+                  {project?.name}
+                </p>
+                <div
+                  className="flex items-center text-[0.7rem] text-yellow-400"
+                  aria-hidden="true"
+                >
+                  <span>★★★★★</span>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-zinc-400">{project?.text}</p>
+            </div>
+          );
+        })}
       </div>
-    
+    </div>
   );
 }
