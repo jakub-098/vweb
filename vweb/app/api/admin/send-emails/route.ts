@@ -39,6 +39,7 @@ async function writeStatus(partial: any) {
     startedAt: null,
     lastUpdatedAt: null,
     errorMessage: null,
+    stopRequested: false,
   };
 
   try {
@@ -62,6 +63,16 @@ async function writeStatus(partial: any) {
 
   await fs.mkdir(path.dirname(STATUS_JSON_PATH), { recursive: true });
   await fs.writeFile(STATUS_JSON_PATH, JSON.stringify(next, null, 2), "utf8");
+}
+
+async function isStopRequested(): Promise<boolean> {
+  try {
+    const raw = await fs.readFile(STATUS_JSON_PATH, "utf8");
+    const data = JSON.parse(raw);
+    return Boolean(data.stopRequested);
+  } catch {
+    return false;
+  }
 }
 
 async function readHtml(): Promise<string> {
@@ -135,9 +146,16 @@ export async function POST(request: Request) {
       sent,
       failed,
       errorMessage: null,
+      stopRequested: false,
     });
 
     for (let index = 0; index < emails.length; index++) {
+      // Allow external stop request between individual emails
+      if (await isStopRequested()) {
+        await writeStatus({ status: "stopped" });
+        break;
+      }
+
       const email = emails[index];
       const to = email.mail;
       try {

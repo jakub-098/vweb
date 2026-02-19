@@ -11,6 +11,7 @@ export default function AdminEmailsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<{
@@ -21,6 +22,7 @@ export default function AdminEmailsPage() {
     startedAt: string | null;
     lastUpdatedAt: string | null;
     errorMessage: string | null;
+    stopRequested?: boolean;
   } | null>(null);
   const [now, setNow] = useState<Date>(new Date());
 
@@ -209,6 +211,46 @@ export default function AdminEmailsPage() {
     }
   };
 
+  const handleStop = async () => {
+    if (!password || !status || status.status !== "running" || stopping) return;
+    try {
+      setStopping(true);
+      setSendResult(null);
+      setError(null);
+
+      const res = await fetch("/api/admin/email-status", {
+        method: "POST",
+        headers: {
+          "x-admin-password": password,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "stop" }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 401) {
+        setSendResult("Nesprávne admin heslo pre zastavenie odosielania.");
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        setSendResult(data.error || "Nepodarilo sa zastaviť odosielanie e-mailov.");
+        return;
+      }
+
+      setSendResult(
+        "Požiadavka na zastavenie odosielania bola prijatá. Prebiehajúci e-mail sa môže ešte dokončiť."
+      );
+      await fetchStatus(password);
+    } catch (err) {
+      console.error("Failed to stop email send", err);
+      setSendResult("Pri zastavovaní odosielania nastala chyba.");
+    } finally {
+      setStopping(false);
+    }
+  };
+
   function formatDuration(startedAt: string | null): string {
     if (!startedAt) return "0:00";
     const start = new Date(startedAt).getTime();
@@ -293,10 +335,21 @@ export default function AdminEmailsPage() {
                 <strong>{formatDuration(status.startedAt)}</strong>
               </p>
             )}
+            {status.stopRequested && status.status === "running" && (
+              <p className="text-amber-300">
+                Zastavenie odosielania je požadované. Aktuálne odosielaný e-mail sa môže ešte dokončiť.
+              </p>
+            )}
             {status.status === "finished" && (
               <p>
                 Hotovo. Odoslané: <strong>{status.sent}</strong>, zlyhané: {" "}
                 <strong>{status.failed}</strong>.
+              </p>
+            )}
+            {status.status === "stopped" && (
+              <p>
+                Odosielanie bolo zastavené. Odoslané: <strong>{status.sent}</strong> z{" "}
+                <strong>{status.total}</strong>, zlyhané: <strong>{status.failed}</strong>.
               </p>
             )}
             {status.status === "error" && status.errorMessage && (
@@ -339,13 +392,23 @@ export default function AdminEmailsPage() {
             <button
               type="button"
               onClick={handleSend}
-							disabled={!password || sending || status?.status === "running"}
+              disabled={!password || sending || status?.status === "running"}
               className="inline-flex items-center rounded-full border border-emerald-400/70 bg-emerald-500/20 px-5 py-2 text-[0.7rem] font-semibold text-emerald-100 hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {sending
                 ? "Odosielam e-maily..."
                 : "Spustiť dnešné odosielanie (max 99 e-mailov)"}
             </button>
+            {status?.status === "running" && (
+              <button
+                type="button"
+                onClick={handleStop}
+                disabled={!password || stopping}
+                className="inline-flex items-center rounded-full border border-red-400/70 bg-red-500/20 px-5 py-2 text-[0.7rem] font-semibold text-red-100 hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {stopping ? "Zastavujem odosielanie..." : "Zastaviť odosielanie"}
+              </button>
+            )}
             {sendResult && (
               <p className="text-xs text-zinc-300">{sendResult}</p>
             )}
