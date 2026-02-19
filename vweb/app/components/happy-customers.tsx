@@ -37,10 +37,7 @@ export default function HappyCustomers() {
 
           let logoClass = "mx-auto h-20 w-auto object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
 
-          if (index === 0) {
-            // Limetka – slightly smaller, no hover scale change
-            logoClass = "mx-auto h-20 w-auto origin-center scale-[0.8] object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
-          } else if (index === 1) {
+          if (index === 1) {
             // Chalet – slightly larger without affecting text layout
             logoClass = "mx-auto h-20 w-auto origin-center scale-[1.1] object-contain grayscale opacity-80 transition hover:opacity-100 hover:grayscale-0";
           }
