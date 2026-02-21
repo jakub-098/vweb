@@ -6,6 +6,53 @@ export default function CustomWeb() {
       id="web-na-mieru"
       className="w-full max-w-6xl px-4 pb-28 sm:w-4/5 lg:w-2/3 sm:px-0"
     >
+       <div className="mx-auto max-w-4xl px-6 text-center">
+
+    {/* Small label */}
+    <p className="text-sm uppercase tracking-[0.3em] text-purple-400/80">
+      Potrebujete poradiť?
+    </p>
+
+    {/* Headline */}
+    <h2 className="mt-6 text-4xl font-semibold text-white sm:text-5xl">
+      Pomôžeme vám vybrať správne riešenie
+    </h2>
+
+    {/* Short text */}
+    <p className="mt-6 text-lg text-zinc-400">
+      Ozvite sa nám. Konzultácia je nezáväzná a radi vám odporučíme
+      najvhodnejší balík pre váš projekt.
+    </p>
+
+    {/* Contact info */}
+    <div className="mt-14 space-y-6">
+
+      {/* Email */}
+      <div className="flex items-center justify-center gap-4 text-2xl font-semibold text-white">
+        <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md">
+          ✉️
+        </div>
+        <span>info@vweb.sk</span>
+      </div>
+
+      {/* Phone */}
+      <div className="flex items-center justify-center gap-4 text-2xl font-semibold text-white">
+        <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md">
+          📞
+        </div>
+        <span>+421 900 123 456</span>
+      </div>
+
+    </div>
+
+    {/* CTA */}
+    <div className="mt-14">
+      <button className="rounded-2xl bg-purple-600 px-10 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-white transition duration-300 hover:bg-purple-500 hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]">
+        Napísať správu
+      </button>
+    </div>
+
+  </div>
       <div className="relative overflow-hidden rounded-2xl border border-purple-300/20 bg-black/60 shadow-[0_24px_80px_rgba(0,0,0,0.95)] backdrop-blur-3xl">
         <div
           className="absolute inset-0 bg-[url('/vawes2.png')] bg-cover bg-center opacity-40 mix-blend-screen"

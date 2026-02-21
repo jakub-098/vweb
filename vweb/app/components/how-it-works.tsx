@@ -6,9 +6,10 @@ export default function HowItWorks() {
   return (
     <section
       id="ako-to-funguje"
-      className="relative w-full max-w-6xl -mt-24 scroll-mt-28 pt-0 pb-24 sm:w-4/5 lg:w-2/3 sm:-mt-32 sm:scroll-mt-32 sm:pb-32 "
+      className="relative w-full max-w-6xl -mt-24 scroll-mt-28 pt-0  sm:w-4/5 lg:w-2/3 sm:-mt-32 sm:scroll-mt-32  "
     >
-      <div className="relative mx-auto w-full">
+      <HappyCustomers />
+      {/* <div className="relative mx-auto w-full">
         <div className="mb-12 text-center">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200/70">
             Proces
@@ -131,7 +132,7 @@ export default function HowItWorks() {
             <span className="text-xs opacity-90">↗</span>
           </a>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

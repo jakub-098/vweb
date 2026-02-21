@@ -8,7 +8,10 @@ import Eshops from "./components/eshops";
 import CustomWeb from "./components/custom-web";
 import Contact from "./components/contact";
 import Navbar from "./components/navbar";
-//import HappyCustomers from "./components/happy-customers";
+import Baliky from "./components/baliky";
+import BalikyDetail from "./components/baliky-detail";
+import Faq from "./components/faq";
+import PersonalTouch from "./components/personal-touch";
 
 export default function Home() {
   useEffect(() => {
@@ -43,12 +46,17 @@ export default function Home() {
       <Navbar />
       <Header />
       <HowItWorks />
+      <Baliky />
+      <BalikyDetail />
       {/* <Eshops /> */}
-      <CustomWeb />
+      {/* <CustomWeb /> */}
+
+      <Faq />
+      <PersonalTouch />
       <Contact />
-      
-      <footer className="w-full border-t border-purple-500/30 bg-black/70 px-4 py-8 text-xs text-zinc-400 sm:px-8 sm:text-sm">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 sm:w-4/5 sm:flex-row lg:w-2/3">
+
+      <footer className="w-full border-t border-purple-500/30 bg-black/70 px-4 py-10 text-sm text-zinc-400 sm:px-10 sm:py-12 sm:text-base">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 sm:w-4/5 sm:flex-row lg:w-2/3">
           <div className="text-center sm:text-left">
             <div className="flex justify-center sm:justify-start">
               <Image
@@ -58,13 +66,13 @@ export default function Home() {
 					height={16}
               />
             </div>
-				<nav className="mt-2 flex justify-center gap-4 text-xs text-zinc-400 sm:justify-start sm:text-sm">
-              {[
-                { href: "#top", label: "Úvod" },
-                { href: "#ako-to-funguje", label: "Proces" },
-                { href: "#web-na-mieru", label: "Web na mieru" },
-                { href: "#kontakt", label: "Kontakt" },
-              ].map((link) => (
+        <nav className="mt-4 flex justify-center gap-5 text-sm text-zinc-400 sm:justify-start sm:text-base">
+          {[
+          { href: "#top", label: "Úvod" },
+          { href: "#ponuka", label: "Ponuka" },
+          { href: "#faq", label: "FAQ" },
+          { href: "#kontakt", label: "Kontakt" },
+          ].map((link) => (
                 <button
                   key={link.href}
                   type="button"
@@ -81,20 +89,26 @@ export default function Home() {
             </nav>
         
           </div>
-          <div className="flex flex-col items-center gap-1 text-center text-xs text-zinc-400 sm:items-end sm:text-right sm:text-sm">
-            <p className="text-sm font-semibold text-zinc-50 sm:text-base">
+          <div className="flex flex-col items-center gap-1.5 text-center text-sm text-zinc-400 sm:items-end sm:text-right sm:text-base">
+            <p className="text-base font-semibold text-zinc-50 sm:text-lg">
               Jakub Virlic
             </p>
-            <p className="text-[0.7rem] text-zinc-400/80 sm:text-xs">
+            <p className="text-xs text-zinc-400/80 sm:text-sm">
               vedúci webdevelopmentu
             </p>
-            <a href="mailto:info@vvweb.sk" className="transition hover:text-zinc-100">
+            <a href="mailto:info@vvweb.sk" className="text-sm transition hover:text-zinc-100 sm:text-base">
               info@vweb.sk
             </a>
-            <a href="tel:+421917641379" className="transition hover:text-zinc-100">
+            <a href="tel:+421917641379" className="text-sm transition hover:text-zinc-100 sm:text-base">
               0917 641 379
             </a>
           </div>
+        </div>
+
+        <div className="mx-auto mt-6 w-full max-w-6xl border-t border-purple-500/20 pt-4 text-center text-[0.7rem] text-zinc-100 sm:w-4/5 lg:w-2/3">
+          <p>
+            © 2026 vweb.sk – Všetky práva vyhradené. 
+          </p>
         </div>
       </footer>
     </div>
