@@ -373,6 +373,7 @@ export default function ConfigPage() {
               domainRequest,
               totalPrice: estimatedPrice,
               deliverySpeed: fastDelivery === "yes" ? "24h" : "48h",
+              packageName: undefined,
             }),
           );
         } catch (error) {

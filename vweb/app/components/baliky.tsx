@@ -168,6 +168,7 @@ export default function Baliky() {
                           domainRequest: "",
                           totalPrice: numericPrice,
                           deliverySpeed,
+                          packageName: plan.name,
                         }),
                       );
                     } catch {

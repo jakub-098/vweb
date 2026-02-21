@@ -36,6 +36,7 @@ type ConfigSummary = {
   domainRequest: string;
   totalPrice: number;
   deliverySpeed: "24h" | "48h";
+  packageName?: string;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -531,8 +532,10 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
 
         {/* RIGHT SIDE – price card */}
         <div className="h-fit rounded-3xl bg-white/10 p-6 text-sm text-zinc-100 shadow-[0_0_60px_rgba(168,85,247,0.3)] backdrop-blur-2xl sm:p-8">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200">
-            Cena projektu
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-200">
+            {mode === "local" && configSummary?.packageName
+              ? `Balík ${configSummary.packageName}`
+              : "Cena projektu"}
           </p>
           <p className="mt-4 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">
             {finalPriceValue != null ? finalPriceValue.toFixed(2) : "-"} €
