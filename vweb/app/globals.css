@@ -33,6 +33,30 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ========================= */
+/* Happy customers marquee   */
+/* ========================= */
+
+.customers-marquee-container {
+  overflow: hidden;
+}
+
+.customers-marquee-track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: customers-marquee 40s linear infinite;
+}
+
+@keyframes customers-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes slide-in-right {
   from {
     opacity: 0;

@@ -7,7 +7,7 @@ export default function PersonalTouch() {
     <section className="w-full max-w-5xl px-6 pt-10 pb-30">
       <div className="mx-auto flex flex-col items-center gap-10 text-center md:flex-row md:items-center md:justify-center md:text-left">
         <div className="flex justify-center md:justify-start">
-          <div className="relative h-36 w-36 overflow-hidden rounded-full  bg-black/40 shadow-[0_20px_70px_rgba(0,0,0,0.8)] sm:h-44 sm:w-44">
+          <div className="relative h-40 w-40 overflow-hidden rounded-full bg-black/40 shadow-[0_24px_80px_rgba(0,0,0,0.85)] sm:h-45 sm:w-45">
             <Image
               src="/profile.jpg"
               alt="Profil developera"

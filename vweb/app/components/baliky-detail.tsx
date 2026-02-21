@@ -116,7 +116,7 @@ export default function BalikyDetail() {
       </div>
 
       {/* Box 4 */}
-      <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
+      <div id="custom" className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
         <div className="flex items-start gap-4">
           <div className="mt-1 h-3 w-3 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
           <div>
@@ -140,7 +140,7 @@ export default function BalikyDetail() {
     
 
 
-    <div className="mt-16 text-center">
+    <div  className="mt-16 text-center">
       <h2 className="text-4xl font-semibold text-white sm:text-5xl">
         Custom
       </h2>

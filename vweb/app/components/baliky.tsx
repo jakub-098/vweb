@@ -1,6 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export default function Baliky() {
+  const router = useRouter();
   const plans = [
     {
       name: "Business",
@@ -125,6 +128,54 @@ export default function Baliky() {
 
               <div className="mt-8">
                 <button
+                  type="button"
+                  onClick={() => {
+                    if (plan.name === "Custom") {
+                      if (typeof window !== "undefined") {
+                        const el = document.getElementById("custom");
+                        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                      return;
+                    }
+
+                    if (typeof window === "undefined") return;
+
+                    const numericPrice = (() => {
+                      const cleaned = plan.price.replace(/[^0-9,\.]/g, "").replace(",", ".");
+                      const num = parseFloat(cleaned);
+                      return Number.isNaN(num) ? 0 : num;
+                    })();
+
+                    const deliverySpeed = plan.delivery === "24h" ? "24h" : "48h" as const;
+
+                    try {
+                      window.localStorage.setItem(
+                        "vwebConfigSummary",
+                        JSON.stringify({
+                          theme: "tmava",
+                          accentColor: "#a855f7",
+                          accentCustom: null,
+                          mailOption: "potrebujem",
+                          sectionAbout: true,
+                          sectionCards: true,
+                          sectionFaq: true,
+                          sectionGallery: false,
+                          sectionOffer: true,
+                          sectionContactForm: true,
+                          customFont: null,
+                          domainOption: "request",
+                          domainOwn: "",
+                          domainRequest: "",
+                          totalPrice: numericPrice,
+                          deliverySpeed,
+                        }),
+                      );
+                    } catch {
+                      // ignore localStorage errors
+                    }
+
+                    router.push("/summary");
+                  }}
                   className={`w-full rounded-full py-3 text-sm font-semibold transition 
                     ${isFeatured 
                       ? "bg-purple-500 text-white hover:bg-purple-400" 
