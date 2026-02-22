@@ -27,6 +27,8 @@ type Order = {
 	section_contact_form?: number | boolean;
 	section_footer?: number | boolean;
 	status?: number | null;
+	theme?: string | null;
+	accent_color?: string | null;
 };
 
 type SectionDescriptor = {
@@ -85,6 +87,25 @@ export default function UploadPage() {
 	const [finishDialogOpen, setFinishDialogOpen] = useState(false);
 	const [finishSubmitting, setFinishSubmitting] = useState(false);
 	const [finishDone, setFinishDone] = useState(false);
+	const [finishError, setFinishError] = useState<string | null>(null);
+
+	// Config-like fields collected in footer (so config page isn't needed)
+	const [theme, setTheme] = useState<"tmava" | "svetla">("svetla");
+	const [accent, setAccent] = useState<
+		| "purple"
+		| "blue"
+		| "green"
+		| "orange"
+		| "pink"
+		| "red"
+		| "yellow"
+		| "teal"
+		| "gray"
+	>("purple");
+	const [accentCustom, setAccentCustom] = useState("");
+	const [note, setNote] = useState("");
+	const [logoFile, setLogoFile] = useState<File | null>(null);
+	const [existingLogoName, setExistingLogoName] = useState<string | null>(null);
 
 	async function loadExistingSections(orderId: number, active: SectionDescriptor[]) {
 		try {
@@ -364,6 +385,38 @@ export default function UploadPage() {
 			// status 1 (alebo iný neznámy) – povolené nahrávanie podkladov
 			setOrder(fetchedOrder);
 
+			// hydrate theme/accent from order if present
+			try {
+				const orderTheme = (fetchedOrder as any).theme;
+				if (orderTheme === "tmava" || orderTheme === "svetla") {
+					setTheme(orderTheme);
+				}
+				const orderAccent = (fetchedOrder as any).accent_color;
+				if (typeof orderAccent === "string" && orderAccent.trim().length > 0) {
+					const normalized = orderAccent.trim();
+					const known = [
+						"purple",
+						"blue",
+						"green",
+						"orange",
+						"pink",
+						"red",
+						"yellow",
+						"teal",
+						"gray",
+					];
+					if (known.includes(normalized)) {
+						setAccent(normalized as any);
+						setAccentCustom("");
+					} else {
+						setAccent("purple");
+						setAccentCustom(normalized);
+					}
+				}
+			} catch {
+				// ignore
+			}
+
 			if (typeof window !== "undefined") {
 				try {
 					window.localStorage.setItem("vwebOrderEmail", email);
@@ -416,6 +469,21 @@ export default function UploadPage() {
 			setCurrentSectionIndex(0);
 
 			await loadExistingSections(fetchedOrder.id, activeWithFixed);
+			// load optional branding (logo + note) – via the same API file as header uploads
+			try {
+				const brandingRes = await fetch(
+					`/api/sections/header?orderId=${fetchedOrder.id}&branding=1`,
+				);
+				if (brandingRes.ok) {
+					const brandingData = await brandingRes.json();
+					if (brandingData?.success) {
+						if (typeof brandingData.note === "string") setNote(brandingData.note);
+						if (typeof brandingData.logoName === "string") setExistingLogoName(brandingData.logoName);
+					}
+				}
+			} catch {
+				// ignore
+			}
 			setLoginOpen(false);
 			setLoading(false);
 		} catch (err) {
@@ -497,6 +565,38 @@ export default function UploadPage() {
 				// status 1 (alebo iný neznámy) – povolené nahrávanie podkladov
 				setOrder(fetchedOrder);
 
+				// hydrate theme/accent from order if present
+				try {
+					const orderTheme = (fetchedOrder as any).theme;
+					if (orderTheme === "tmava" || orderTheme === "svetla") {
+						setTheme(orderTheme);
+					}
+					const orderAccent = (fetchedOrder as any).accent_color;
+					if (typeof orderAccent === "string" && orderAccent.trim().length > 0) {
+						const normalized = orderAccent.trim();
+						const known = [
+							"purple",
+							"blue",
+							"green",
+							"orange",
+							"pink",
+							"red",
+							"yellow",
+							"teal",
+							"gray",
+						];
+						if (known.includes(normalized)) {
+							setAccent(normalized as any);
+							setAccentCustom("");
+						} else {
+							setAccent("purple");
+							setAccentCustom(normalized);
+						}
+					}
+				} catch {
+					// ignore
+				}
+
 				if (typeof window !== "undefined") {
 					try {
 						window.localStorage.setItem("vwebOrderEmail", trimmedEmail);
@@ -549,6 +649,21 @@ export default function UploadPage() {
 				setCurrentSectionIndex(0);
 
 				await loadExistingSections(fetchedOrder.id, activeWithFixed);
+				// load optional branding (logo + note) – via the same API file as header uploads
+				try {
+					const brandingRes = await fetch(
+						`/api/sections/header?orderId=${fetchedOrder.id}&branding=1`,
+					);
+					if (brandingRes.ok) {
+						const brandingData = await brandingRes.json();
+						if (brandingData?.success) {
+							if (typeof brandingData.note === "string") setNote(brandingData.note);
+							if (typeof brandingData.logoName === "string") setExistingLogoName(brandingData.logoName);
+						}
+					}
+				} catch {
+					// ignore
+				}
 				setLoading(false);
 			} catch (err) {
 				console.error("Failed to load order for upload page", err);
@@ -698,15 +813,7 @@ export default function UploadPage() {
 			}
 		}
 
-		if (project.small_title > 0) {
-			for (let i = 0; i < project.small_title; i++) {
-				const storageKey = `${sectionKey}.small_title.${i}`;
-				const presetValue =
-					project.small_title_defaults?.[i] ?? (i === 0 ? project.small_title_value : "");
-				checkField(storageKey, presetValue);
-			}
-		}
-
+		// small_title polia už od používateľa nevyžadujeme – použijú sa predvolené hodnoty z presetov
 		if (project.title > 0) {
 			for (let i = 0; i < project.title; i++) {
 				const storageKey = `${sectionKey}.title.${i}`;
@@ -730,14 +837,7 @@ export default function UploadPage() {
 			for (const itemId of defaultItemIds) {
 				const baseKey = `${sectionKey}.default.${itemId}`;
 
-				if (defaultProject.small_title > 0) {
-					for (let j = 0; j < defaultProject.small_title; j++) {
-						const storageKey = `${baseKey}.small_title.${j}`;
-						const presetValue = j === 0 ? defaultProject.small_title_value : "";
-						checkField(storageKey, presetValue);
-					}
-				}
-
+				// small_title na položkách tiež riešime iba cez predvolené texty, bez vstupu od používateľa
 				if (defaultProject.title > 0) {
 					for (let j = 0; j < defaultProject.title; j++) {
 						const storageKey = `${baseKey}.title.${j}`;
@@ -767,8 +867,8 @@ export default function UploadPage() {
 			}
 		}
 
-		// Ak má sekcia obrázky (okrem sekcie O nás), vyžadujeme aspoň jeden obrázok
-		if (project.images > 0 && sectionKey !== "section_about") {
+		// Ak má sekcia obrázky (okrem sekcie O nás a náhľadu), vyžadujeme aspoň jeden obrázok
+		if (project.images > 0 && sectionKey !== "section_about" && sectionKey !== "section_header") {
 			const existingSectionImages = existingImagesBySection[sectionKey]?.length ?? 0;
 			const newSectionImages = imagesBySection[sectionKey]?.length ?? 0;
 			if (existingSectionImages + newSectionImages === 0) {
@@ -822,6 +922,19 @@ export default function UploadPage() {
 		if (currentSectionIndex === 0) return;
 		setSectionError(null);
 		setCurrentSectionIndex((prev) => Math.max(prev - 1, 0));
+	}
+
+	function handleSkipSection() {
+		if (!sections.length) return;
+		const current = sections[currentSectionIndex];
+		if (!current) return;
+
+		setSectionError(null);
+		if (currentSectionIndex < sections.length - 1) {
+			setCurrentSectionIndex((prev) => prev + 1);
+		} else {
+			setFinishDialogOpen(true);
+		}
 	}
 
 	function removeDefaultItem(sectionKey: string, itemId: number) {
@@ -1044,7 +1157,46 @@ export default function UploadPage() {
 		}
 
 		setFinishSubmitting(true);
+		setFinishError(null);
 		try {
+			const userEmail = ((order as any).user_email as string | undefined) ?? "";
+
+			// Persist theme + accent to orders (partial update)
+			try {
+				await fetch("/api/orders/update", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						orderId: order.id,
+						theme,
+						accentColor: accent,
+						accentCustom: accentCustom || null,
+					}),
+				});
+			} catch (err) {
+				console.error("Failed to persist theme/accent", err);
+			}
+
+			// Persist note + logo (optional) – via the same API file as header uploads
+			try {
+				const fd = new FormData();
+				fd.append("orderId", String(order.id));
+				fd.append("userEmail", userEmail);
+				fd.append("branding", "1");
+				fd.append("note", note);
+				if (logoFile) fd.append("logo", logoFile);
+				const brandingRes = await fetch("/api/sections/header", { method: "POST", body: fd });
+				if (brandingRes.ok) {
+					const brandingData = await brandingRes.json();
+					if (brandingData?.success && typeof brandingData.logoName === "string") {
+						setExistingLogoName(brandingData.logoName);
+						setLogoFile(null);
+					}
+				}
+			} catch (err) {
+				console.error("Failed to persist branding", err);
+			}
+
 			await fetch("/api/orders/status", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -1053,6 +1205,7 @@ export default function UploadPage() {
 			setFinishDone(true);
 		} catch (err) {
 			console.error("Failed to update order status to 3", err);
+			setFinishError("Nepodarilo sa odoslať formulár. Skús to prosím ešte raz.");
 		} finally {
 			setFinishSubmitting(false);
 		}
@@ -1094,11 +1247,13 @@ export default function UploadPage() {
 								const maxDefaultItems = project?.default ?? 0;
 								const currentDefaultCount = defaultItemIds.length;
 								const previewImage = SECTION_PREVIEW_IMAGES[key];
+								const maxSectionImages =
+									key === "section_header" ? 1 : (project?.images ?? 0);
 
 								return (
 									<div
 										key={key}
-										className="rounded-xl border border-purple-300/30 bg-black/60 px-4 py-4 text-sm text-zinc-100"
+										className="rounded-xl bg-black/60 px-4 py-4 text-sm text-zinc-100"
 									>
 												<div className="mt-2 mb-3 flex items-center justify-between gap-3">
 													<p className="text-base font-semibold uppercase tracking-[0.25em] text-purple-100 sm:text-xl">
@@ -1113,19 +1268,11 @@ export default function UploadPage() {
 														Pozrieť demo stránku
 													</a>
 												</div>
-												<div className="flex items-center justify-between gap-3 mb-3">
-											<button
-												type="button"
-													className="text-sm font-medium text-purple-200 hover:text-purple-100 disabled:opacity-40"
-												onClick={handlePrevSection}
-												disabled={currentSectionIndex === 0}
-											>
-												<span className="mr-1">←</span> Späť
-												</button>
+												<div className="mb-3 flex items-center justify-end">
 													<p className="text-sm font-medium text-zinc-400">
-													Sekcia {currentSectionIndex + 1} / {sections.length}
-												</p>
-										</div>
+														Sekcia {currentSectionIndex + 1} / {sections.length}
+													</p>
+												</div>
 										{previewImage && (
 											<div className="mb-4 w-full overflow-hidden rounded-lg border border-white/10 bg-black/60">
 												<div className="relative h-40 w-full sm:h-52 md:h-64">
@@ -1146,28 +1293,7 @@ export default function UploadPage() {
 											</p>
 										) : (
 												<div className="mt-3 space-y-3 text-sm text-zinc-200">
-												{project.small_title > 0 && (
-													<div className="space-y-1">
-														<p className="font-semibold text-zinc-100">Malý nadpis</p>
-														{Array.from({ length: project.small_title }).map((_, i) => {
-															const storageKey = `${key}.small_title.${i}`;
-															const presetValue =
-																project.small_title_defaults?.[i] ??
-																(i === 0 ? project.small_title_value : "");
-															return (
-																<input
-																	key={storageKey}
-																	type="text"
-																	required
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																	    placeholder={presetValue || `Malý nadpis ${i + 1}`}
-																		    value={values[storageKey] ?? ""}
-																	onChange={(e) => updateValue(key, "small_title", i, e.target.value)}
-																/>
-															);
-														})}
-													</div>
-												)}
+												{/* Malý nadpis pre hlavné sekcie už od používateľa nezbierame – použijeme predvolené hodnoty z presetov */}
 												{project.title > 0 && (
 													<div className="space-y-1">
 														<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
@@ -1181,7 +1307,7 @@ export default function UploadPage() {
 																	key={storageKey}
 																	type="text"
 																	required
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																	placeholder={presetValue || `Hlavný nadpis ${i + 1}`}
 																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "title", i, e.target.value)}
@@ -1201,7 +1327,7 @@ export default function UploadPage() {
 																	key={storageKey}
 																	rows={3}
 																	required
-																		className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																	className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
 																	placeholder={presetValue || `Text ${i + 1}`}
 																	value={values[storageKey] ?? ""}
 																	onChange={(e) => updateValue(key, "text", i, e.target.value)}
@@ -1223,25 +1349,25 @@ export default function UploadPage() {
 															/>
 														</div>
 													)}
-												{project.images > 0 && key !== "section_about" && (
+												{maxSectionImages > 0 && key !== "section_about" && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-3">
 															<div className="flex flex-col gap-0.5">
 																<p>
-																	Obrázky: {existingSectionImages.length + imagesForSection.length}/{project.images} nahraných
+																	Obrázky: {existingSectionImages.length + imagesForSection.length}/{maxSectionImages} nahraných
 																</p>
 																{key === "section_header" && (
 																	<p className="text-xs text-zinc-400">
-																		Pre túto sekciu nahraj 2 obrázky: <span className="font-medium">BG image</span> (pozadie) a <span className="font-medium">logo</span>.
+																		Nahrajte velký obrázok pre pozadie náhľadu, ak zatiaľ taký obrázok nemáte, my ho doplníme s našej knižnice.
 																	</p>
 																)}
 															</div>
 															<button
 																type="button"
 																className="rounded-md border border-purple-400/70 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/30"
-																onClick={() => openImageModal(key, project.images)}
+																onClick={() => openImageModal(key, maxSectionImages)}
 															>
-																Nahrať obrázky
+																Nahrať obrázok
 															</button>
 														</div>
 															{(existingSectionImages.length > 0 || imagesForSection.length > 0) && (
@@ -1312,31 +1438,7 @@ export default function UploadPage() {
 																					Odstrániť
 																				</button>
 																			</div>
-																			{defaultProject.small_title > 0 && (
-																				<div className="space-y-1">
-																					<p className="font-semibold text-zinc-100">
-																						Malý nadpis
-																					</p>
-																					{Array.from({ length: defaultProject.small_title }).map((_, j) => {
-																						const storageKey = `${baseKey}.small_title.${j}`;
-																						const presetValue =
-																							j === 0 ? defaultProject.small_title_value : "";
-																						return (
-																							<input
-																								key={storageKey}
-																								type="text"
-																								required
-																								className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-																								placeholder={presetValue || `Malý nadpis ${j + 1}`}
-																									value={values[storageKey] ?? ""}
-																								onChange={(e) =>
-																									updateValue(`${key}.default.${itemId}`, "small_title", j, e.target.value)
-																								}
-																							/>
-																						);
-																					})}
-																				</div>
-																			)}
+																			{/* Malý nadpis pre predvolené položky nezobrazujeme – použijú sa predvolené texty */}
 																			{defaultProject.title > 0 && (
 																				<div className="space-y-1">
 																					<p className="font-semibold text-zinc-100">Hlavný nadpis</p>
@@ -1455,18 +1557,259 @@ export default function UploadPage() {
 												)}
 											</div>
 										)}
-															{sectionError && (
-																<p className="mt-4 text-sm text-red-300">{sectionError}</p>
-															)}
-															<div className="mt-4 flex justify-end">
-											<button
-																		type="button"
-																		className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-5 py-2 text-base font-semibold text-purple-50 hover:bg-purple-500/40"
-												onClick={handleNextSection}
-											>
-												{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Ďalej"}
-											</button>
-										</div>
+																{key === "section_footer" && (
+																	<div className="space-y-5 rounded-lg border border-white/10 bg-black/40 px-4 py-4 mt-20">
+																		
+																		<div className="space-y-1">
+																			<p className="font-semibold text-zinc-100">Logo (voliteľné)</p>
+																			<p className="text-xs text-zinc-400">ak nenahráte logo, vytvoríme Vám jednoduché logo my.</p>
+																			<div className="mt-2 flex items-center justify-between gap-3">
+																				<label className="inline-flex cursor-pointer items-center rounded-md border border-purple-400/70 bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-100 hover:bg-purple-500/30">
+																					<input
+																					type="file"
+																					accept="image/*"
+																					className="hidden"
+																					onChange={(e) => {
+																						const f = e.target.files?.[0] ?? null;
+																						setLogoFile(f);
+																						if (f) setExistingLogoName(null);
+																					}}
+																				/>
+																					<span>Nahrať logo</span>
+																				</label>
+																				{(existingLogoName || logoFile) && (
+																					<div className="flex min-w-0 items-center gap-2">
+																						<span className="truncate text-xs text-zinc-300">
+																							{logoFile ? logoFile.name : existingLogoName}
+																						</span>
+																						<button
+																							type="button"
+																							className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/70 text-xs text-white hover:bg-red-500"
+																							onClick={() => {
+																							setLogoFile(null);
+																							setExistingLogoName(null);
+																						}}
+																						>
+																							×
+																						</button>
+																					</div>
+																				)}
+																			</div>
+																	</div>
+
+																		<div className="space-y-2">
+																			<p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-200">Téma</p>
+																			<div className="inline-flex rounded-full bg-black/60 p-1.5 text-xs sm:text-sm">
+																				<button
+																					type="button"
+																					onClick={() => setTheme("tmava")}
+																					className={`rounded-full px-5 py-2 font-semibold transition ${
+																						theme === "tmava" ? "bg-purple-500/90 text-white" : "text-zinc-200"
+																					}`}
+																				>
+																					Tmavá
+																				</button>
+																				<button
+																					type="button"
+																					onClick={() => setTheme("svetla")}
+																					className={`rounded-full px-5 py-2 font-semibold transition ${
+																						theme === "svetla" ? "bg-purple-500/90 text-white" : "text-zinc-200"
+																					}`}
+																				>
+																					Svetlá
+																				</button>
+																			</div>
+																		</div>
+
+																		<div className="space-y-2">
+																			<p className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-200">Akcent farba</p>
+																			<div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="purple"
+																						checked={accent === "purple"}
+																						onChange={() => setAccent("purple")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-purple-500" />
+																						<span>Fialová</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="blue"
+																						checked={accent === "blue"}
+																						onChange={() => setAccent("blue")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-blue-500" />
+																						<span>Modrá</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="green"
+																						checked={accent === "green"}
+																						onChange={() => setAccent("green")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-emerald-500" />
+																						<span>Zelená</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="orange"
+																						checked={accent === "orange"}
+																						onChange={() => setAccent("orange")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-amber-400" />
+																						<span>Oranžová</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="pink"
+																						checked={accent === "pink"}
+																						onChange={() => setAccent("pink")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-pink-500" />
+																						<span>Ružová</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="red"
+																						checked={accent === "red"}
+																						onChange={() => setAccent("red")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-red-500" />
+																						<span>Červená</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="yellow"
+																						checked={accent === "yellow"}
+																						onChange={() => setAccent("yellow")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-yellow-400" />
+																						<span>Žltá</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="teal"
+																						checked={accent === "teal"}
+																						onChange={() => setAccent("teal")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-teal-400" />
+																						<span>Tyrkysová</span>
+																					</span>
+																				</label>
+																				<label className="flex items-center gap-2">
+																					<input
+																						type="radio"
+																						name="accent-upload"
+																						value="gray"
+																						checked={accent === "gray"}
+																						onChange={() => setAccent("gray")}
+																						className="h-3.5 w-3.5 accent-purple-500"
+																					/>
+																					<span className="inline-flex items-center gap-2">
+																						<span className="h-3 w-3 rounded-full bg-zinc-400" />
+																						<span>Neutrálna</span>
+																					</span>
+																				</label>
+																			</div>
+																			<input
+																				type="text"
+																				placeholder="#A855F7 (vlastný kód, voliteľné)"
+																				value={accentCustom}
+																				onChange={(e) => setAccentCustom(e.target.value)}
+																				className="mt-2 w-full rounded-lg border border-white/15 bg-black/50 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																			/>
+																		</div>
+
+																		<div className="space-y-2">
+																			<p className="text-xs text-zinc-400">
+																				Váš email bude v tvare info@zvolenadomena, ak chcete mať iný zaciatok ako info, napíšte nám to do poznámky, ďakujeme
+																			</p>
+																			<p className="font-semibold text-zinc-100">Poznámka (voliteľné)</p>
+																			<textarea
+																				rows={3}
+																				className="mt-1 w-full rounded-md border border-white/20 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+																				placeholder="Sem môžeš doplniť špeciálne požiadavky alebo iné poznámky."
+																				value={note}
+																				onChange={(e) => setNote(e.target.value)}
+																			/>
+																		</div>
+																	</div>
+																)}
+
+																{sectionError && (
+																	<p className="mt-4 text-sm text-red-300">{sectionError}</p>
+																)}
+																<div className="mt-4 flex items-center justify-between">
+																	<div>
+																		{currentSectionIndex > 0 && (
+																			<button
+																				type="button"
+																				className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-5 py-2 text-base font-semibold text-purple-50 hover:bg-purple-500/40"
+																				onClick={handlePrevSection}
+																			>
+																				Späť
+																			</button>
+																		)}
+																	</div>
+																	<div className="flex items-center gap-2">
+																		{key !== "section_header" && key !== "section_footer" && (
+																			<button
+																				type="button"
+																				className="inline-flex items-center rounded-md border border-zinc-600 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+																				onClick={handleSkipSection}
+																			>
+																				Nepotrebujem túto sekciu
+																			</button>
+																		)}
+																		<button
+																			type="button"
+																			className="inline-flex items-center rounded-md border border-purple-400/70 bg-purple-500/30 px-5 py-2 text-base font-semibold text-purple-50 hover:bg-purple-500/40"
+																			onClick={handleNextSection}
+																		>
+																			{currentSectionIndex === sections.length - 1 ? "Dokončiť" : "Ďalej"}
+																		</button>
+																	</div>
+																</div>
 									</div>
 								);
 							})()}
@@ -1486,6 +1829,11 @@ export default function UploadPage() {
 								<p className="mt-2 text-sm text-zinc-300">
 									Naozaj chceš dokončiť konfiguráciu a odoslať formulár?
 								</p>
+								{finishError && (
+									<p className="mt-3 rounded-md bg-red-500/15 px-3 py-2 text-sm text-red-200">
+										{finishError}
+									</p>
+								)}
 								<div className="mt-6 flex justify-end gap-2 text-sm">
 									<button
 										type="button"

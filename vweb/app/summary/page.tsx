@@ -661,6 +661,12 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
                         domainOwn: "",
                         domainRequest: normalizedDomain,
                         note: note || null,
+                        sectionAbout: true,
+                        sectionCards: true,
+                        sectionFaq: true,
+                        sectionGallery: true,
+                        sectionOffer: true,
+                        sectionContactForm: true,
                       }),
                     });
 
