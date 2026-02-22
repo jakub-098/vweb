@@ -133,6 +133,16 @@ export default function BalikyDetail() {
 
     </div>
 
+    <div className="mt-8 text-center">
+      <button
+        type="button"
+        onClick={() => window.open('/preview', '_blank')}
+        className="rounded-2xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+      >
+        Prezrieť Demo stránku
+      </button>
+    </div>
+
     {/* ===================== */}
     {/* CUSTOM Timeline + Nadpis */}
     {/* ===================== */}

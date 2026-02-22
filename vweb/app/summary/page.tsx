@@ -96,6 +96,29 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
     }
   }, []);
 
+  // Analytics: summary page visited
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (window.sessionStorage.getItem("vwebSummaryTracked") === "1") return;
+      window.sessionStorage.setItem("vwebSummaryTracked", "1");
+    } catch {
+      // ignore
+    }
+
+    (async () => {
+      try {
+        await fetch("/api/analytics/increment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: 1 }),
+        });
+      } catch (err) {
+        console.error("Failed to track summary visit", err);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     // Inline live mode from configurator
     if (liveConfigSummary) {
