@@ -3,6 +3,12 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
 type Order = {
   id: number;
   user_email: string | null;
@@ -51,6 +57,30 @@ type SummaryProps = {
   priceBreakdown?: string[];
 };
 
+function sendGoogleConversionEvent(): void {
+  if (typeof window === "undefined") return;
+  const gtag = window.gtag;
+  if (typeof gtag !== "function") return;
+
+  try {
+    if (window.sessionStorage.getItem("vwebAdsConversionSent") === "1") return;
+    window.sessionStorage.setItem("vwebAdsConversionSent", "1");
+  } catch {
+    // ignore storage errors
+  }
+
+  try {
+    gtag("event", "ads_conversion_Odoslanie_formul_ra_pre_1", {
+      event_callback: () => {
+        // no navigation here; we just want to ensure the event is queued/sent
+      },
+      event_timeout: 2000,
+    });
+  } catch {
+    // ignore tracking errors
+  }
+}
+
 export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBreakdown }: SummaryProps = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -81,20 +111,6 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [promoOk, setPromoOk] = useState<boolean | null>(null);
   const [promoDiscountPercent, setPromoDiscountPercent] = useState<number | null>(null);
-
-  // Google Ads/Analytics conversion event when user reaches the summary page
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    // ensure gtag is available
-    try {
-      const gtag = (window as any).gtag;
-      if (typeof gtag === "function") {
-        gtag("event", "conversion_event_submit_lead_form", {});
-      }
-    } catch {
-      // ignore tracking errors
-    }
-  }, []);
 
   // Analytics: summary page visited
   useEffect(() => {
@@ -631,6 +647,9 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
                 }
 
                 setSubmitting(true);
+
+                // Google Ads conversion (no thank-you page, fire on submit start)
+                sendGoogleConversionEvent();
 
                 // track final purchase click
                 try {
