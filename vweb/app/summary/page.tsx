@@ -57,31 +57,35 @@ type SummaryProps = {
   priceBreakdown?: string[];
 };
 
-function sendGoogleConversionEvent(): void {
-  if (typeof window === "undefined") return;
-  const gtag = window.gtag;
-  if (typeof gtag !== "function") return;
+function gtagSendEvent(url?: string): boolean {
+  if (typeof window === "undefined") return false;
 
-  try {
-    if (window.sessionStorage.getItem("vwebAdsConversionSent") === "1") return;
-    window.sessionStorage.setItem("vwebAdsConversionSent", "1");
-  } catch {
-    // ignore storage errors
+  const callback = () => {
+    if (typeof url === "string") {
+      window.location.href = url;
+    }
+  };
+
+  const gtag = window.gtag;
+  if (typeof gtag !== "function") {
+    callback();
+    return false;
   }
 
   try {
-    gtag("event", "ads_conversion_Odoslanie_formul_ra_pre_1", {
-      event_callback: () => {
-        // no navigation here; we just want to ensure the event is queued/sent
-      },
+    gtag("event", "purchase", {
+      event_callback: callback,
       event_timeout: 2000,
+      // <event_parameters>
     });
   } catch {
-    // ignore tracking errors
+    callback();
   }
+
+  return false;
 }
 
-export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBreakdown }: SummaryProps = {}) {
+export default function SummaryPage({ liveConfigSummary, priceBreakdown }: SummaryProps = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -648,9 +652,6 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
 
                 setSubmitting(true);
 
-                // Google Ads conversion (no thank-you page, fire on submit start)
-                sendGoogleConversionEvent();
-
                 // track final purchase click
                 try {
                   await fetch("/api/analytics/increment", {
@@ -792,6 +793,9 @@ export default function SummaryPage({ onEditConfig, liveConfigSummary, priceBrea
                     console.error("Failed to update status to submitted", err);
                   }
                 }
+
+                // Google tag (gtag.js) event - delayed navigation helper
+                gtagSendEvent();
 
                 // po odoslaní objednávky zobrazíme ďakovné okno
                 setThankYouOpen(true);
