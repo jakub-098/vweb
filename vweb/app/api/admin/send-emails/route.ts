@@ -114,6 +114,11 @@ export async function POST(request: Request) {
       mail: String(row.mail),
     }));
 
+    // Reset emails stuck in 'sending' status back to 'pending'
+    await pool.query(
+      "UPDATE mails SET status = 'pending' WHERE status = 'sending'"
+    );
+
     if (emails.length === 0) {
       await writeStatus({
         status: "idle",

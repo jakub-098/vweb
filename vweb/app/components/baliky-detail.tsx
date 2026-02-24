@@ -2,7 +2,7 @@
 
 export default function BalikyDetail() {
   return (
-    <section className="relative w-full pb-24">
+    <section className="relative w-full pb-24 mt-10">
   <div className="mx-auto max-w-6xl px-6">
 
     {/* ===================== */}
@@ -19,7 +19,7 @@ export default function BalikyDetail() {
         Bez technických komplikácií. Bez zbytočného čakania.
       </p> */}
     </div>
-    <div className="relative mt-10">
+    <div className="relative mt-15">
     {/* Horizontal line (posunutá nižšie) */}
     <div className="absolute top-16 left-0 right-0 hidden h-px bg-gradient-to-r from-purple-500/20 via-purple-400/60 to-purple-500/20 sm:block" />
 
@@ -66,7 +66,7 @@ export default function BalikyDetail() {
 
     </div>
   </div>
-    <div className="mt-20 grid gap-8 sm:grid-cols-2">
+    <div className="mt-20 grid gap-8 sm:grid-cols-2 mb-10">
 
       {/* Box 1 */}
       <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
