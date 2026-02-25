@@ -116,6 +116,38 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   const [promoOk, setPromoOk] = useState<boolean | null>(null);
   const [promoDiscountPercent, setPromoDiscountPercent] = useState<number | null>(null);
 
+  // Google Ads: conversion event on Summary page load
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let sent = false;
+    const trySend = () => {
+      if (sent) return;
+      const gtag = window.gtag;
+      if (typeof gtag !== "function") return;
+
+      sent = true;
+      try {
+        gtag("config", "AW-17955579995");
+        gtag("event", "add_to_cart");
+      } catch {
+        // ignore
+      }
+    };
+
+    trySend();
+
+    const intervalId = window.setInterval(trySend, 250);
+    const timeoutId = window.setTimeout(() => {
+      window.clearInterval(intervalId);
+    }, 2000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   // Analytics: summary page visited
   useEffect(() => {
     if (typeof window === "undefined") return;
