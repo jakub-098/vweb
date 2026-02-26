@@ -130,6 +130,9 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
       try {
         gtag("config", "AW-17955579995");
         gtag("event", "add_to_cart");
+        gtag("event", "conversion", {
+          send_to: "AW-17955579995/hLVHCM6CsP8bENvQ8fFC",
+        });
       } catch {
         // ignore
       }
