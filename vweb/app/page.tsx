@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useEffect } from "react";
 import Header from "./components/header";
 import HowItWorks from "./components/how-it-works";
-import Eshops from "./components/eshops";
-import CustomWeb from "./components/custom-web";
 import Contact from "./components/contact";
 import Navbar from "./components/navbar";
 import Baliky from "./components/baliky";
@@ -56,52 +54,64 @@ export default function Home() {
       <Contact />
 
       <footer className="w-full border-t border-purple-500/30 bg-black/70 px-4 py-10 text-sm text-zinc-400 sm:px-10 sm:py-12 sm:text-base">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 sm:w-4/5 sm:flex-row lg:w-2/3">
-          <div className="text-center sm:text-left">
-            <div className="flex justify-center sm:justify-start">
-              <Image
-                src="/Logo_White.png"
-				alt="Váš Web logo"
-					width={75}
-					height={16}
-              />
+        <div className="mx-auto w-full max-w-6xl sm:w-4/5 lg:w-2/3">
+          <div className="grid gap-10 text-center sm:grid-cols-3 sm:items-start sm:text-left">
+            <div>
+              <div className="flex justify-center sm:justify-start">
+                <Image src="/Logo_White.png" alt="Váš Web logo" width={75} height={16} />
+              </div>
+              <nav className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 sm:justify-start sm:text-base">
+                {[
+                  { href: "#top", label: "Úvod" },
+                  { href: "#ponuka", label: "Ponuka" },
+                  { href: "#faq", label: "FAQ" },
+                  { href: "#kontakt", label: "Kontakt" },
+                ].map((link) => (
+                  <button
+                    key={link.href}
+                    type="button"
+                    onClick={() => {
+                      const id = link.href.slice(1);
+                      const el = document.getElementById(id);
+                      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="transition hover:text-zinc-100"
+                  >
+                    {link.label}
+                  </button>
+                ))}
+              </nav>
             </div>
-        <nav className="mt-4 flex justify-center gap-5 text-sm text-zinc-400 sm:justify-start sm:text-base">
-          {[
-          { href: "#top", label: "Úvod" },
-          { href: "#ponuka", label: "Ponuka" },
-          { href: "#faq", label: "FAQ" },
-          { href: "#kontakt", label: "Kontakt" },
-          ].map((link) => (
-                <button
-                  key={link.href}
-                  type="button"
-                  onClick={() => {
-                    const id = link.href.slice(1);
-                    const el = document.getElementById(id);
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  className="transition hover:text-zinc-100"
-                >
-                  {link.label}
-                </button>
-              ))}
-            </nav>
-        
-          </div>
-          <div className="flex flex-col items-center gap-1.5 text-center text-sm text-zinc-400 sm:items-end sm:text-right sm:text-base">
-            <p className="text-base font-semibold text-zinc-50 sm:text-lg">
-              Jakub Virlic
-            </p>
-            <p className="text-xs text-zinc-400/80 sm:text-sm">
-              vedúci webdevelopmentu
-            </p>
-            <a href="mailto:info@vvweb.sk" className="text-sm transition hover:text-zinc-100 sm:text-base">
-              info@vweb.sk
-            </a>
-            <a href="tel:+421917641379" className="text-sm transition hover:text-zinc-100 sm:text-base">
-              0917 641 379
-            </a>
+
+            {/* Middle column: contact */}
+            <div className="flex flex-col items-center gap-1.5 text-center text-sm text-zinc-400 sm:text-base">
+              <p className="text-base font-semibold text-zinc-50 sm:text-lg">Kontakty</p>
+              
+              <a
+                href="mailto:info@vweb.sk"
+                className="text-sm transition hover:text-zinc-100 sm:text-base"
+              >
+                info@vweb.sk
+              </a>
+              <a
+                href="tel:+421917641379"
+                className="text-sm transition hover:text-zinc-100 sm:text-base"
+              >
+                0917 641 379
+              </a>
+            </div>
+
+            {/* Right column: company details (placeholders) */}
+            <div className="flex flex-col items-center gap-1.5 text-center text-sm text-zinc-400 sm:items-end sm:text-right sm:text-base">
+              <p className="text-base font-semibold text-zinc-50 sm:text-lg">Spoločnosť</p>
+              
+              <p className="text-sm sm:text-base">Smart Dom s.r.o.</p>
+              <p className="text-sm sm:text-base">Bratislavská 180/49
+Pezinok, 902 01</p>
+              <p className="text-sm sm:text-base">IČO: 57368953</p>
+              {/* <p className="text-sm sm:text-base">DIČ: [DOPLŇ]</p> */}
+              <p className="text-xs text-zinc-400/80 sm:text-sm">Spoločnosť nie je platiteľom DPH</p>
+            </div>
           </div>
         </div>
 
