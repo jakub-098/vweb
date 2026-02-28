@@ -43,6 +43,7 @@ type ConfigSummary = {
   totalPrice: number;
   deliverySpeed: "24h" | "48h";
   packageName?: string;
+  priceId?: string | null;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -89,6 +90,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStartError, setPaymentStartError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [mode, setMode] = useState<"local" | "order" | null>(null);
   const [configSummary, setConfigSummary] = useState<ConfigSummary | null>(null);
@@ -679,6 +681,8 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               onClick={async () => {
                 if (!termsAccepted || submitting) return;
 
+                setPaymentStartError(null);
+
                 // domain must be filled and available; re-check on submit
                 const domainOk = await checkDomainAvailability();
                 if (!domainOk) {
@@ -696,6 +700,121 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                   });
                 } catch (err) {
                   console.error("Failed to track purchase", err);
+                }
+
+                const priceIdForCheckout =
+                  mode === "local" &&
+                  configSummary &&
+                  typeof configSummary.priceId === "string" &&
+                  configSummary.priceId.trim().length > 0
+                    ? configSummary.priceId.trim()
+                    : null;
+
+                // Stripe flow: do NOT create an order or send any emails before payment.
+                // We only create a Checkout Session and let the Stripe webhook create the order after payment succeeds.
+                if (priceIdForCheckout && mode === "local") {
+                  if (!configSummary) {
+                    setSubmitting(false);
+                    return;
+                  }
+
+                  const trimmedEmail = userEmail.trim();
+                  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!trimmedEmail) {
+                    setEmailError("Prosím zadajte svoj e-mail.");
+                    setSubmitting(false);
+                    return;
+                  }
+                  if (!emailPattern.test(trimmedEmail)) {
+                    setEmailError("Zadajte prosím platnú e-mailovú adresu.");
+                    setSubmitting(false);
+                    return;
+                  }
+                  setEmailError(null);
+
+                  // validate company fields if enabled
+                  if (isCompany) {
+                    if (ico.length !== 8) {
+                      setCompanyError("IČO musí mať presne 8 číslic.");
+                      setSubmitting(false);
+                      return;
+                    }
+                    if (dic.length !== 10) {
+                      setCompanyError("DIČ musí mať presne 10 číslic.");
+                      setSubmitting(false);
+                      return;
+                    }
+                    setCompanyError(null);
+                  } else {
+                    setCompanyError(null);
+                  }
+
+                  const normalizedDomain = domainRequest
+                    .trim()
+                    .replace(/^https?:\/\//, "")
+                    .replace(/^www\./, "");
+
+                  try {
+                    const res = await fetch("/api/checkout_sessions", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        priceId: priceIdForCheckout,
+                        customerEmail: trimmedEmail,
+                        promoPercent: promoDiscountPercent ?? undefined,
+                        packageName: configSummary.packageName ?? undefined,
+                        orderDraft: {
+                          // mirror what the old pre-stripe flow used to store
+                          theme: configSummary.theme,
+                          accentColor: configSummary.accentCustom ?? configSummary.accentColor,
+                          customFont: configSummary.customFont ?? null,
+
+                          userEmail: trimmedEmail,
+                          totalPrice: finalPriceValue ?? configSummary.totalPrice,
+                          deliverySpeed: configSummary.deliverySpeed,
+
+                          hostingOption: "potrebujem",
+                          mailOption: configSummary.mailOption,
+
+                          domainOption: "request",
+                          domainOwn: "",
+                          domainRequest: normalizedDomain,
+
+                          sectionAbout: true,
+                          sectionCards: true,
+                          sectionFaq: true,
+                          sectionGallery: true,
+                          sectionOffer: true,
+                          sectionContactForm: true,
+
+                          is_company: isCompany,
+                          company_name: isCompany ? companyName || null : null,
+                          company_address: isCompany ? companyAddress || null : null,
+                          ico: isCompany ? ico || null : null,
+                          dic: isCompany ? dic || null : null,
+                        },
+                      }),
+                    });
+
+                    const data = (await res.json().catch(() => null)) as
+                      | { url?: string; error?: string }
+                      | null;
+
+                    if (!res.ok || !data?.url) {
+                      throw new Error(data?.error ?? "Failed to create checkout session");
+                    }
+
+                    // Google tag (gtag.js) event - delayed navigation helper
+                    gtagSendEvent(data.url);
+                    return;
+                  } catch (err) {
+                    console.error("Failed to start Stripe checkout", err);
+                    setPaymentStartError(
+                      "Nepodarilo sa spustiť platbu kartou. Skús to prosím neskôr.",
+                    );
+                    setSubmitting(false);
+                    return;
+                  }
                 }
 
                 let finalOrderId: number | null = null;
@@ -829,10 +948,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                   }
                 }
 
-                // Google tag (gtag.js) event - delayed navigation helper
-                gtagSendEvent();
-
-                // po odoslaní objednávky zobrazíme ďakovné okno
+                // fallback – keep the original flow if we don't have a Stripe price id
                 setThankYouOpen(true);
                 setSubmitting(false);
               }}
@@ -841,6 +957,12 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               {submitting ? "Odosielam..." : "Dokončiť a zaplatiť"}
             </button>
           </div>
+
+          {paymentStartError && (
+            <p className="mt-3 text-xs text-red-300">
+              {paymentStartError}
+            </p>
+          )}
         </div>
       </div>
     );

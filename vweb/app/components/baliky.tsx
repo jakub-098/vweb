@@ -11,6 +11,8 @@ export default function Baliky() {
       featured: false,
       delivery: "48h",
       price: "490 €",
+      price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
+      //price_id:"price_1T5VdhKXcEzYeCDYzbrx7Ny3",
       features: [
         "Kompletný web bez starostí",
         "Výber vlastnej domény",
@@ -29,6 +31,7 @@ export default function Baliky() {
       featured: true,
       delivery: "24h",
       price: "690 €",
+      price_id:"price_1T5VdrKXcEzYeCDYVKcTcEOP",
       features: [
         "Kompletný web bez starostí",
         "Výber vlastnej domény",
@@ -169,6 +172,7 @@ export default function Baliky() {
                           totalPrice: numericPrice,
                           deliverySpeed,
                           packageName: plan.name,
+                          priceId: plan.price_id ?? null,
                         }),
                       );
                     } catch {

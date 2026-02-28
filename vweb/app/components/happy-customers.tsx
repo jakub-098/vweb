@@ -19,7 +19,7 @@ export default function HappyCustomers() {
           let logoAlt = project?.name || "";
 
           if (index === 0) {
-            href = "https://www.limetka-jtl.sk";
+            href = "";
             logoSrc = "/logos/limetka.png";
             
           } else if (index === 1) {
