@@ -11,9 +11,9 @@ export default function Baliky() {
       featured: false,
       delivery: "48h",
       price: "490 €",
-      price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
+      //price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
       discount_price_id:"price_1T67wEKXcEzYeCDYns4wA7mV",
-      //price_id:"price_1T5VdhKXcEzYeCDYzbrx7Ny3",
+      price_id:"price_1T5VdhKXcEzYeCDYzbrx7Ny3",
       
       features: [
         "Kompletný web bez starostí",
@@ -34,8 +34,8 @@ export default function Baliky() {
       delivery: "24h",
       price: "690 €",
       price_id:"price_1T5VdrKXcEzYeCDYVKcTcEOP",
-      // discount_price_id:"price_1T67yeKXcEzYeCDYcBqqN6TP",
-      discount_price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
+       discount_price_id:"price_1T67yeKXcEzYeCDYcBqqN6TP",
+      //discount_price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
       features: [
         "Kompletný web bez starostí",
         "Výber vlastnej domény",

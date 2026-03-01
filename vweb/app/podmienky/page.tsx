@@ -17,11 +17,11 @@ export default function PodmienkyPage() {
               povinnosti medzi poskytovateľom služieb a klientom pri vytváraní webových
               stránok prostredníctvom online objednávkového formulára.
             </p>
-            {/* <p className="font-semibold text-zinc-50">Poskytovateľ:</p>
-            <p>Obchodné meno / názov: [DOPLŇ]</p>
-            <p>Sídlo: [DOPLŇ]</p>
-            <p>IČO / DIČ: [DOPLŇ, ak existuje]</p>
-            <p>E-mail: [DOPLŇ]</p> */}
+             <p className="font-semibold text-zinc-50">Poskytovateľ:</p>
+            <p>Obchodné meno / názov: Smart Dom s.r.o.</p>
+            <p>Sídlo: Bratislavská 180/49 Pezinok, 902 01</p>
+            <p>IČO: 57368953</p>
+            <p>E-mail: info@vweb.sk</p> 
             <p className="font-semibold text-zinc-50">Klient:</p>
             <p>
               Fyzická alebo právnická osoba, ktorá si objedná služby poskytovateľa

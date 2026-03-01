@@ -106,8 +106,7 @@ export default function Home() {
               <p className="text-base font-semibold text-zinc-50 sm:text-lg">Spoločnosť</p>
               
               <p className="text-sm sm:text-base">Smart Dom s.r.o.</p>
-              <p className="text-sm sm:text-base">Bratislavská 180/49
-Pezinok, 902 01</p>
+         
               <p className="text-sm sm:text-base">IČO: 57368953</p>
               {/* <p className="text-sm sm:text-base">DIČ: [DOPLŇ]</p> */}
               <p className="text-xs text-zinc-400/80 sm:text-sm">Spoločnosť nie je platiteľom DPH</p>
