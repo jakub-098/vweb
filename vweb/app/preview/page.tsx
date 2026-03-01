@@ -423,26 +423,45 @@ export default function PreviewPage() {
 
       {/* FOOTER */}
       <footer className="w-full border-t border-slate-200/70 bg-white/80 px-4 py-8 text-sm text-slate-600 sm:px-8">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 sm:w-4/5 sm:flex-row lg:w-2/3">
-          <div className="text-center sm:text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-              vweb.sk
-            </p>
-            <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500 sm:text-sm">
-              Jednoduché prezentačné weby na mieru, navrhnuté tak, aby pôsobili
-              profesionálne a boli ľahko zrozumiteľné pre vašich klientov.
-            </p>
+        <div className="mx-auto w-full max-w-6xl sm:w-4/5 lg:w-2/3">
+          <div className="grid gap-8 md:grid-cols-3 md:items-center">
+            <div className="flex h-full flex-col justify-center text-center md:text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                vweb.sk
+              </p>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+                Jednoduché prezentačné weby na mieru, navrhnuté tak, aby pôsobili
+                profesionálne a boli ľahko zrozumiteľné pre vašich klientov.
+              </p>
+            </div>
+
+            <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-sm text-slate-500 md:justify-self-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                Kontakt
+              </p>
+              <a href="mailto:studio@vasweb.sk" className="transition hover:text-slate-900">
+                studio@vweb.sk
+              </a>
+              <a href="tel:+421900000000" className="transition hover:text-slate-900">
+                +421 900 000 000
+              </a>
+            </div>
+
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 aspect-[4/3]">
+                <iframe
+                  title="Mapa – Hodžovo námestie"
+                  src="https://www.google.com/maps?q=Hod%C5%BEovo+n%C3%A1mestie&output=embed"
+                  className="h-full w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-1 text-xs text-slate-500 sm:items-end sm:text-sm">
-            <a href="mailto:studio@vasweb.sk" className="transition hover:text-slate-900">
-              studio@vweb.sk
-            </a>
-            <a href="tel:+421900000000" className="transition hover:text-slate-900">
-              +421 900 000 000
-            </a>
-            <p className="mt-1 text-[0.7rem] text-slate-400">
-              © {new Date().getFullYear()} vweb.sk – všetky práva vyhradené.
-            </p>
+
+          <div className="mt-8 border-t border-slate-200/70 pt-4 text-center text-[0.7rem] text-slate-400">
+            © 2026 vweb.sk – všetky práva vyhradené.
           </div>
         </div>
       </footer>

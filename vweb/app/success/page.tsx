@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { stripe } from "@/lib/stripe";
+import { finalizePaidCheckoutSession } from "@/lib/stripe-orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,16 +47,10 @@ export default async function SuccessPage({ searchParams }: SuccessProps) {
     return redirect("/summary");
   }
 
-  const customerEmail = session.customer_details?.email ?? session.customer_email ?? "";
-  const customerName = session.customer_details?.name ?? "";
-  const customerPhone = session.customer_details?.phone ?? "";
+  const finalized =
+    session.payment_status === "paid" ? await finalizePaidCheckoutSession(session) : { orderId: null };
 
-  const address = session.customer_details?.address;
-  const addressLine = address
-    ? [address.line1, address.line2, address.postal_code, address.city, address.country]
-        .filter(Boolean)
-        .join(", ")
-    : "";
+  const customerEmail = session.customer_details?.email ?? session.customer_email ?? "";
 
   const items = session.line_items?.data ?? [];
 
@@ -100,13 +96,23 @@ export default async function SuccessPage({ searchParams }: SuccessProps) {
                   <span className="text-zinc-400">Order ID:</span> {session.metadata.orderId}
                 </p>
               )}
+              {finalized.orderId != null && (
+                <p>
+                  <span className="text-zinc-400">Objednávka v DB:</span> {finalized.orderId}
+                </p>
+              )}
               {items.length > 0 && (
                 <div>
                   <p className="text-zinc-400">Položky:</p>
                   <ul className="mt-2 space-y-1">
                     {items.map((it) => (
                       <li key={it.id} className="text-zinc-200">
-                        {(it.description || it.price?.product || "Položka") as any} × {it.quantity ?? 1}
+                        {typeof it.description === "string" && it.description.trim().length > 0
+                          ? it.description
+                          : typeof it.price?.product === "string" && it.price.product.trim().length > 0
+                            ? it.price.product
+                            : "Položka"}{" "}
+                        × {it.quantity ?? 1}
                       </li>
                     ))}
                   </ul>
@@ -122,12 +128,12 @@ export default async function SuccessPage({ searchParams }: SuccessProps) {
           )}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-zinc-200"
             >
               Späť na web
-            </a>
+            </Link>
             <a
               href="mailto:info@vweb.sk"
               className="inline-flex items-center justify-center rounded-full bg-purple-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-purple-400"

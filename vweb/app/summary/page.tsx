@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 declare global {
   interface Window {
@@ -44,6 +45,7 @@ type ConfigSummary = {
   deliverySpeed: "24h" | "48h";
   packageName?: string;
   priceId?: string | null;
+  discountPriceId?: string | null;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -105,7 +107,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   const [submitting, setSubmitting] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [note, setNote] = useState("");
+  const [note] = useState("");
   const [domainRequest, setDomainRequest] = useState("");
   const [domainChecking, setDomainChecking] = useState(false);
   const [domainAvailable, setDomainAvailable] = useState<boolean | null>(null);
@@ -420,7 +422,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               Overenie domény
             </p>
             <p className="mt-2 text-xs text-zinc-300 sm:text-sm">
-              Skontroluj si, či je tvoja vysnívaná doména voľná ešte pred odoslaním objednávky.
+              Overte si, či je vaša doména voľná ešte pred odoslaním objednávky.
             </p>
             <div className="mt-4 space-y-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -540,18 +542,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                   <p className="mt-1 text-xs text-red-300">{emailError}</p>
                 )}
 
-                <div className="mt-4">
-                  <label className="block text-[0.75rem] text-zinc-400">
-                    Poznámka (voliteľné)
-                  </label>
-                  <textarea
-                    className="mt-2 w-full rounded-2xl border border-white/20 bg-black/50 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
-                    rows={3}
-                    placeholder="Sem môžeš doplniť špeciálne požiadavky alebo iné poznámky."
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-                </div>
+                
               </div>
 
               <div className="rounded-2xl bg-white/5 px-6 py-5 text-xs text-zinc-200 backdrop-blur-xl sm:text-sm">
@@ -661,17 +652,31 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
             Čas dodania začína po odoslaní vyplneného Formulára, ktorý po uhradení sumy obdržíte na váš e-mail.
           </p>
 
-          <div className="mt-6 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <img
+          <div className="mt-6 flex flex-col gap-3">
+            <div className="flex items-center justify-center gap-2">
+              <Image
+                src="/stripe_white.png"
+                alt="Platby spracúva Stripe"
+                width={92}
+                height={32}
+                className="h-8 w-auto opacity-90"
+                priority={false}
+              />
+              <Image
                 src="/ApplePay.png"
                 alt="Apple Pay"
+                width={64}
+                height={32}
                 className="h-8 w-auto opacity-80"
+                priority={false}
               />
-              <img
+              <Image
                 src="/GooglePay.png"
                 alt="Google Pay"
+                width={80}
+                height={32}
                 className="h-8 w-auto rounded-md bg-white px-2 py-0.5"
+                priority={false}
               />
             </div>
 
@@ -702,13 +707,24 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                   console.error("Failed to track purchase", err);
                 }
 
-                const priceIdForCheckout =
+                const basePriceId =
                   mode === "local" &&
                   configSummary &&
                   typeof configSummary.priceId === "string" &&
                   configSummary.priceId.trim().length > 0
                     ? configSummary.priceId.trim()
                     : null;
+
+                const discountPriceId =
+                  mode === "local" &&
+                  configSummary &&
+                  typeof configSummary.discountPriceId === "string" &&
+                  configSummary.discountPriceId.trim().length > 0
+                    ? configSummary.discountPriceId.trim()
+                    : null;
+
+                const useDiscountPrice = promoOk === true && discountPriceId != null;
+                const priceIdForCheckout = useDiscountPrice ? discountPriceId : basePriceId;
 
                 // Stripe flow: do NOT create an order or send any emails before payment.
                 // We only create a Checkout Session and let the Stripe webhook create the order after payment succeeds.
@@ -761,12 +777,14 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                       body: JSON.stringify({
                         priceId: priceIdForCheckout,
                         customerEmail: trimmedEmail,
-                        promoPercent: promoDiscountPercent ?? undefined,
+                        // If we're switching to a pre-discounted Stripe Price, don't apply an additional coupon.
+                        promoPercent: useDiscountPrice ? undefined : promoDiscountPercent ?? undefined,
                         packageName: configSummary.packageName ?? undefined,
                         orderDraft: {
                           // mirror what the old pre-stripe flow used to store
                           theme: configSummary.theme,
-                          accentColor: configSummary.accentCustom ?? configSummary.accentColor,
+                          accentColor: configSummary.accentColor,
+                          accentCustom: configSummary.accentCustom ?? null,
                           customFont: configSummary.customFont ?? null,
 
                           userEmail: trimmedEmail,
@@ -952,7 +970,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                 setThankYouOpen(true);
                 setSubmitting(false);
               }}
-              className="inline-flex items-center rounded-full bg-purple-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
+              className="inline-flex w-full items-center justify-center rounded-full bg-purple-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-purple-500/50"
             >
               {submitting ? "Odosielam..." : "Dokončiť a zaplatiť"}
             </button>
@@ -976,10 +994,10 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
             Objednávka
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Zhrnutie konfigurácie
+            Zhrnutie Objednávky
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-zinc-300 sm:text-base">
-            Vyplň e-mail, over doménu a potvrď objednávku svojho nového webu.
+            Vyplňte e-mail, overte doménu a potvrďte objednávku svojho nového webu.
           </p>
         </div>
 

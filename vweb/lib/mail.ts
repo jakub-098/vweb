@@ -321,17 +321,15 @@ export async function sendNewOrderNotification(order: OrderForEmail): Promise<vo
   });
 }
 
-export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<void> {
+export async function sendPaymentReceivedEmail(
+  order: OrderForEmail,
+  options?: { notifyAdmin?: boolean }
+): Promise<void> {
   if (!smtpHost || !smtpUser || !smtpPass) {
     return;
   }
 
-  if (!order.user_email) {
-    console.warn("Order is missing user_email, skipping payment received email", {
-      orderId: order.id,
-    });
-    return;
-  }
+  const notifyAdmin = options?.notifyAdmin === true;
 
   const subject = "Prijali sme vašu platbu";
 
@@ -448,13 +446,54 @@ export async function sendPaymentReceivedEmail(order: OrderForEmail): Promise<vo
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `Vweb <${smtpUser}>`,
-    to: order.user_email,
-    subject,
-    text,
-    html,
-  });
+  if (order.user_email) {
+    await transporter.sendMail({
+      from: `Vweb <${smtpUser}>`,
+      to: order.user_email,
+      subject,
+      text,
+      html,
+    });
+  } else {
+    console.warn("Order is missing user_email, skipping payment received client email", {
+      orderId: order.id,
+    });
+  }
+
+  if (notifyAdmin) {
+    const adminSubject = `Platba prijatá – objednávka #${order.id}`;
+    const adminLines: string[] = [
+      "Platba bola prijatá (Stripe).",
+      "",
+      `ID objednávky: ${order.id}`,
+    ];
+    if (order.user_email) adminLines.push(`Email zákazníka: ${order.user_email}`);
+    if (order.total_price != null) adminLines.push(`Celková cena: ${order.total_price} €`);
+    if (order.delivery_speed) adminLines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
+    if (order.domain_option === "own" && order.domain_own) {
+      adminLines.push(`Doména (vlastná): ${order.domain_own}`);
+    } else if (order.domain_option === "request" && order.domain_request) {
+      adminLines.push(`Požadovaná doména: ${order.domain_request}`);
+    }
+    if (order.created_at) adminLines.push(`Vytvorené: ${order.created_at}`);
+
+    await transporter.sendMail({
+      from: `Vweb <${smtpUser}>`,
+      to: smtpUser,
+      subject: adminSubject,
+      text: adminLines.join("\n"),
+      html: `<p>Platba bola prijatá (Stripe).</p>
+<ul>
+  <li><strong>ID objednávky:</strong> ${order.id}</li>
+  ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
+  ${order.total_price != null ? `<li><strong>Celková cena:</strong> ${order.total_price} €</li>` : ""}
+  ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+  ${order.domain_option === "own" && order.domain_own ? `<li><strong>Doména (vlastná):</strong> ${order.domain_own}</li>` : ""}
+  ${order.domain_option === "request" && order.domain_request ? `<li><strong>Požadovaná doména:</strong> ${order.domain_request}</li>` : ""}
+  ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
+</ul>`,
+    });
+  }
 }
 
 type ContactPayload = {

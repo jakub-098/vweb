@@ -114,6 +114,9 @@ export async function POST(request: Request) {
       const accentColor = asTrimmedString(draft.accentColor, 64);
       if (accentColor) metadata.draft_accent_color = accentColor;
 
+      const accentCustom = asTrimmedString(draft.accentCustom, 64);
+      if (accentCustom) metadata.draft_accent_custom = accentCustom;
+
       const customFont = asTrimmedString(draft.customFont, 128);
       if (customFont) metadata.draft_custom_font = customFont;
 
