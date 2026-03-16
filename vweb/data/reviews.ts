@@ -14,9 +14,15 @@ export const projects: Project[] = [
     text: "Chcel som stránku pre ubytovanie s rezerváciami. Vyzerá profesionálne, vrelo odporúčam - balík CUSTOM "
     
   },
+  
   {
     name: "ZCT3",
-    text: "Konečne niekto, kto spraví web bez čakania a zbytočností. Do druhého dňa bola online. - balík EXPRESS"
+    text: "Do druhého dňa bola stránka online. - balík CLASSIC"
+    
+  },
+  {
+    name: "Kraus Legal",
+    text: "Stránka naplnila očakávania - balík BUSINESS"
     
   },
   {

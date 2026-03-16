@@ -21,6 +21,8 @@ export default function PodmienkyPage() {
             <p>Obchodné meno / názov: Smart Dom s.r.o.</p>
             <p>Sídlo: Bratislavská 180/49 Pezinok, 902 01</p>
             <p>IČO: 57368953</p>
+            <p>DIČ: 2122685587</p>
+            <p>IČ DPH: SK2122685587</p>
             <p>E-mail: info@vweb.sk</p> 
             <p className="font-semibold text-zinc-50">Klient:</p>
             <p>

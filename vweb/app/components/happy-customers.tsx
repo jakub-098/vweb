@@ -29,10 +29,14 @@ export default function HappyCustomers() {
             href = "https://www.zct3.eu";
             logoSrc = "/logos/zct3.png";
           }
-          else if (index === 3) {
+           else if (index === 3) {
+            href = "https://www.krauslegal.sk";
+            logoSrc = "/logos/kl.png";
+          }
+          else if (index === 4) {
             href = "https://www.easy-project.sk";
             logoSrc = "/logos/easyproject.png";
-          } else if (index === 4) {
+          } else if (index === 5) {
             href = "https://www.adamvirlic.com";
             logoSrc = "/logos/adamvirlic.png";
           }

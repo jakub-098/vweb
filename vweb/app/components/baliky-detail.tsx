@@ -11,7 +11,7 @@ export default function BalikyDetail() {
 
     <div className="text-center">
       <h2 className="text-4xl font-semibold text-white sm:text-5xl">
-        Business / Express
+        Business / Classic
       </h2>
 
       {/* <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
@@ -94,7 +94,7 @@ export default function BalikyDetail() {
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
               Stránka bude vyzerať profesionálne na mobile aj desktop zariadeniach.
-              Pripravená reprezentovať vašu značku.
+              Pripravená reprezentovať vašu firmu.
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function BalikyDetail() {
               Spustenie do 48 / 24 hodín
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              Po dodaní podkladov začína bežať čas. Podľa zvoleného balíka bude stránka online do 48 (Business) alebo 24 (Express) hodín.
+              Po dodaní podkladov začína bežať čas. Podľa vybraného času dodania bude stránka online do 48 alebo 24 hodín.
             </p>
           </div>
         </div>

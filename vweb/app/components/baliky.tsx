@@ -6,15 +6,16 @@ export default function Baliky() {
   const router = useRouter();
   const plans = [
     {
-      name: "Business",
-      label: "Najobľúbenejší balík",
+      name: "Classic",
+      label: "Základný balík",
       featured: false,
       delivery: "48h",
-      price: "490 €",
+      price: "590 €",
+      monthly: "19,90€ mes",
       //price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
-      discount_price_id:"price_1T67wEKXcEzYeCDYns4wA7mV",
-      price_id:"price_1T5VdhKXcEzYeCDYzbrx7Ny3",
-      
+      price_id:"price_1TBOccKXcEzYeCDYVAPOqMAk",
+      subscription:"price_1TBNp8KXcEzYeCDY4iidBXKr",
+      fast_fee:"price_1TBOaNKXcEzYeCDYBkSlxj7w", 
       features: [
         "Kompletný web bez starostí",
         "Výber vlastnej domény",
@@ -28,22 +29,22 @@ export default function Baliky() {
       ],
     },
     {
-      name: "Express",
-      label: "Najrýchlejší balík",
+      name: "Business",
+      label: "Najobľúbenejší balík",
       featured: true,
       delivery: "24h",
-      price: "690 €",
-      price_id:"price_1T5VdrKXcEzYeCDYVKcTcEOP",
-       discount_price_id:"price_1T67yeKXcEzYeCDYcBqqN6TP",
-      //discount_price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
+      price: "0 €",
+      monthly: "79,90€ mesačne",
+      subscription:"price_1TBOPBKXcEzYeCDYqmiFd7C8",
+      fast_fee:"price_1TBOaNKXcEzYeCDYBkSlxj7w", 
+      
       features: [
-        "Kompletný web bez starostí",
-        "Výber vlastnej domény",
-        "Nastavenie e‑mailov",
-        "Nastavenie hostingu",
-        "SEO optimalizácia",
-        "Responzívny dizajn",
-        "jednoduché textové logo"
+        "Zabezbečime online prezenciu vašej firmy ",
+        "Rýchla podpora a úpravy podľa vašich požiadaviek",
+        "Aktualizácia obsahu a údržba webu bez ďalších poplatkov",
+        "Všetky výhody balíka Classic",
+        "Možnosť viacerých e-mailových schránok ",
+        "Profesionálne SEO nastavenie pre vyššiu návštevnosť",
       ],
     },
     {
@@ -51,7 +52,7 @@ export default function Baliky() {
       label: "Balík na mieru",
       featured: false,
       delivery: "X h",
-      price: "od 990 €",
+      price: "od 1990 €",
       features: [
         "Komplexné riešenie šité na mieru",
         "Rozšírená funkcionalita",
@@ -72,7 +73,7 @@ export default function Baliky() {
         Možnosti
       </p>
       <h2 className="mt-4 text-4xl font-semibold text-white">
-        Vyberte si balík
+        Vyberte si z našich balíkov
       </h2>
     </div>
 
@@ -101,24 +102,20 @@ export default function Baliky() {
               {plan.label}
             </p>
 
-            {/* Name + delivery time */}
-            <h3 className="mt-3 flex items-baseline justify-between text-2xl font-semibold text-white">
-              <span>{plan.name}</span>
-              <span
-                className={`rounded-2xl px-3 py-1 text-2xl font-bold tracking-tight ${
-                  isFeatured
-                    ? "bg-purple-500/20 text-purple-200"
-                    : "bg-zinc-800/70 text-zinc-200"
-                }`}
-              >
-                {plan.delivery}
-              </span>
+            {/* Name (delivery time hidden in UI) */}
+            <h3 className="mt-3 text-2xl font-semibold text-white">
+              {plan.name}
             </h3>
 
             {/* Price */}
             <div className="mt-6">
               <p className="text-5xl font-bold text-white">
                 {plan.price}
+                {plan.monthly && (
+                  <span className="ml-2 text-2xl font-semibold text-zinc-300">
+                    + {plan.monthly}
+                  </span>
+                )}
               </p>
             </div>
 
@@ -177,7 +174,10 @@ export default function Baliky() {
                           deliverySpeed,
                           packageName: plan.name,
                           priceId: plan.price_id ?? null,
-                          discountPriceId: plan.discount_price_id ?? null,
+                          discountPriceId: null,
+                          monthly: plan.monthly ?? null,
+                          subscriptionPriceId: plan.subscription ?? null,
+                          fastFeePriceId: plan.fast_fee ?? null,
                         }),
                       );
                     } catch {

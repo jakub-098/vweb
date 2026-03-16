@@ -373,7 +373,10 @@ export default function ConfigPage() {
               domainRequest,
               totalPrice: estimatedPrice,
               deliverySpeed: fastDelivery === "yes" ? "24h" : "48h",
-              packageName: undefined,
+                      packageName: undefined,
+                      monthly: null,
+                      subscriptionPriceId: null,
+                      fastFeePriceId: null,
             }),
           );
         } catch (error) {

@@ -25,6 +25,8 @@ type CreateCheckoutSessionBody = {
   promoPercent?: unknown;
   packageName?: unknown;
   orderDraft?: unknown;
+  mode?: unknown;
+  lineItems?: unknown;
 };
 
 function asTrimmedString(value: unknown, maxLen = 500): string | null {
@@ -48,17 +50,51 @@ function as01Flag(value: unknown): "0" | "1" | null {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateCheckoutSessionBody;
+    const modeRaw = typeof body.mode === "string" ? body.mode.trim().toLowerCase() : "";
+    const mode: Stripe.Checkout.SessionCreateParams.Mode =
+      modeRaw === "subscription" ? "subscription" : "payment";
 
-    const priceId = typeof body.priceId === "string" ? body.priceId.trim() : "";
-    if (!priceId || !priceId.startsWith("price_")) {
-      return NextResponse.json(
-        { error: "Missing or invalid priceId" },
-        { status: 400 }
-      );
+    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] | null = null;
+
+    if (Array.isArray(body.lineItems)) {
+      const parsed: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+      for (const item of body.lineItems as unknown[]) {
+        if (!item || typeof item !== "object") continue;
+        const it = item as { price?: unknown; quantity?: unknown };
+        const price = typeof it.price === "string" ? it.price.trim() : "";
+        if (!price || !price.startsWith("price_")) continue;
+        const quantityRaw =
+          typeof it.quantity === "number" ? it.quantity : 1;
+        const quantity =
+          Number.isFinite(quantityRaw) && quantityRaw > 0
+            ? Math.floor(quantityRaw)
+            : 1;
+        parsed.push({ price, quantity });
+      }
+      if (parsed.length > 0) {
+        lineItems = parsed;
+      }
     }
 
-    const quantityRaw = typeof body.quantity === "number" ? body.quantity : 1;
-    const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? Math.floor(quantityRaw) : 1;
+    if (!lineItems) {
+      const priceId =
+        typeof body.priceId === "string" ? body.priceId.trim() : "";
+      if (!priceId || !priceId.startsWith("price_")) {
+        return NextResponse.json(
+          { error: "Missing or invalid priceId" },
+          { status: 400 }
+        );
+      }
+
+      const quantityRaw =
+        typeof body.quantity === "number" ? body.quantity : 1;
+      const quantity =
+        Number.isFinite(quantityRaw) && quantityRaw > 0
+          ? Math.floor(quantityRaw)
+          : 1;
+
+      lineItems = [{ price: priceId, quantity }];
+    }
 
     const orderIdRaw =
       typeof body.orderId === "number"
@@ -181,14 +217,18 @@ export async function POST(request: Request) {
     }
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [{ price: priceId, quantity }],
+      mode,
+      line_items: lineItems,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
       customer_email: customerEmail,
       client_reference_id: orderId != null ? String(orderId) : undefined,
       metadata,
       discounts,
+      // Enable Stripe Tax automatic calculation so VAT is shown in Checkout
+      automatic_tax: { enabled: true },
+      // Optionally collect VAT IDs from customers; Stripe will validate and adjust tax
+      tax_id_collection: { enabled: true },
       // Ensures we can display purchased items on the Success page
       // without additional Stripe calls.
       // (We still retrieve with expand, but having metadata helps.)

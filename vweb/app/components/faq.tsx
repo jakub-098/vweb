@@ -42,7 +42,7 @@ export default function Faq() {
         </p>
       </details>
 
-        <details className="group">
+        {/* <details className="group">
         <summary className="flex cursor-pointer items-center justify-between text-base font-semibold text-zinc-50 transition-colors duration-200 hover:text-purple-300 sm:text-lg">
           <span>Aký je rozdiel medzi Business a Express balíkom?</span>
           <span className="ml-6 text-sm text-zinc-500 transition-transform duration-300 group-open:rotate-90">
@@ -52,7 +52,7 @@ export default function Faq() {
         <p className="mt-3 text-sm leading-relaxed text-zinc-400 sm:text-base">
           Balíky ponúkajú identický výsledok, líšia sa len v dobe dodania. Business doručíme do 48 hodín a Express do 24 hodín. 
         </p>
-      </details>
+      </details> */}
 
       <details className="group">
         <summary className="flex cursor-pointer items-center justify-between text-base font-semibold text-zinc-50 transition-colors duration-200 hover:text-purple-300 sm:text-lg">

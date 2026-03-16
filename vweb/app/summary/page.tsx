@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import HappyCustomers from "../components/happy-customers";
 
 declare global {
   interface Window {
@@ -46,6 +47,9 @@ type ConfigSummary = {
   packageName?: string;
   priceId?: string | null;
   discountPriceId?: string | null;
+  monthly?: string | null;
+  subscriptionPriceId?: string | null;
+  fastFeePriceId?: string | null;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -119,6 +123,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [promoOk, setPromoOk] = useState<boolean | null>(null);
   const [promoDiscountPercent, setPromoDiscountPercent] = useState<number | null>(null);
+  const [expressDelivery24h, setExpressDelivery24h] = useState(false);
 
   // Google Ads: conversion event on Summary page load
   useEffect(() => {
@@ -375,8 +380,8 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   }
 
   const deliveryLabel = (() => {
-    if (mode === "local" && configSummary) {
-      return configSummary.deliverySpeed === "24h" ? "24 h (expres)" : "48 h";
+    if (mode === "local") {
+      return expressDelivery24h ? "24 h (expres)" : "48 h";
     }
     if (!order || !order.delivery_speed) return "48 h";
     return order.delivery_speed === "24h" ? "24 h (expres)" : "48 h";
@@ -403,6 +408,12 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
     const discounted = totalPriceValue * discountFactor;
     if (!Number.isFinite(discounted) || discounted < 0) return totalPriceValue;
     return discounted;
+  })();
+
+  const finalPriceWithExpress = (() => {
+    if (finalPriceValue == null) return null;
+    const extra = mode === "local" && expressDelivery24h ? 200 : 0;
+    return finalPriceValue + extra;
   })();
 
   const hasSummaryContent =
@@ -464,6 +475,22 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               )}
             </div>
           </div>
+
+          {mode === "local" && (
+            <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/50 text-purple-500 focus:ring-purple-500"
+                  checked={expressDelivery24h}
+                  onChange={(e) => setExpressDelivery24h(e.target.checked)}
+                />
+                <span className="text-sm text-zinc-200">
+                  doručenie do 24h (ak nie je zvolené, stránku doručíme do 48h)
+                </span>
+              </label>
+            </div>
+          )}
 
           {/* Company toggle & fields */}
           <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
@@ -609,8 +636,15 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               : "Cena projektu"}
           </p>
           <p className="mt-4 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">
-            {finalPriceValue != null ? finalPriceValue.toFixed(2) : "-"} €
+            {finalPriceWithExpress != null ? finalPriceWithExpress.toFixed(2) : "-"} €
+            <span className="ml-2 text-sm font-normal text-zinc-300">bez DPH</span>
           </p>
+          {mode === "local" && configSummary?.monthly && (
+            <p className="mt-2 text-sm font-semibold text-zinc-100">
+              + Mesačne: <span className="text-purple-200">{configSummary.monthly}</span>
+              <span className="ml-2 text-xs font-normal text-zinc-300">bez DPH</span>
+            </p>
+          )}
           {promoDiscountPercent != null && totalPriceValue != null && finalPriceValue != null && finalPriceValue !== totalPriceValue && (
             <p className="mt-1 text-xs text-emerald-300">
               Pôvodná cena: <span className="line-through opacity-70">{totalPriceValue.toFixed(2)} €</span>, zľava {promoDiscountPercent}%.
@@ -626,6 +660,12 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
               </div>
             )}
           </div>
+
+          {mode === "local" && configSummary?.packageName === "Business" && (
+            <p className="mt-3 text-xs text-zinc-300">
+              Minimálna doba viazanosti je 12 mesiacov. Po uplynutí tejto doby je možné službu kedykoľvek zrušiť.
+            </p>
+          )}
 
           <div className="mt-6 flex items-start gap-2 text-xs text-zinc-300 sm:text-sm">
             <input
@@ -707,28 +747,11 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                   console.error("Failed to track purchase", err);
                 }
 
-                const basePriceId =
-                  mode === "local" &&
-                  configSummary &&
-                  typeof configSummary.priceId === "string" &&
-                  configSummary.priceId.trim().length > 0
-                    ? configSummary.priceId.trim()
-                    : null;
-
-                const discountPriceId =
-                  mode === "local" &&
-                  configSummary &&
-                  typeof configSummary.discountPriceId === "string" &&
-                  configSummary.discountPriceId.trim().length > 0
-                    ? configSummary.discountPriceId.trim()
-                    : null;
-
-                const useDiscountPrice = promoOk === true && discountPriceId != null;
-                const priceIdForCheckout = useDiscountPrice ? discountPriceId : basePriceId;
+                const deliverySpeedFinal = expressDelivery24h ? "24h" : "48h";
 
                 // Stripe flow: do NOT create an order or send any emails before payment.
                 // We only create a Checkout Session and let the Stripe webhook create the order after payment succeeds.
-                if (priceIdForCheckout && mode === "local") {
+                if (mode === "local") {
                   if (!configSummary) {
                     setSubmitting(false);
                     return;
@@ -770,61 +793,171 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                     .replace(/^https?:\/\//, "")
                     .replace(/^www\./, "");
 
+                  const basePriceId =
+                    typeof configSummary.priceId === "string" &&
+                    configSummary.priceId.trim().length > 0
+                      ? configSummary.priceId.trim()
+                      : null;
+
+                  const discountPriceId =
+                    typeof configSummary.discountPriceId === "string" &&
+                    configSummary.discountPriceId.trim().length > 0
+                      ? configSummary.discountPriceId.trim()
+                      : null;
+
+                  const useDiscountPrice =
+                    promoOk === true && discountPriceId != null;
+                  const priceIdForCheckout =
+                    useDiscountPrice ? discountPriceId : basePriceId;
+
+                  const subscriptionPriceId =
+                    typeof configSummary.subscriptionPriceId === "string" &&
+                    configSummary.subscriptionPriceId.trim().length > 0
+                      ? configSummary.subscriptionPriceId.trim()
+                      : null;
+                  const fastFeePriceId =
+                    typeof configSummary.fastFeePriceId === "string" &&
+                    configSummary.fastFeePriceId.trim().length > 0
+                      ? configSummary.fastFeePriceId.trim()
+                      : null;
+
+                  const isSubscriptionPackage =
+                    subscriptionPriceId != null &&
+                    (configSummary.packageName === "Classic" ||
+                      configSummary.packageName === "Business");
+
                   try {
-                    const res = await fetch("/api/checkout_sessions", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        priceId: priceIdForCheckout,
-                        customerEmail: trimmedEmail,
-                        // If we're switching to a pre-discounted Stripe Price, don't apply an additional coupon.
-                        promoPercent: useDiscountPrice ? undefined : promoDiscountPercent ?? undefined,
-                        packageName: configSummary.packageName ?? undefined,
-                        orderDraft: {
-                          // mirror what the old pre-stripe flow used to store
-                          theme: configSummary.theme,
-                          accentColor: configSummary.accentColor,
-                          accentCustom: configSummary.accentCustom ?? null,
-                          customFont: configSummary.customFont ?? null,
+                    if (isSubscriptionPackage) {
+                      const lineItems: { price: string; quantity: number }[] = [];
 
-                          userEmail: trimmedEmail,
-                          totalPrice: finalPriceValue ?? configSummary.totalPrice,
-                          deliverySpeed: configSummary.deliverySpeed,
+                      // always bill the recurring subscription
+                      lineItems.push({ price: subscriptionPriceId!, quantity: 1 });
 
-                          hostingOption: "potrebujem",
-                          mailOption: configSummary.mailOption,
+                      // Classic: add one-time base setup fee
+                      if (configSummary.packageName === "Classic" && priceIdForCheckout) {
+                        lineItems.push({ price: priceIdForCheckout, quantity: 1 });
+                      }
 
-                          domainOption: "request",
-                          domainOwn: "",
-                          domainRequest: normalizedDomain,
+                      // optional fast delivery fee
+                      if (expressDelivery24h && fastFeePriceId) {
+                        lineItems.push({ price: fastFeePriceId, quantity: 1 });
+                      }
 
-                          sectionAbout: true,
-                          sectionCards: true,
-                          sectionFaq: true,
-                          sectionGallery: true,
-                          sectionOffer: true,
-                          sectionContactForm: true,
+                      const res = await fetch("/api/checkout_sessions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          mode: "subscription",
+                          lineItems,
+                          customerEmail: trimmedEmail,
+                          promoPercent: promoDiscountPercent ?? undefined,
+                          packageName: configSummary.packageName ?? undefined,
+                          orderDraft: {
+                            theme: configSummary.theme,
+                            accentColor: configSummary.accentColor,
+                            accentCustom: configSummary.accentCustom ?? null,
+                            customFont: configSummary.customFont ?? null,
+                            userEmail: trimmedEmail,
+                            totalPrice:
+                              finalPriceWithExpress ??
+                              finalPriceValue ??
+                              configSummary.totalPrice,
+                            deliverySpeed: deliverySpeedFinal,
+                            hostingOption: "potrebujem",
+                            mailOption: configSummary.mailOption,
+                            domainOption: "request",
+                            domainOwn: "",
+                            domainRequest: normalizedDomain,
+                            sectionAbout: true,
+                            sectionCards: true,
+                            sectionFaq: true,
+                            sectionGallery: true,
+                            sectionOffer: true,
+                            sectionContactForm: true,
+                            is_company: isCompany,
+                            company_name: isCompany ? companyName || null : null,
+                            company_address: isCompany
+                              ? companyAddress || null
+                              : null,
+                            ico: isCompany ? ico || null : null,
+                            dic: isCompany ? dic || null : null,
+                          },
+                        }),
+                      });
 
-                          is_company: isCompany,
-                          company_name: isCompany ? companyName || null : null,
-                          company_address: isCompany ? companyAddress || null : null,
-                          ico: isCompany ? ico || null : null,
-                          dic: isCompany ? dic || null : null,
-                        },
-                      }),
-                    });
+                      const data = (await res.json().catch(() => null)) as
+                        | { url?: string; error?: string }
+                        | null;
 
-                    const data = (await res.json().catch(() => null)) as
-                      | { url?: string; error?: string }
-                      | null;
+                      if (!res.ok || !data?.url) {
+                        throw new Error(
+                          data?.error ?? "Failed to create checkout session",
+                        );
+                      }
 
-                    if (!res.ok || !data?.url) {
-                      throw new Error(data?.error ?? "Failed to create checkout session");
+                      gtagSendEvent(data.url);
+                      return;
                     }
 
-                    // Google tag (gtag.js) event - delayed navigation helper
-                    gtagSendEvent(data.url);
-                    return;
+                    if (priceIdForCheckout) {
+                      const res = await fetch("/api/checkout_sessions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          priceId: priceIdForCheckout,
+                          customerEmail: trimmedEmail,
+                          promoPercent: useDiscountPrice
+                            ? undefined
+                            : promoDiscountPercent ?? undefined,
+                          packageName: configSummary.packageName ?? undefined,
+                          orderDraft: {
+                            theme: configSummary.theme,
+                            accentColor: configSummary.accentColor,
+                            accentCustom: configSummary.accentCustom ?? null,
+                            customFont: configSummary.customFont ?? null,
+                            userEmail: trimmedEmail,
+                            totalPrice:
+                              finalPriceWithExpress ??
+                              finalPriceValue ??
+                              configSummary.totalPrice,
+                            deliverySpeed: deliverySpeedFinal,
+                            hostingOption: "potrebujem",
+                            mailOption: configSummary.mailOption,
+                            domainOption: "request",
+                            domainOwn: "",
+                            domainRequest: normalizedDomain,
+                            sectionAbout: true,
+                            sectionCards: true,
+                            sectionFaq: true,
+                            sectionGallery: true,
+                            sectionOffer: true,
+                            sectionContactForm: true,
+                            is_company: isCompany,
+                            company_name: isCompany ? companyName || null : null,
+                            company_address: isCompany
+                              ? companyAddress || null
+                              : null,
+                            ico: isCompany ? ico || null : null,
+                            dic: isCompany ? dic || null : null,
+                          },
+                        }),
+                      });
+
+                      const data = (await res.json().catch(() => null)) as
+                        | { url?: string; error?: string }
+                        | null;
+
+                      if (!res.ok || !data?.url) {
+                        throw new Error(
+                          data?.error ?? "Failed to create checkout session",
+                        );
+                      }
+
+                      gtagSendEvent(data.url);
+                      return;
+                    }
+
+                    // fall through to non-Stripe flow if we have no suitable price id
                   } catch (err) {
                     console.error("Failed to start Stripe checkout", err);
                     setPaymentStartError(
@@ -869,8 +1002,8 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                       body: JSON.stringify({
                         // only send values that are actually present on the summary page
                         userEmail: trimmedEmail,
-                        totalPrice: finalPriceValue ?? configSummary.totalPrice,
-                        deliverySpeed: configSummary.deliverySpeed,
+                        totalPrice: finalPriceWithExpress ?? finalPriceValue ?? configSummary.totalPrice,
+                        deliverySpeed: deliverySpeedFinal,
                         hostingOption: "potrebujem",
                         domainOption: "request",
                         domainOwn: "",
@@ -1040,6 +1173,58 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
             </div>
           </div>
         )}
+        <div className="mt-16 flex flex-col items-center">
+          <section className="w-full rounded-3xl bg-white/5 px-6 py-8 text-center text-zinc-50 shadow-[0_16px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:px-8 sm:py-10">
+          <h2 className="text-base font-semibold tracking-tight sm:text-lg">
+            V prípade akýchkoľvek otázok nás neváhajte kontaktovať
+          </h2>
+
+          <div className="mt-6 flex flex-col items-center justify-center gap-4 text-sm text-zinc-200 sm:flex-row sm:gap-8 sm:text-sm">
+            <a
+              href="mailto:info@vweb.sk"
+              className="flex items-center gap-3 rounded-2xl bg-white/5 px-5 py-3 transition hover:bg-white/10"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/80 text-white">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                  <path d="M5 7l7 5 7-5" />
+                </svg>
+              </span>
+              <span className="font-medium">info@vweb.sk</span>
+            </a>
+
+            <a
+              href="tel:+421917641379"
+              className="flex items-center gap-3 rounded-2xl bg-white/5 px-5 py-3 transition hover:bg-white/10"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/80 text-white">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path d="M5 4h3l2 5-2 1c1 2 3 4 5 5l1.1-2.1L19 14l2 3c-.5 1.5-2 3-3.5 3-2.5 0-7-2.5-9.5-5S3 9 3 6.5C3 5 4.5 3.5 6 3z" />
+                </svg>
+              </span>
+              <span className="font-medium">0917 641 379</span>
+            </a>
+          </div>
+          </section>
+
+          <div className="mt-14 w-full flex justify-center">
+            <HappyCustomers />
+          </div>
+        </div>
       </div>
 
     </section>
