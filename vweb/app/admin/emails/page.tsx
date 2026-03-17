@@ -25,6 +25,30 @@ export default function AdminEmailsPage() {
     stopRequested?: boolean;
   } | null>(null);
   const [now, setNow] = useState<Date>(new Date());
+  const [sendLimit, setSendLimit] = useState<number>(100);
+  const [savingLimit, setSavingLimit] = useState(false);
+
+  async function fetchConfig(pw: string) {
+    try {
+      const res = await fetch("/api/admin/email-config", {
+        headers: {
+          "x-admin-password": pw,
+        },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (!data.success) return;
+
+      const value = Number(data.defaultDailyLimit);
+      if (Number.isFinite(value) && value > 0) {
+        setSendLimit(Math.min(300, Math.max(1, Math.floor(value))));
+      }
+    } catch (err) {
+      console.error("Failed to load email config", err);
+    }
+  }
 
   async function fetchEmailInfo(pw: string) {
     try {
@@ -107,6 +131,7 @@ export default function AdminEmailsPage() {
       setPassword(stored);
       fetchEmailInfo(stored);
       fetchStatus(stored);
+      fetchConfig(stored);
     }
   }, []);
 
@@ -129,6 +154,7 @@ export default function AdminEmailsPage() {
     }
     await fetchEmailInfo(password);
 		await fetchStatus(password);
+    await fetchConfig(password);
   };
 
   const handleUpload = async () => {
@@ -175,6 +201,10 @@ export default function AdminEmailsPage() {
 
   const handleSend = async () => {
     if (!password || sending) return;
+    if (!sendLimit || sendLimit <= 0) {
+      setSendResult("Zadaj prosím platný počet e-mailov na odoslanie.");
+      return;
+    }
     try {
       setSending(true);
       setSendResult(null);
@@ -184,7 +214,9 @@ export default function AdminEmailsPage() {
         method: "POST",
         headers: {
           "x-admin-password": password,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ limit: sendLimit }),
       });
 
       const data = await res.json();
@@ -251,6 +283,52 @@ export default function AdminEmailsPage() {
     }
   };
 
+  const handleSaveLimit = async () => {
+    if (!password) return;
+    if (!sendLimit || sendLimit <= 0) {
+      setSendResult("Zadaj prosím platný počet e-mailov na uloženie.");
+      return;
+    }
+
+    try {
+      setSavingLimit(true);
+      setSendResult(null);
+
+      const res = await fetch("/api/admin/email-config", {
+        method: "POST",
+        headers: {
+          "x-admin-password": password,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ defaultDailyLimit: sendLimit }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 401) {
+        setSendResult("Nesprávne admin heslo pre uloženie nastavení.");
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        setSendResult(data.error || "Nepodarilo sa uložiť počet e-mailov.");
+        return;
+      }
+
+      const value = Number(data.defaultDailyLimit);
+      if (Number.isFinite(value) && value > 0) {
+        setSendLimit(Math.min(300, Math.max(1, Math.floor(value))));
+      }
+
+      setSendResult("Predvolený počet e-mailov bol úspešne uložený.");
+    } catch (err) {
+      console.error("Failed to save email limit", err);
+      setSendResult("Pri ukladaní počtu e-mailov nastala chyba.");
+    } finally {
+      setSavingLimit(false);
+    }
+  };
+
   function formatDuration(startedAt: string | null): string {
     if (!startedAt) return "0:00";
     const start = new Date(startedAt).getTime();
@@ -270,7 +348,7 @@ export default function AdminEmailsPage() {
               Admin – e-maily
             </h1>
             <p className="mt-2 text-sm text-zinc-300 sm:text-base">
-              Nahraj nový JSON so zoznamom e-mailov. Každý deň sa odošle maximálne 99 adresátov.
+              Nahraj nový JSON so zoznamom e-mailov. Každý deň sa odošle maximálne 300 adresátov. Nižšie nastav počet e-mailov pre aktuálnu dávku.
             </p>
           </div>
           <Link
@@ -389,6 +467,38 @@ export default function AdminEmailsPage() {
           </div>
 
           <div className="mt-8 space-y-2">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                Počet e-mailov (max 300)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={300}
+                className="mt-1 w-full max-w-xs rounded-lg border border-white/15 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-purple-400 focus:outline-none"
+                value={sendLimit}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  if (Number.isNaN(value)) {
+                    setSendLimit(0);
+                  } else {
+                    setSendLimit(Math.min(300, Math.max(1, value)));
+                  }
+                }}
+              />
+              <p className="mt-1 text-[0.7rem] text-zinc-400">
+                Tento počet môžeš uložiť ako predvolený pre ďalšie dni alebo použiť len pre dnešné odosielanie.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveLimit}
+                disabled={!password || savingLimit}
+                className="inline-flex items-center rounded-full border border-blue-400/70 bg-blue-500/20 px-5 py-2 text-[0.7rem] font-semibold text-blue-100 hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingLimit ? "Ukladám..." : "Uložiť ako predvolený"}
+              </button>
             <button
               type="button"
               onClick={handleSend}
@@ -397,8 +507,9 @@ export default function AdminEmailsPage() {
             >
               {sending
                 ? "Odosielam e-maily..."
-                : "Spustiť dnešné odosielanie (max 99 e-mailov)"}
+                : "Spustiť dnešné odosielanie"}
             </button>
+            </div>
             {status?.status === "running" && (
               <button
                 type="button"

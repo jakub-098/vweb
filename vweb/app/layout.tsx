@@ -18,7 +18,7 @@ const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
 export const metadata: Metadata = {
   title: "Váš Web",
   description:
-    "Váš Web – tvorba moderných, responzívnych webov a e‑shopov do 24 hodín s jasným procesom od nápadu po hotové riešenie.",
+    "Váš Web – tvorba moderných, responzívnych prezentačných webov do 24 hodín. Všetky naše balíky obsahujú Doménu, Hosting aj Emaily. Pozrite si naše balíky a vyberte ten pravý pre vás.",
   metadataBase: new URL("https://www.vweb.sk"),
   themeColor: "#000000",
   icons: {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Váš Web – Moderný web do 24 hodín",
     description:
-      "Váš Web stavia moderné, rýchle a responzívne weby a e‑shopy do 24 hodín. Pozri si proces, ponuku a kontakt na jednej stránke.",
+      "Váš Web stavia moderné, rýchle a responzívne weby do 24 hodín. Pozrite si naše balíky a vyberre ten pravý pre vás.",
     url: "https://www.vweb.sk",
     locale: "sk_SK",
     type: "website",

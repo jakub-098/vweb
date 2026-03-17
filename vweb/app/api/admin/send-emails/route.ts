@@ -25,9 +25,15 @@ const mgClient = mailgun.client({
 const ROOT_DIR = process.cwd();
 const STATUS_JSON_PATH = path.join(ROOT_DIR, "data", "emails-status.json");
 const HTML_PATH = path.join(ROOT_DIR, "public", "reachout.html");
-const DAILY_LIMIT = 99;
-const MIN_DELAY_MS = 3 * 60 * 1000; // 3 min
-const MAX_DELAY_MS = 7 * 60 * 1000; // 7 min
+const MAX_DAILY_LIMIT = 300;
+const CONFIG_PATH = path.join(ROOT_DIR, "data", "email-config.json");
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
+const FROM_ADDRESSES = [
+  "Vweb <team@vweb.tech>",
+  "Jakub z Vweb.sk <jakub@vweb.tech>",
+  "Martin z Vweb.sk <martin@vweb.tech>",
+] as const;
 
 async function writeStatus(partial: any) {
   const now = new Date().toISOString();
@@ -87,6 +93,20 @@ function randomDelayMs(minMs: number, maxMs: number) {
   return Math.floor(minMs + Math.random() * (maxMs - minMs));
 }
 
+async function readDefaultDailyLimit(): Promise<number> {
+  try {
+    const raw = await fs.readFile(CONFIG_PATH, "utf8");
+    const data = JSON.parse(raw);
+    const value = Number(data?.defaultDailyLimit);
+    if (!Number.isFinite(value) || value <= 0) {
+      return 100;
+    }
+    return Math.min(MAX_DAILY_LIMIT, Math.floor(value));
+  } catch {
+    return 100;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     if (!checkAdminPassword(request)) {
@@ -103,10 +123,28 @@ export async function POST(request: Request) {
     const html = await readHtml();
     const subject = process.env.AUTO_MAIL_SUBJECT || "web bez zbytočných starostí";
 
-    // Load up to DAILY_LIMIT pending emails from the mails table
+    // Read optional limit from request body (number of emails to send in this session)
+    let requestedLimit: number | null = null;
+    try {
+      const body = await request.json();
+      if (body && typeof body.limit === "number" && Number.isFinite(body.limit)) {
+        requestedLimit = Math.max(1, Math.floor(body.limit));
+      }
+    } catch {
+      // Body might be empty or invalid JSON – ignore and use defaults
+      requestedLimit = null;
+    }
+
+    const storedDefaultLimit = await readDefaultDailyLimit();
+    const perSessionLimit = Math.min(
+      MAX_DAILY_LIMIT,
+      requestedLimit ?? storedDefaultLimit
+    );
+
+    // Load up to perSessionLimit pending emails from the mails table
     const [rows] = await pool.query<any[]>(
       "SELECT id, mail FROM mails WHERE status = 'pending' ORDER BY id ASC LIMIT ?",
-      [DAILY_LIMIT]
+      [perSessionLimit]
     );
 
     const emails = (rows as any[]).map((row) => ({
@@ -145,6 +183,18 @@ export async function POST(request: Request) {
     let sent = 0;
     let failed = 0;
 
+    // Compute variable delay so that all emails are sent within ~12 hours.
+    const totalToSend = emails.length;
+    const baseDelayMs = Math.max(
+      Math.floor(TWELVE_HOURS_MS / Math.max(totalToSend, 1)),
+      60 * 1000
+    );
+    const minDelayMs = Math.floor(baseDelayMs * 0.5);
+    const maxDelayMs = Math.floor(baseDelayMs * 1.5);
+
+    // Initialize sender rotation
+    let fromIndex = Math.floor(Math.random() * FROM_ADDRESSES.length);
+
     await writeStatus({
       status: "running",
       total: emails.length,
@@ -164,8 +214,16 @@ export async function POST(request: Request) {
       const email = emails[index];
       const to = email.mail;
       try {
+        // Rotate between sender addresses with slight randomness
+        if (Math.random() < 0.3) {
+          fromIndex = Math.floor(Math.random() * FROM_ADDRESSES.length);
+        } else {
+          fromIndex = (fromIndex + 1) % FROM_ADDRESSES.length;
+        }
+        const fromAddress = FROM_ADDRESSES[fromIndex];
+
         await mgClient.messages.create(mailgunDomain, {
-          from: "Vweb <team@vweb.tech>",
+          from: fromAddress,
           to: [to],
           subject,
           html,
@@ -182,7 +240,7 @@ export async function POST(request: Request) {
 
       // Add 3–7 min delay between sends, except after the last one
       if (index < emails.length - 1) {
-        const delay = randomDelayMs(MIN_DELAY_MS, MAX_DELAY_MS);
+        const delay = randomDelayMs(minDelayMs, maxDelayMs);
         await sleep(delay);
       }
     }

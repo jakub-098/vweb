@@ -4,7 +4,7 @@ import Image from "next/image";
 import { projects } from "@/data/reviews";
 
 export default function HappyCustomers() {
-  const items = [0, 1, 2, 3, 4] as const;
+  const items = [0, 1, 2, 3, 4, 5] as const;
 
   return (
     <div className="customers-marquee-container mb-12 mt-4 w-full max-w-6xl px-4 sm:mb-16 sm:px-6">
