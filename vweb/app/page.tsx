@@ -10,6 +10,10 @@ import Baliky from "./components/baliky";
 import BalikyDetail from "./components/baliky-detail";
 import Faq from "./components/faq";
 import PersonalTouch from "./components/personal-touch";
+import SocialProof from "./components/social-proof";
+import ValueProps from "./components/value-props";
+import ClientReviews from "./components/client-reviews";
+// import HappyCustomers from "./components/happy-customers";
 
 export default function Home() {
   useEffect(() => {
@@ -43,14 +47,19 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center bg-[radial-gradient(circle_at_top,_#4c1d95_0,_#02010a_25%,_#02010a_55%,_transparent_70%),radial-gradient(circle_at_bottom,_#4c1d95_0,_#02010a_35%,_#000_80%)] text-zinc-50">
       <Navbar />
       <Header />
+      <SocialProof />
       <HowItWorks />
-      <Baliky />
+      <ValueProps />
       <BalikyDetail />
+      <Baliky />
+      
       {/* <Eshops /> */}
       {/* <CustomWeb /> */}
 
       <Faq />
       <PersonalTouch />
+      <ClientReviews />
+      {/* <HappyCustomers /> */}
       <Contact />
 
       <footer className="w-full border-t border-purple-500/30 bg-black/70 px-4 py-10 text-xs text-zinc-400 sm:px-10 sm:py-12 sm:text-sm">

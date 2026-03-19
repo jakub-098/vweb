@@ -50,6 +50,7 @@ type ConfigSummary = {
   monthly?: string | null;
   subscriptionPriceId?: string | null;
   fastFeePriceId?: string | null;
+  outreachPriceId?: string | null;
 };
 
 function isTruthyFlag(value: number | boolean | undefined | null): boolean {
@@ -124,6 +125,8 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   const [promoOk, setPromoOk] = useState<boolean | null>(null);
   const [promoDiscountPercent, setPromoDiscountPercent] = useState<number | null>(null);
   const [expressDelivery24h, setExpressDelivery24h] = useState(false);
+  const [outreachAddon, setOutreachAddon] = useState(false);
+  const [outreachInfoOpen, setOutreachInfoOpen] = useState(false);
 
   // Google Ads: conversion event on Summary page load
   useEffect(() => {
@@ -352,6 +355,22 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
       setPromoOk(true);
       setPromoDiscountPercent(percentage);
       setPromoMessage(`Promo kód bol uplatnený – zľava ${percentage}% z ceny projektu.`);
+
+      // Track successful promo-code usage once per session in analytics (mapped to "Codes")
+      if (typeof window !== "undefined") {
+        try {
+          if (window.sessionStorage.getItem("vwebPromoTracked") !== "1") {
+            window.sessionStorage.setItem("vwebPromoTracked", "1");
+            void fetch("/api/analytics/increment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: 2 }),
+            }).catch(() => {});
+          }
+        } catch {
+          // best-effort only
+        }
+      }
     } catch (err) {
       console.error("Failed to validate promo code", err);
       setPromoOk(false);
@@ -411,9 +430,33 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
   })();
 
   const finalPriceWithExpress = (() => {
-    if (finalPriceValue == null) return null;
-    const extra = mode === "local" && expressDelivery24h ? 200 : 0;
-    return finalPriceValue + extra;
+    if (mode !== "local") return finalPriceValue;
+    if (totalPriceValue == null) return finalPriceValue;
+
+    let extras = 0;
+    if (expressDelivery24h) extras += 199.99;
+    if (outreachAddon) extras += 199.99;
+
+    // For Business balík, aplikuj zľavu na celú jednorazovú platbu (projekt + add-ony),
+    // aby sa finálna cena zmenila aj v prípade, že samotný projekt je za 0 €.
+    if (
+      configSummary?.packageName === "Business" &&
+      promoDiscountPercent != null &&
+      Number.isFinite(promoDiscountPercent)
+    ) {
+      const combined = totalPriceValue + extras;
+      const factor = 1 - promoDiscountPercent / 100;
+      const discounted = combined * factor;
+      if (!Number.isFinite(discounted) || discounted < 0) return combined;
+      return discounted;
+    }
+
+    // Ostatné balíky: zľava len na cenu projektu, add-ony bez zľavy.
+    if (finalPriceValue == null) {
+      return totalPriceValue + extras;
+    }
+
+    return finalPriceValue + extras;
   })();
 
   const hasSummaryContent =
@@ -477,23 +520,84 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
           </div>
 
           {mode === "local" && (
-            <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
-              <label className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/50 text-purple-500 focus:ring-purple-500"
-                  checked={expressDelivery24h}
-                  onChange={(e) => setExpressDelivery24h(e.target.checked)}
-                />
-                <span className="text-sm text-zinc-200">
-                  doručenie do 24h (ak nie je zvolené, stránku doručíme do 48h)
-                </span>
-              </label>
-            </div>
+            <>
+              <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/50 text-purple-500 focus:ring-purple-500"
+                    checked={expressDelivery24h}
+                    onChange={(e) => setExpressDelivery24h(e.target.checked)}
+                  />
+                  <span className="text-sm font-semibold text-zinc-100">
+                    doručenie do 24h
+                    <span className="ml-2 text-xs font-normal text-zinc-300">
+                      (+199,99 € bez DPH)
+                    </span>
+                    <span className="mt-1 block text-[0.75rem] font-normal text-zinc-400">
+                      Ak nie je zvolené, stránku doručíme do 48h.
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <label className="flex flex-1 items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/50 text-purple-500 focus:ring-purple-500"
+                        checked={outreachAddon}
+                        onChange={(e) => setOutreachAddon(e.target.checked)}
+                      />
+                      <span className="text-sm font-semibold text-zinc-100">
+                        Chcem pomôcť so získavaním zákazníkov (Outreach)
+                        <span className="ml-2 text-xs font-normal text-zinc-300">
+                          (+199,99 € bez DPH)
+                        </span>
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setOutreachInfoOpen((v) => !v)}
+                      className="w-full whitespace-nowrap rounded-2xl bg-purple-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    >
+                      {outreachInfoOpen ? "Zavrieť" : "Zistiť viac"}
+                    </button>
+                  </div>
+
+                  {outreachInfoOpen && (
+                    <div className="mt-3 space-y-2 rounded-2xl bg-black/40 px-4 py-3 text-xs text-zinc-200">
+                      <p className="text-[0.75rem] font-semibold text-purple-200">
+                        Outreach
+                      </p>
+                      <p>
+                        Získajte prvé zákazky hneď po spustení webu.
+                      </p>
+                      <p>
+                        Oslovíme firmy, ktoré môžu byť vašimi klientmi.
+                      </p>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-[0.78rem] text-zinc-200">
+                        <li>oslovenie firiem vo vašom odvetví</li>
+                        <li>príprava emailov, ktoré generujú dopyty</li>
+                        <li>výber relevantných potenciálnych klientov</li>
+                        <li>jednoduchý systém ako získavať ďalších zákazníkov</li>
+                      </ul>
+                      <p className="mt-2 text-[0.75rem] text-zinc-400">
+                        Najlepšie funguje pre firmy, ktoré ponúkajú služby iným firmám (B2B). Pre viac informácií nás neváhajte kontaktovat na <a href="mailto:info@vweb.sk" className="text-purple-400 hover:text-purple-300">
+                          info@vweb.sk
+                        </a>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
           {/* Company toggle & fields */}
-          <div className="rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
+          <div className="mt-20 rounded-2xl bg-white/5 px-6 py-5 text-sm text-zinc-200 backdrop-blur-xl">
             <label className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -640,20 +744,46 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
             <span className="ml-2 text-sm font-normal text-zinc-300">bez DPH</span>
           </p>
           {mode === "local" && configSummary?.monthly && (
-            <p className="mt-2 text-sm font-semibold text-zinc-100">
-              + Mesačne: <span className="text-purple-200">{configSummary.monthly}</span>
-              <span className="ml-2 text-xs font-normal text-zinc-300">bez DPH</span>
-            </p>
-          )}
-          {promoDiscountPercent != null && totalPriceValue != null && finalPriceValue != null && finalPriceValue !== totalPriceValue && (
-            <p className="mt-1 text-xs text-emerald-300">
-              Pôvodná cena: <span className="line-through opacity-70">{totalPriceValue.toFixed(2)} €</span>, zľava {promoDiscountPercent}%.
-            </p>
+            <div className="mt-2 text-sm text-zinc-100">
+              <p className="font-semibold">
+                + Mesačne: <span className="text-purple-200">{configSummary.monthly}</span>
+                <span className="ml-2 text-xs font-normal text-zinc-300">bez DPH</span>
+              </p>
+              {configSummary?.packageName === "Business" &&
+                promoDiscountPercent != null && (
+                  <p className="mt-1 text-[0.78rem] text-emerald-300">
+                    - zľava {promoDiscountPercent}% na mesačnú platbu (navždy)
+                  </p>
+                )}
+            </div>
           )}
           <div className="mt-4 text-[0.8rem] text-zinc-300">
             <p>Dodanie: {deliveryLabel}</p>
+
+            {mode === "local" && expressDelivery24h && (
+              <p className="mt-1 text-[0.8rem] text-zinc-300">
+                Expresné doručenie 24h: +199,99 €
+              </p>
+            )}
+
+            {mode === "local" && outreachAddon && (
+              <p className="mt-1 text-[0.8rem] text-zinc-300">
+                Outreach (získavanie zákazníkov): +199,99 €
+              </p>
+            )}
+
+            {promoDiscountPercent != null &&
+              ((totalPriceValue != null &&
+                finalPriceValue != null &&
+                finalPriceValue !== totalPriceValue) ||
+                (mode === "local" && configSummary?.packageName === "Business")) && (
+                <p className="mt-2 text-[0.78rem] text-emerald-300">
+                  - zľava {promoDiscountPercent}% z ceny projektu
+                </p>
+              )}
+
             {Array.isArray(priceBreakdown) && priceBreakdown.length > 0 && (
-              <div className="mt-2 space-y-0.5 text-[0.8rem] text-zinc-300">
+              <div className="mt-3 space-y-0.5 text-[0.8rem] text-zinc-300">
                 {priceBreakdown.map((line, idx) => (
                   <p key={idx}>{line}</p>
                 ))}
@@ -662,12 +792,12 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
           </div>
 
           {mode === "local" && configSummary?.packageName === "Business" && (
-            <p className="mt-3 text-xs text-zinc-300">
+            <p className="mt-5 text-xs text-zinc-300">
               Minimálna doba viazanosti je 12 mesiacov. Po uplynutí tejto doby je možné službu kedykoľvek zrušiť.
             </p>
           )}
 
-          <div className="mt-6 flex items-start gap-2 text-xs text-zinc-300 sm:text-sm">
+          <div className="mt-7 flex items-start gap-2 text-xs text-zinc-300 sm:text-sm">
             <input
               id="terms-checkbox"
               type="checkbox"
@@ -820,6 +950,11 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                     configSummary.fastFeePriceId.trim().length > 0
                       ? configSummary.fastFeePriceId.trim()
                       : null;
+                  const outreachPriceId =
+                    typeof configSummary.outreachPriceId === "string" &&
+                    configSummary.outreachPriceId.trim().length > 0
+                      ? configSummary.outreachPriceId.trim()
+                      : null;
 
                   const isSubscriptionPackage =
                     subscriptionPriceId != null &&
@@ -843,6 +978,16 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                         lineItems.push({ price: fastFeePriceId, quantity: 1 });
                       }
 
+                      // optional outreach add-on
+                      if (outreachAddon && outreachPriceId) {
+                        lineItems.push({ price: outreachPriceId, quantity: 1 });
+                      }
+
+                      const promoPercentForSubscription =
+                        configSummary.packageName === "Business"
+                          ? promoDiscountPercent ?? undefined
+                          : undefined;
+
                       const res = await fetch("/api/checkout_sessions", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -850,7 +995,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                           mode: "subscription",
                           lineItems,
                           customerEmail: trimmedEmail,
-                          promoPercent: promoDiscountPercent ?? undefined,
+                          promoPercent: promoPercentForSubscription,
                           packageName: configSummary.packageName ?? undefined,
                           orderDraft: {
                             theme: configSummary.theme,
@@ -874,6 +1019,7 @@ export default function SummaryPage({ liveConfigSummary, priceBreakdown }: Summa
                             sectionGallery: true,
                             sectionOffer: true,
                             sectionContactForm: true,
+                            outreach: outreachAddon,
                             is_company: isCompany,
                             company_name: isCompany ? companyName || null : null,
                             company_address: isCompany

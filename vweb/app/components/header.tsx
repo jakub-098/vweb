@@ -33,16 +33,21 @@ export default function Header() {
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-{/*               
+              
               <a
-                href="/config"
+                href="#ako-to-funguje"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.getElementById("ponuka");
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
               >
-                Zistiť Cenu (30s)
+                Pozrieť Ponuku
                 <span className="text-xs opacity-80 transition-transform duration-200 group-hover:translate-x-0.5">
                   ↗
                 </span>
-              </a> */}
+              </a>
               <a
                 href="#ako-to-funguje"
                 onClick={(e) => {
@@ -50,7 +55,7 @@ export default function Header() {
                   const el = document.getElementById("ako-to-funguje");
                   el?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
-                className="group inline-flex items-center justify-center rounded-2xl bg-purple-500 px-10 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-purple-400"
+                className="group inline-flex items-center justify-center rounded-2xl border border-purple-400/70 bg-transparent px-10 py-3.5 text-sm font-semibold text-purple-100 transition duration-200 hover:bg-purple-500/10"
               >
                 <span className="mr-1">Chcem vedieť viac</span>
                 <span className="text-xs opacity-80 transition-transform duration-200 group-hover:translate-x-0.5">

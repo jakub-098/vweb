@@ -15,7 +15,8 @@ export default function Baliky() {
       //price_id:"price_1T5uvkKXcEzYeCDYk5H6ua3K",
       price_id:"price_1TBOccKXcEzYeCDYVAPOqMAk",
       subscription:"price_1TBNp8KXcEzYeCDY4iidBXKr",
-      fast_fee:"price_1TBOaNKXcEzYeCDYBkSlxj7w", 
+      fast_fee:"price_1TCloHKXcEzYeCDYXquGVf0V", 
+      outreach: "price_1TClv5KXcEzYeCDYDZ6oxVwF",
       features: [
         "Kompletný web bez starostí",
         "Výber vlastnej domény",
@@ -36,7 +37,8 @@ export default function Baliky() {
       price: "0 €",
       monthly: "79,90€ mesačne",
       subscription:"price_1TBOPBKXcEzYeCDYqmiFd7C8",
-      fast_fee:"price_1TBOaNKXcEzYeCDYBkSlxj7w", 
+      fast_fee:"price_1TCloHKXcEzYeCDYXquGVf0V",
+      outreach: "price_1TClv5KXcEzYeCDYDZ6oxVwF", 
       
       features: [
         "Zabezbečime online prezenciu vašej firmy ",
@@ -178,6 +180,7 @@ export default function Baliky() {
                           monthly: plan.monthly ?? null,
                           subscriptionPriceId: plan.subscription ?? null,
                           fastFeePriceId: plan.fast_fee ?? null,
+                          outreachPriceId: plan.outreach ?? null,
                         }),
                       );
                     } catch {
@@ -200,6 +203,75 @@ export default function Baliky() {
           </div>
         )
       })}
+
+    </div>
+    <div className="mt-40">
+      <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 h-2.5 w-2.5 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
+              <div>
+                <h3 className="text-xl font-semibold text-white">
+                  Pozrite sa, ako môže vyzerať váš web
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                  Otvorte si ukážkovú stránku a pozrite si reálne spracovanie balíka v praxi.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => window.open('/preview', '_blank')}
+              className="rounded-2xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+            >
+              Prezrieť demo stránku
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div className="mt-12 grid gap-8 sm:grid-cols-2">
+
+      <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10 sm:col-span-2">
+
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+
+          <div className="max-w-xl">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 h-2.5 w-2.5 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
+              <div>
+                <h3 className="text-xl font-semibold text-white">
+                  Riešenie pre komplexné projekty a e-shopy
+                </h3>
+
+                <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                  Potrebujete pokročilé funkcionality, rezervačný systém alebo
+                  individuálny dizajn? Pripravíme riešenie na mieru podľa vašich požiadaviek.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("kontakt");
+                el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="rounded-2xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
+            >
+              Požiadať o ponuku
+            </button>
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
   </div>

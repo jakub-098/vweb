@@ -1,14 +1,11 @@
 "use client";
 
-import HappyCustomers from "./happy-customers";
-
 export default function HowItWorks() {
   return (
     <section
       id="ako-to-funguje"
       className="relative w-full max-w-6xl -mt-24 scroll-mt-28 pt-0  sm:w-4/5 lg:w-2/3 sm:-mt-32 sm:scroll-mt-32  "
     >
-      <HappyCustomers />
       {/* <div className="relative mx-auto w-full">
         <div className="mb-12 text-center">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-purple-200/70">

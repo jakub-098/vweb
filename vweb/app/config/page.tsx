@@ -377,6 +377,7 @@ export default function ConfigPage() {
                       monthly: null,
                       subscriptionPriceId: null,
                       fastFeePriceId: null,
+                      outreachPriceId: null,
             }),
           );
         } catch (error) {

@@ -119,7 +119,7 @@ export default function Contact() {
     //   </div>
     // </section>
     <section
-  id="kontakt"
+
   className="w-full max-w-6xl px-6 pb-32"
 >
   

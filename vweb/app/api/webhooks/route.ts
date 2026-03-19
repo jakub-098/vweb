@@ -67,6 +67,9 @@ export async function POST(request: Request) {
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
 
+        const md = session.metadata ?? {};
+        const outreachSelected = md.draft_outreach === "1";
+
         const paymentStatus = session.payment_status;
         const orderIdFromMetadata = session.metadata?.orderId;
         const orderIdFromClientRef = session.client_reference_id;
@@ -114,7 +117,10 @@ export async function POST(request: Request) {
             };
 
             try {
-              await sendPaymentReceivedEmail(orderForEmail, { notifyAdmin: true });
+              await sendPaymentReceivedEmail(orderForEmail, {
+                notifyAdmin: true,
+                outreachSelected,
+              });
             } catch (emailError) {
               console.error("Stripe webhook: failed to send payment received email", emailError);
             }

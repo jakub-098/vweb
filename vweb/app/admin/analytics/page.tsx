@@ -116,8 +116,8 @@ export default function AdminAnalyticsPage() {
 
   const metrics = [
     { key: "main" as const, label: "Visits", description: "Počet návštev hlavnej stránky" },
-    { key: "config" as const, label: "Config", description: "Počet spustených konfigurácií" },
-    { key: "upload" as const, label: "Finish", description: "Počet nahratí konfigurácie" },
+    { key: "config" as const, label: "Summary", description: "Počet zobrazení sumár stránky" },
+    { key: "upload" as const, label: "Codes", description: "Počet použitých promo kódov" },
     { key: "purchase" as const, label: "Purchase", description: "Počet dokončených nákupov" },
   ];
 
@@ -134,12 +134,12 @@ export default function AdminAnalyticsPage() {
   const last7ConfigValues = dailyAnalytics.map((d) => Number(d.config ?? 0) || 0);
 	const last7MainValues = dailyAnalytics.map((d) => Number((d as any).main ?? 0) || 0);
 
-  const lineData = {
+  const lineDataSummary = {
     labels: last7Labels,
     datasets: [
       {
-        label: "Config",
-			data: last7ConfigValues,
+        label: "Summary",
+		data: last7ConfigValues,
         borderColor: "rgba(168, 85, 247, 0.9)",
         backgroundColor: "rgba(168, 85, 247, 0.3)",
         tension: 0.3,
@@ -147,16 +147,23 @@ export default function AdminAnalyticsPage() {
         pointHoverRadius: 4,
         fill: false,
       },
-			{
-				label: "Všetky návštevy (main)",
-				data: last7MainValues,
-				borderColor: "rgba(255, 255, 255, 0.9)",
-				backgroundColor: "rgba(255, 255, 255, 0.25)",
-				borderWidth: 1.5,
-				pointRadius: 2.5,
-				pointHoverRadius: 4,
-				fill: false,
-			},
+    ],
+  };
+
+  const lineDataVisits = {
+    labels: last7Labels,
+    datasets: [
+      {
+        label: "Visits",
+        data: last7MainValues,
+        borderColor: "rgba(255, 255, 255, 0.9)",
+        backgroundColor: "rgba(255, 255, 255, 0.25)",
+        borderWidth: 1.5,
+        pointRadius: 2.5,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        fill: false,
+      },
     ],
   };
 
@@ -307,14 +314,27 @@ export default function AdminAnalyticsPage() {
           })}
         </div>
 
-      {/* Last 7 days line chart (config only) */}
-      <div className="mt-10">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400">
-          Config – posledných 7 dní
-        </h3>
-        <div className="rounded-2xl bg-black/70 px-4 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.9)]">
-          <div className="h-40">
-            <Line data={lineData} options={lineOptions} />
+      {/* Last 7 days line charts (stacked) */}
+      <div className="mt-10 space-y-8">
+        <div>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            Summary – posledných 7 dní
+          </h3>
+          <div className="rounded-2xl bg-black/70 px-4 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.9)]">
+            <div className="h-40">
+              <Line data={lineDataSummary} options={lineOptions} />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            Návštevy – posledných 7 dní
+          </h3>
+          <div className="rounded-2xl bg-black/70 px-4 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.9)]">
+            <div className="h-40">
+              <Line data={lineDataVisits} options={lineOptions} />
+            </div>
           </div>
         </div>
       </div>

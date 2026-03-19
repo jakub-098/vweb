@@ -53,6 +53,8 @@ export async function finalizePaidCheckoutSession(
   }
 
   const sessionKey = `stripe:${session.id}`;
+  const md = session.metadata ?? {};
+  const outreachSelected = md.draft_outreach === "1";
 
   // Idempotency (webhooks retry; success page might also run): if we already have an order for
   // this sessionKey, only ensure status=1 and send emails once.
@@ -79,7 +81,10 @@ export async function finalizePaidCheckoutSession(
       };
 
       try {
-        await sendPaymentReceivedEmail(orderForEmail, { notifyAdmin: true });
+        await sendPaymentReceivedEmail(orderForEmail, {
+          notifyAdmin: true,
+          outreachSelected,
+        });
       } catch (emailError) {
         console.error("Stripe finalize: failed to send payment received email", emailError);
       }
@@ -87,8 +92,6 @@ export async function finalizePaidCheckoutSession(
 
     return { orderId: current.id };
   }
-
-  const md = session.metadata ?? {};
 
   const draftUserEmail = pickString(md.draft_user_email);
   const stripeEmail = (session.customer_details?.email ?? session.customer_email ?? "").trim();
@@ -236,7 +239,10 @@ export async function finalizePaidCheckoutSession(
       };
 
       try {
-        await sendPaymentReceivedEmail(orderForEmail, { notifyAdmin: true });
+        await sendPaymentReceivedEmail(orderForEmail, {
+          notifyAdmin: true,
+          outreachSelected,
+        });
       } catch (emailError) {
         console.error("Stripe finalize: failed to send payment received email", emailError);
       }
@@ -256,7 +262,10 @@ export async function finalizePaidCheckoutSession(
     };
 
     try {
-      await sendPaymentReceivedEmail(orderForEmail, { notifyAdmin: true });
+      await sendPaymentReceivedEmail(orderForEmail, {
+        notifyAdmin: true,
+        outreachSelected,
+      });
     } catch (emailError) {
       console.error("Stripe finalize: failed to send payment received email", emailError);
     }

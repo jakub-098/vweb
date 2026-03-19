@@ -7,10 +7,8 @@ export default function HappyCustomers() {
   const items = [0, 1, 2, 3, 4, 5] as const;
 
   return (
-    <div className="customers-marquee-container mb-12 mt-4 w-full max-w-6xl px-4 sm:mb-16 sm:px-6">
-      <div className="relative">
-       
-        <div className="customers-marquee-track">
+    <div className="customers-marquee-container mb-12 sm:mb-16">
+      <div className="customers-marquee-track">
         {[...items, ...items].map((index, i) => {
           const project = projects[index];
 
@@ -82,7 +80,6 @@ export default function HappyCustomers() {
             </div>
           );
         })}
-        </div>
       </div>
     </div>
   );

@@ -200,14 +200,23 @@ export async function POST(request: Request) {
       if (ico) metadata.draft_ico = ico;
       const dic = asTrimmedString(draft.dic, 32);
       if (dic) metadata.draft_dic = dic;
+
+      const outreach = as01Flag(draft.outreach);
+      if (outreach) metadata.draft_outreach = outreach;
     }
 
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
 
     if (promoPercent != null) {
+      let duration: Stripe.CouponCreateParams.Duration = "once";
+
+      if (mode === "subscription" && packageName === "Business") {
+        duration = "forever";
+      }
+
       const coupon = await stripe.coupons.create({
         percent_off: promoPercent,
-        duration: "once",
+        duration,
         max_redemptions: 1,
         name: "Promo zľava",
         metadata,

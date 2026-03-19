@@ -2,24 +2,24 @@
 
 export default function BalikyDetail() {
   return (
-    <section className="relative w-full pb-24 mt-10">
+    <section className="relative w-full pb-30 mt-7">
   <div className="mx-auto max-w-6xl px-6">
 
     {/* ===================== */}
     {/* Business / Express */}
     {/* ===================== */}
 
-    <div className="text-center">
+    {/* <div className="text-center">
       <h2 className="text-4xl font-semibold text-white sm:text-5xl">
         Business / Classic
       </h2>
 
-      {/* <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
+      <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
         Vy si vyberiete balík, nahráte obsah a o všetko ostatné sa postaráme my.
         Bez technických komplikácií. Bez zbytočného čakania.
-      </p> */}
-    </div>
-    <div className="relative mt-15">
+      </p>
+    </div> */}
+    <div className="relative mt-0">
     {/* Horizontal line (posunutá nižšie) */}
     <div className="absolute top-16 left-0 right-0 hidden h-px bg-gradient-to-r from-purple-500/20 via-purple-400/60 to-purple-500/20 sm:block" />
 
@@ -66,9 +66,9 @@ export default function BalikyDetail() {
 
     </div>
   </div>
-    <div className="mt-20 grid gap-8 sm:grid-cols-2 mb-10">
+    {/* <div className="mt-20 grid gap-8 sm:grid-cols-2 mb-10">
 
-      {/* Box 1 */}
+    
       <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
         <div className="flex items-start gap-4">
           <div className="mt-1 h-3 w-3 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
@@ -84,7 +84,7 @@ export default function BalikyDetail() {
         </div>
       </div>
 
-      {/* Box 2 */}
+     
       <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
         <div className="flex items-start gap-4">
           <div className="mt-1 h-3 w-3 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
@@ -100,7 +100,7 @@ export default function BalikyDetail() {
         </div>
       </div>
 
-      {/* Box 3 */}
+    
       <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
         <div className="flex items-start gap-4">
           <div className="mt-1 h-3 w-3 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
@@ -115,7 +115,6 @@ export default function BalikyDetail() {
         </div>
       </div>
 
-      {/* Box 4 */}
       <div id="custom" className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10">
         <div className="flex items-start gap-4">
           <div className="mt-1 h-3 w-3 rounded-full bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.7)]" />
@@ -131,17 +130,9 @@ export default function BalikyDetail() {
         </div>
       </div>
 
-    </div>
+    </div> */}
 
-    <div className="mt-8 text-center">
-      <button
-        type="button"
-        onClick={() => window.open('/preview', '_blank')}
-        className="rounded-2xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)]"
-      >
-        Prezrieť Demo stránku
-      </button>
-    </div>
+    
 
     {/* ===================== */}
     {/* CUSTOM Timeline + Nadpis */}
@@ -150,13 +141,13 @@ export default function BalikyDetail() {
     
 
 
-    <div  className="mt-16 text-center">
+    {/* <div  className="mt-16 text-center">
       <h2 className="text-4xl font-semibold text-white sm:text-5xl">
         Custom
       </h2>
     </div>
 
-    {/* Custom Box */}
+
     <div className="mt-12 grid gap-8 sm:grid-cols-2">
 
       <div className="rounded-3xl bg-white/5 p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:bg-white/10 sm:col-span-2">
@@ -196,7 +187,7 @@ export default function BalikyDetail() {
 
       </div>
 
-    </div>
+    </div> */}
 
   </div>
 </section>
