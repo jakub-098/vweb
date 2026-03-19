@@ -30,114 +30,69 @@ export type OrderForEmail = {
 };
 
 export async function sendUploadCompletedEmails(order: OrderForEmail): Promise<void> {
-	if (!smtpHost || !smtpUser || !smtpPass) {
-		return;
-	}
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    return;
+  }
 
-	// Email pre admina – informácia, že klient dokončil nahrávanie podkladov
-	const adminSubject = "Zákazník dokončil nahrávanie podkladov";
-	const adminLines: string[] = [
-		"Zákazník dokončil nahrávanie podkladov v konfigurátore.",
-		"",
-		`ID objednávky: ${order.id}`,
-	];
-	if (order.user_email) {
-		adminLines.push(`Email zákazníka: ${order.user_email}`);
-	}
-	if (order.delivery_speed) {
-		adminLines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
-	}
-	if (order.created_at) {
-		adminLines.push(`Vytvorené: ${order.created_at}`);
-	}
+  const adminSubject = "Zákazník dokončil nahrávanie podkladov";
+  const adminLines: string[] = [
+    "Zákazník dokončil nahrávanie podkladov v konfigurátore.",
+    "",
+    `ID objednávky: ${order.id}`,
+  ];
+  if (order.user_email) adminLines.push(`Email zákazníka: ${order.user_email}`);
+  if (order.delivery_speed) adminLines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
+  if (order.created_at) adminLines.push(`Vytvorené: ${order.created_at}`);
 
-	const adminText = adminLines.join("\n");
-
-	const adminHtml = `<p>Zákazník dokončil nahrávanie podkladov v konfigurátore.</p>
-<ul>
-  <li><strong>ID objednávky:</strong> ${order.id}</li>
-  ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
-  ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
-  ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
-</ul>`;
-
-	await transporter.sendMail({
-		from: `Vweb <${smtpUser}>`,
-		to: smtpUser,
-		subject: adminSubject,
-		text: adminText,
-		html: adminHtml,
-	});
-
-	// Email pre klienta – prijali sme konfiguráciu a púšťame sa do práce
-	if (!order.user_email) {
-		console.warn("Order is missing user_email, skipping upload completed client email", {
-			orderId: order.id,
-		});
-		return;
-	}
-
-	const clientSubject = "Prijali sme vašu konfiguráciu";
-
-	const clientHtml = `<!DOCTYPE html>
+  const adminText = adminLines.join("\n");
+  const adminHtml = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Prijali sme vašu konfiguráciu</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Konfigurácia prijatá
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 8px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu konfiguráciu</h1>
-              <p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Všetky podklady sme úspešne prijali a náš tím sa púšťa do práce na vašom webe.
-              </p>
-              ${order.delivery_speed ? `<p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                <strong style="color:#111827;">Zvolená rýchlosť dodania:</strong>
-                <span style="font-weight:600;"> ${order.delivery_speed}</span>
-              </p>` : ""}
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Nahrávanie podkladov dokončené</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <p>Zákazník dokončil nahrávanie podkladov v konfigurátore.</p>
+  <ul>
+    <li><strong>ID objednávky:</strong> ${order.id}</li>
+    ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
+    ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+    ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
+  </ul>
 </body>
 </html>`;
 
-	await transporter.sendMail({
-		from: `Vweb <${smtpUser}>`,
-		to: order.user_email,
-		subject: clientSubject,
-		text: "Prijali sme vašu konfiguráciu a púšťame sa do práce na vašom webe.",
-		html: clientHtml,
-	});
+  await transporter.sendMail({
+    from: `Vweb <${smtpUser}>`,
+    to: smtpUser,
+    subject: adminSubject,
+    text: adminText,
+    html: adminHtml,
+  });
+
+  if (!order.user_email) {
+    console.warn("Order is missing user_email, skipping upload completed client email", {
+      orderId: order.id,
+    });
+    return;
+  }
+
+  const clientSubject = "Prijali sme vašu konfiguráciu";
+  const clientText = "Prijali sme vašu konfiguráciu a púšťame sa do práce na vašom webe.";
+  const clientHtml = `<!DOCTYPE html>
+<html lang="sk">
+<head><meta charset="UTF-8" /><title>Prijali sme vašu konfiguráciu</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <p>Všetky podklady sme úspešne prijali a náš tím sa púšťa do práce na vašom webe.</p>
+  ${order.delivery_speed ? `<p><strong>Zvolená rýchlosť dodania:</strong> ${order.delivery_speed}</p>` : ""}
+  <p>Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
+</body>
+</html>`;
+
+  await transporter.sendMail({
+    from: `Vweb <${smtpUser}>`,
+    to: order.user_email,
+    subject: clientSubject,
+    text: clientText,
+    html: clientHtml,
+  });
 }
 
 export async function sendNewOrderNotification(order: OrderForEmail): Promise<void> {
@@ -148,28 +103,20 @@ export async function sendNewOrderNotification(order: OrderForEmail): Promise<vo
   const subject = "Prijali sme vašu objednávku";
 
   const lines: string[] = [
-    `Nová objednávka bola odoslaná.`,
+    "Nová objednávka bola odoslaná.",
     "",
     `ID objednávky: ${order.id}`,
   ];
 
-  if (order.user_email) {
-    lines.push(`Email zákazníka: ${order.user_email}`);
-  }
-  if (order.total_price != null) {
-    lines.push(`Celková cena: ${order.total_price} €`);
-  }
-  if (order.delivery_speed) {
-    lines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
-  }
+  if (order.user_email) lines.push(`Email zákazníka: ${order.user_email}`);
+  if (order.total_price != null) lines.push(`Celková cena: ${order.total_price} €`);
+  if (order.delivery_speed) lines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
   if (order.domain_option === "own" && order.domain_own) {
     lines.push(`Doména (vlastná): ${order.domain_own}`);
   } else if (order.domain_option === "request" && order.domain_request) {
     lines.push(`Požadovaná doména: ${order.domain_request}`);
   }
-  if (order.created_at) {
-    lines.push(`Vytvorené: ${order.created_at}`);
-  }
+  if (order.created_at) lines.push(`Vytvorené: ${order.created_at}`);
 
   const text = lines.join("\n");
 
@@ -194,98 +141,15 @@ export async function sendNewOrderNotification(order: OrderForEmail): Promise<vo
 
   const clientHtml = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Prijali sme vašu objednávku</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Nová objednávka
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 8px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu objednávku</h1>
-              <p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Aby sa náš tím mohol pustiť do práce, uhraďte prosím požadovanú sumu.
-              </p>
-              ${order.total_price != null ? `<p style="margin:0 0 24px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                <strong style="color:#111827;">Celková suma na úhradu:</strong>
-                <span style="font-weight:700; color:#7c3aed;"> ${order.total_price} &euro;</span>
-              </p>` : ""}
-            </td>
-          </tr>
-
-          <tr>
-            <td align="center" style="padding:4px 32px 24px 32px;">
-              <a href="${buttonHref}"
-                 style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:12px 28px; font-size:14px; font-weight:600; border-radius:999px; display:inline-block; box-shadow:0 10px 15px -3px rgba(124,58,237,0.35);">
-                Uhradiť objednávku
-              </a>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
-                <tr>
-                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">
-                    Detaily objednávky
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">
-                      
-                      ${order.delivery_speed ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Rýchlosť dodania</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.delivery_speed}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "own" && order.domain_own ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Doména (vlastná)</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_own}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "request" && order.domain_request ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Požadovaná doména</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_request}</td>
-                      </tr>` : ""}
-                      
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk"; style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Prijali sme vašu objednávku</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Prijali sme vašu objednávku</h1>
+  <p>Aby sa náš tím mohol pustiť do práce, uhraďte prosím požadovanú sumu.</p>
+  ${order.total_price != null ? `<p><strong>Celková suma na úhradu:</strong> ${order.total_price} €</p>` : ""}
+  <p><a href="${buttonHref}" style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:10px 22px; border-radius:999px;">Uhradiť objednávku</a></p>
 </body>
- </html>`;
+</html>`;
 
-  // Send styled payment email to client
   if (order.user_email) {
     await transporter.sendMail({
       from: `Vweb <${smtpUser}>`,
@@ -294,23 +158,24 @@ export async function sendNewOrderNotification(order: OrderForEmail): Promise<vo
       text,
       html: clientHtml,
     });
-  } else {
-    console.warn("Order is missing user_email, skipping client notification email", {
-      orderId: order.id,
-    });
   }
 
-  // Send plain notification email to admin (no design)
-  const adminHtml = `<p>Nová objednávka bola odoslaná.</p>
-<ul>
-  <li><strong>ID objednávky:</strong> ${order.id}</li>
-  ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
-  ${order.total_price != null ? `<li><strong>Celková cena:</strong> ${order.total_price} €</li>` : ""}
-  ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
-  ${order.domain_option === "own" && order.domain_own ? `<li><strong>Doména (vlastná):</strong> ${order.domain_own}</li>` : ""}
-  ${order.domain_option === "request" && order.domain_request ? `<li><strong>Požadovaná doména:</strong> ${order.domain_request}</li>` : ""}
-  ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
-</ul>`;
+  const adminHtml = `<!DOCTYPE html>
+<html lang="sk">
+<head><meta charset="UTF-8" /><title>Nová objednávka</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <p>Nová objednávka bola odoslaná.</p>
+  <ul>
+    <li><strong>ID objednávky:</strong> ${order.id}</li>
+    ${order.user_email ? `<li><strong>Email zákazníka:</strong> ${order.user_email}</li>` : ""}
+    ${order.total_price != null ? `<li><strong>Celková cena:</strong> ${order.total_price} €</li>` : ""}
+    ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+    ${order.domain_option === "own" && order.domain_own ? `<li><strong>Doména (vlastná):</strong> ${order.domain_own}</li>` : ""}
+    ${order.domain_option === "request" && order.domain_request ? `<li><strong>Požadovaná doména:</strong> ${order.domain_request}</li>` : ""}
+    ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
+  </ul>
+</body>
+</html>`;
 
   await transporter.sendMail({
     from: `Vweb <${smtpUser}>`,
@@ -340,110 +205,31 @@ export async function sendPaymentReceivedEmail(
     `ID objednávky: ${order.id}`,
   ];
 
-  if (order.total_price != null) {
-    lines.push(`Celková cena: ${order.total_price} €`);
-  }
-  if (order.delivery_speed) {
-    lines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
-  }
+  if (order.total_price != null) lines.push(`Celková cena: ${order.total_price} €`);
+  if (order.delivery_speed) lines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
   if (order.domain_option === "own" && order.domain_own) {
     lines.push(`Doména (vlastná): ${order.domain_own}`);
   } else if (order.domain_option === "request" && order.domain_request) {
     lines.push(`Požadovaná doména: ${order.domain_request}`);
   }
-  if (order.created_at) {
-    lines.push(`Vytvorené: ${order.created_at}`);
-  }
+  if (order.created_at) lines.push(`Vytvorené: ${order.created_at}`);
 
   const text = lines.join("\n");
 
   const html = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Prijali sme vašu platbu</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Platba prijatá
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 20px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu platbu</h1>
-              <p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Ďakujeme, vaša platba prebehla úspešne. Teraz už len vyplníte Konfigurátor a počkáte kým bude vaša nová stránka online. 
-              </p>
-              ${order.total_price != null ? `<p style="margin:0 0 24px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                <strong style="color:#111827;">Celková suma:</strong>
-                <span style="font-weight:700; color:#7c3aed;"> ${order.total_price} &euro;</span>
-              </p>` : ""}
-              <a href="https://www.vweb.sk/upload"
-                 style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:12px 28px; font-size:14px; font-weight:600; border-radius:999px; display:inline-block; box-shadow:0 10px 15px -3px rgba(124,58,237,0.35);">
-                Spustiť Konfigurátor
-              </a>
-            </td>
-
-            
-              
-            
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
-                <tr>
-                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">
-                    Detaily objednávky
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">
-                      ${order.delivery_speed ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Rýchlosť dodania</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.delivery_speed}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "own" && order.domain_own ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Doména (vlastná)</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_own}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "request" && order.domain_request ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Požadovaná doména</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_request}</td>
-                      </tr>` : ""}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Prijali sme vašu platbu</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Prijali sme vašu platbu</h1>
+  <p>Ďakujeme, vaša platba prebehla úspešne.</p>
+  ${order.total_price != null ? `<p><strong>Celková suma:</strong> ${order.total_price} €</p>` : ""}
+  <p><a href="https://www.vweb.sk/upload" style="background-color:#7c3aed; color:#ffffff; text-decoration:none; padding:10px 22px; border-radius:999px;">Spustiť Konfigurátor</a></p>
+  <h2>Detaily objednávky</h2>
+  <ul>
+    ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+    ${order.domain_option === "own" && order.domain_own ? `<li><strong>Doména (vlastná):</strong> ${order.domain_own}</li>` : ""}
+    ${order.domain_option === "request" && order.domain_request ? `<li><strong>Požadovaná doména:</strong> ${order.domain_request}</li>` : ""}
+  </ul>
 </body>
 </html>`;
 
@@ -507,6 +293,7 @@ type ContactPayload = {
 type ConsultationPayload = {
   name: string;
   phone: string;
+  email: string;
   note: string;
 };
 
@@ -534,70 +321,15 @@ export async function sendContactEmails(payload: ContactPayload): Promise<void> 
 
   const clientHtml = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Prijali sme vašu správu</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Správa prijatá
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 8px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Prijali sme vašu správu</h1>
-              <p style="margin:0 0 12px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Ďakujeme, že ste nás kontaktovali. Čoskoro sa vám ozveme späť.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
-                <tr>
-                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">
-                    Kópia vašej správy
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px;">
-                    <div style="margin:0; padding:8px 10px; font-size:13px; line-height:1.6; color:#111827; background-color:#ffffff; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Tento e-mail je potvrdenie o prijatí vašej správy na <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">vweb.sk</a>.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Prijali sme vašu správu</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Prijali sme vašu správu</h1>
+  <p>Ďakujeme, že ste nás kontaktovali. Čoskoro sa vám ozveme späť.</p>
+  <h2>Kópia vašej správy</h2>
+  <div style="border:1px solid #e5e7eb; padding:8px 10px; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
 </body>
 </html>`;
 
-  // email pre zákazníka
   await transporter.sendMail({
     from: `vweb.sk <${smtpUser}>`,
     to: fromEmail,
@@ -608,40 +340,15 @@ export async function sendContactEmails(payload: ContactPayload): Promise<void> 
 
   const adminHtml = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charSet="UTF-8" />
-  <title>Nový dopyt z vweb.sk</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif; color:#111827;">
-  <table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding:24px 16px;">
-        <table width="600" cellPadding="0" cellSpacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-          <tr>
-            <td style="padding:18px 22px; border-bottom:1px solid #e5e7eb;">
-              <p style="margin:0; font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#6b21a8; font-weight:600;">Nový dopyt</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:20px 22px 8px 22px;">
-              <p style="margin:0 0 8px 0; font-size:14px; color:#111827;">Niekto vyplnil kontaktný formulár na hlavnej stránke.</p>
-              <p style="margin:0 0 4px 0; font-size:13px; color:#4b5563;"><strong>E-mail:</strong> ${fromEmail}</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:8px 22px 22px 22px;">
-              <p style="margin:0 0 6px 0; font-size:13px; color:#4b5563;">Text správy:</p>
-              <div style="margin:0; padding:10px 12px; font-size:13px; line-height:1.6; color:#111827; background-color:#f9fafb; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Nový dopyt z vweb.sk</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Nový dopyt</h1>
+  <p><strong>E-mail:</strong> ${fromEmail}</p>
+  <h2>Text správy</h2>
+  <div style="border:1px solid #e5e7eb; padding:10px 12px; white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</div>
 </body>
 </html>`;
 
-  // email pre admina (na SMTP_USER)
   await transporter.sendMail({
     from: `vweb.sk <${smtpUser}>`,
     to: smtpUser,
@@ -658,9 +365,10 @@ export async function sendConsultationEmail(payload: ConsultationPayload): Promi
 
   const name = payload.name.trim();
   const phone = payload.phone.trim();
+  const email = payload.email.trim();
   const note = payload.note.trim();
 
-  if (!name || !phone) {
+  if (!name || !phone || !email) {
     return;
   }
 
@@ -671,69 +379,30 @@ export async function sendConsultationEmail(payload: ConsultationPayload): Promi
     "",
     `Meno: ${name}`,
     `Telefón: ${phone}`,
+    `E-mail: ${email}`,
     "",
     "Poznámka / preferovaný čas:",
     note || "(bez poznámky)",
   ];
 
   const text = plainLines.join("\n");
-
   const safeNote = (note || "(bez poznámky)").replace(/</g, "&lt;");
 
   const html = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Nová žiadosť o bezplatnú konzultáciu</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+<head><meta charset="UTF-8" /><title>Nová žiadosť o bezplatnú konzultáciu</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Nová žiadosť o konzultáciu</h1>
+  <p>Zákazník požiadal o bezplatnú konzultáciu cez vweb.sk.</p>
+  <h2>Detaily žiadosti</h2>
+  <table style="border-collapse:collapse; font-size:13px; color:#4b5563;">
+    <tr><td style="padding:2px 0; color:#6b7280;">Meno</td><td style="padding:2px 0; font-weight:500;" align="right">${name}</td></tr>
+    <tr><td style="padding:2px 0; color:#6b7280;">Telefón</td><td style="padding:2px 0; font-weight:500;" align="right">${phone}</td></tr>
+    <tr><td style="padding:2px 0; color:#6b7280;">E-mail</td><td style="padding:2px 0; font-weight:500;" align="right">${email}</td></tr>
     <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Bezplatná konzultácia
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 8px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Nová žiadosť o konzultáciu</h1>
-              <p style="margin:0 0 12px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Zákazník požiadal o bezplatnú konzultáciu cez vweb.sk.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
-                <tr>
-                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">Detaily</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px;">
-                    <p style="margin:0 0 4px 0;"><strong>Meno:</strong> ${name}</p>
-                    <p style="margin:0 0 12px 0;"><strong>Telefón:</strong> ${phone}</p>
-                    <p style="margin:0 0 4px 0; font-weight:600;">Poznámka / preferovaný čas:</p>
-                    <div style="margin:4px 0 0 0; padding:8px 10px; font-size:13px; line-height:1.6; color:#111827; background-color:#ffffff; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${safeNote}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-        </table>
+      <td style="padding:8px 0 2px 0; color:#6b7280; vertical-align:top;">Poznámka / preferovaný čas</td>
+      <td style="padding:8px 0 2px 0; font-weight:500;" align="right">
+        <div style="margin:4px 0 0 0; padding:8px 10px; font-size:13px; line-height:1.6; color:#111827; background-color:#ffffff; border-radius:6px; border:1px solid #e5e7eb; white-space:pre-wrap;">${safeNote}</div>
       </td>
     </tr>
   </table>
@@ -763,100 +432,36 @@ export async function sendOrderCompletedEmail(order: OrderForEmail): Promise<voi
 
   const subject = "Dokončili sme vašu objednávku";
 
-  const lines: string[] = [
+  const textLines = [
     "Dokončili sme vašu objednávku.",
     "",
     `ID objednávky: ${order.id}`,
   ];
-  if (order.delivery_speed) {
-    lines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
+
+  if (order.total_price != null) {
+    textLines.push(`Celková cena: ${order.total_price} €`);
   }
-  if (order.domain_option === "own" && order.domain_own) {
-    lines.push(`Doména (vlastná): ${order.domain_own}`);
-  } else if (order.domain_option === "request" && order.domain_request) {
-    lines.push(`Požadovaná doména: ${order.domain_request}`);
+  if (order.delivery_speed) {
+    textLines.push(`Rýchlosť dodania: ${order.delivery_speed}`);
   }
   if (order.created_at) {
-    lines.push(`Vytvorené: ${order.created_at}`);
+    textLines.push(`Vytvorené: ${order.created_at}`);
   }
 
-  const text = lines.join("\n");
+  const text = textLines.join("\n");
 
   const html = `<!DOCTYPE html>
 <html lang="sk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Dokončili sme vašu objednávku</title>
-</head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e5e7eb;">
-
-          <tr>
-            <td style="padding:24px 32px 16px 32px; border-bottom:1px solid #f3f4f6;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr>
-                  <td align="left" style="font-size:14px; color:#6b7280;">
-                    <span style="display:inline-block; padding:4px 10px; border-radius:999px; background-color:#f5f3ff; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">
-                      Objednávka dokončená
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 32px 8px 32px;">
-              <h1 style="margin:0 0 8px 0; font-size:22px; line-height:1.3; color:#111827;">Dokončili sme vašu objednávku</h1>
-              <p style="margin:0 0 24px 0; font-size:14px; line-height:1.6; color:#4b5563;">
-                Váš web je dokončený. V prípade otázok nás môžete kedykoľvek kontaktovať.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; font-size:13px; color:#4b5563; background-color:#f9fafb; border-radius:8px;">
-                <tr>
-                  <td style="padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:600; color:#111827;">
-                    Detaily objednávky
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">
-                      ${order.delivery_speed ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Rýchlosť dodania</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.delivery_speed}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "own" && order.domain_own ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Doména (vlastná)</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_own}</td>
-                      </tr>` : ""}
-                      ${order.domain_option === "request" && order.domain_request ? `<tr>
-                        <td style="padding:2px 0; color:#6b7280;">Požadovaná doména</td>
-                        <td align="right" style="padding:2px 0; color:#111827; font-weight:500;">${order.domain_request}</td>
-                      </tr>` : ""}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0 32px 24px 32px; font-size:12px; color:#9ca3af; text-align:center; border-top:1px solid #f3f4f6;">
-              <p style="margin:16px 0 4px 0;">Ďakujeme, že ste si vybrali <a href="https://www.vweb.sk" style="color:#7c3aed; font-weight:600;">Vweb</a>.</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+<head><meta charset="UTF-8" /><title>Dokončili sme vašu objednávku</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;">
+  <h1>Dokončili sme vašu objednávku</h1>
+  <p>Vaša webstránka je hotová. Ďakujeme, že ste si vybrali Vweb.</p>
+  <ul>
+    <li><strong>ID objednávky:</strong> ${order.id}</li>
+    ${order.total_price != null ? `<li><strong>Celková cena:</strong> ${order.total_price} €</li>` : ""}
+    ${order.delivery_speed ? `<li><strong>Rýchlosť dodania:</strong> ${order.delivery_speed}</li>` : ""}
+    ${order.created_at ? `<li><strong>Vytvorené:</strong> ${order.created_at}</li>` : ""}
+  </ul>
 </body>
 </html>`;
 
@@ -864,6 +469,14 @@ export async function sendOrderCompletedEmail(order: OrderForEmail): Promise<voi
     from: `Vweb <${smtpUser}>`,
     to: order.user_email,
     subject,
+    text,
+    html,
+  });
+
+  await transporter.sendMail({
+    from: `Vweb <${smtpUser}>`,
+    to: smtpUser,
+    subject: `${subject} – admin kópia`,
     text,
     html,
   });

@@ -7,28 +7,31 @@ export async function POST(request: Request) {
 
     let name = "";
     let phone = "";
+    let email = "";
     let note = "";
 
     if (contentType.includes("application/json")) {
       const body = await request.json();
       name = typeof body.name === "string" ? body.name.trim() : "";
       phone = typeof body.phone === "string" ? body.phone.trim() : "";
+      email = typeof body.email === "string" ? body.email.trim() : "";
       note = typeof body.note === "string" ? body.note.trim() : "";
     } else {
       const formData = await request.formData();
       name = String(formData.get("name") ?? "").trim();
       phone = String(formData.get("phone") ?? "").trim();
+      email = String(formData.get("email") ?? "").trim();
       note = String(formData.get("note") ?? "").trim();
     }
 
-    if (!name || !phone) {
+    if (!name || !phone || !email) {
       return NextResponse.json(
-        { success: false, error: "Meno a telefón sú povinné." },
+        { success: false, error: "Meno, telefón a e-mail sú povinné." },
         { status: 400 },
       );
     }
 
-    await sendConsultationEmail({ name, phone, note });
+    await sendConsultationEmail({ name, phone, email, note });
 
     return NextResponse.json({ success: true });
   } catch (error) {

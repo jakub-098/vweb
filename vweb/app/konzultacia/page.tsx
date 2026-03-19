@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 export default function KonzultaciaPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -15,10 +16,11 @@ export default function KonzultaciaPage() {
 
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
+    const trimmedEmail = email.trim();
     const trimmedNote = note.trim();
 
-    if (!trimmedName || !trimmedPhone) {
-      setErrorMessage("Meno a telefón sú povinné.");
+    if (!trimmedName || !trimmedPhone || !trimmedEmail) {
+      setErrorMessage("Meno, telefón a e-mail sú povinné.");
       return;
     }
 
@@ -28,7 +30,7 @@ export default function KonzultaciaPage() {
       const res = await fetch("/api/consultation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmedName, phone: trimmedPhone, note: trimmedNote }),
+        body: JSON.stringify({ name: trimmedName, phone: trimmedPhone, email: trimmedEmail, note: trimmedNote }),
       });
 
       if (!res.ok) {
@@ -41,6 +43,7 @@ export default function KonzultaciaPage() {
       setStatus("success");
       setName("");
       setPhone("");
+      setEmail("");
       setNote("");
     } catch (err) {
       console.error("Failed to submit consultation request", err);
@@ -96,6 +99,20 @@ export default function KonzultaciaPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full rounded-xl border border-purple-500/30 bg-black/40 px-3 py-2 text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
                   placeholder="+421 900 000 000"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold tracking-wide text-zinc-300">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-purple-500/30 bg-black/40 px-3 py-2 text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                  placeholder="tvojmail@gmail.com"
                   required
                 />
               </div>
