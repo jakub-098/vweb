@@ -28,6 +28,11 @@ export const projects: Project[] = [
     about: "Advokátska kancelária"
   },
   {
+    name: "BizReach",
+    text: "Celý proces bol extrémne jednoduchý, o nič sme sa nemuseli starať. Do pár dní sme mali hotový web aj emaily - balík BUSINESS",
+    about: "Stavebná firma"
+  },
+  {
     name: "Easy Project",
     text: "Celý proces bol extrémne jednoduchý, o nič sme sa nemuseli starať. Do pár dní sme mali hotový web aj emaily - balík BUSINESS",
     about: "Stavebná firma"

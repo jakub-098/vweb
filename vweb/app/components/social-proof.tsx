@@ -4,7 +4,7 @@ import Image from "next/image";
 import { projects } from "@/data/reviews";
 
 export default function SocialProof() {
-  const items = [0, 1, 2, 3, 4, 5] as const;
+  const items = [0, 1, 2, 3, 4, 5, 6] as const;
 
   return (
     <section className="w-full -mt-28 mb-20 pt-1 pb-4 sm:-mt-32 sm:mb-30 sm:pt-2 sm:pb-6">
@@ -35,9 +35,12 @@ export default function SocialProof() {
                 href = "https://www.krauslegal.sk";
                 logoSrc = "/logos/kl.png";
               } else if (index === 4) {
+                href = "https://www.bizreach.sk";
+                logoSrc = "/logos/bizreach.png";  
+              } else if (index === 5) {
                 href = "https://www.easy-project.sk";
                 logoSrc = "/logos/easyproject.png";
-              } else if (index === 5) {
+              } else if (index === 6) {
                 href = "https://www.adamvirlic.com";
                 logoSrc = "/logos/adamvirlic.png";
               }
